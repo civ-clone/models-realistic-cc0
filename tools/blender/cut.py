@@ -250,7 +250,7 @@ for i, (o, h) in enumerate(pairs if mode == "parts" else []):
         continue
     ps = max(h.dimensions) or size
     ws = max(o.matrix_world.to_scale()) or 1.0
-    # found by testing on the Artillery (a part under a x100 parent): the bake measures the cage's
+    # found by testing on a part under a x100 parent: the bake measures the cage's
     # extrusion in the part's own units, but the ray distance in world units
     b.cage_extrusion = ps * 0.04 / ws; b.max_ray_distance = ps * 0.2
     for x in sc.objects: x.select_set(False)
@@ -290,7 +290,7 @@ if mode == "rewrap":
             bpy.data.objects.remove(o)
     for a in list(bpy.data.actions):
         bpy.data.actions.remove(a)
-if os.environ.get("DROP_ANIMS"):  # animations whose licence isn't the model's (e.g. Mixamo) are left out
+if os.environ.get("DROP_ANIMS"):  # animations that came with a model under other terms than its own are left out
     for ob in sc.objects:
         if ob.animation_data:
             ob.animation_data.action = None

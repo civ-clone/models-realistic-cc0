@@ -74,6 +74,7 @@ inside it. Another version of Blender, or another platform, may cut or bake it a
 
 - **The models and the manifest** (`models/`, `manifest.json`, `CREDITS.md`) are under
   [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/): free to use for anything, with no conditions.
-- **The tools and the roster** (`tools/`, `roster.json`) are mine, under the MIT licence.
+- **The tools, the roster and the files about the repository** (`tools/`, `roster.json`, this README and the rest)
+  are mine, under the MIT licence.
 
 See [LICENSE.md](LICENSE.md).

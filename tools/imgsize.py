@@ -8,7 +8,7 @@ def size(data):
     if data[:2] == b'\xff\xd8':
         i = 2
         while i + 9 < len(data):
-            if data[i] != 0xFF:
+            if data[i] != 0xFF or data[i + 1] == 0xFF:  # not a marker, or a fill byte before one
                 i += 1
                 continue
             marker = data[i + 1]

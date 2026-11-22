@@ -100,18 +100,18 @@
   },
   "knight": {
    "file": "models/knight.glb",
-   "scale": 0.10224,
-   "sha256": "acd550b5b2a787a30c81895eb2a6f2bd593efe6ba9fcc47d0c2a5d4b86b0dd7e",
+   "scale": 0.0875,
+   "sha256": "394b8706f468c9a9d3604fcc13f45165febe086d18e9eb837d19e9e756e2bede",
    "extent": {
     "across": [
-     -0.425,
-     0.425
+     -0.497,
+     0.497
     ],
     "along": [
-     -1.027,
-     1.027
+     -1.2,
+     1.2
     ],
-    "height": 2.6
+    "height": 3.039
    },
    "triangles": 2996,
    "from": [
@@ -371,7 +371,7 @@
   "frigate": {
    "file": "models/frigate.glb",
    "scale": 0.007778,
-   "sha256": "b8861d16fd4d43672be0f2c10d52612d1da1cb364f2632c1ddcd742c3115e3b6",
+   "sha256": "8aad7d33dd3e4714e4fa4c6f2898f9ad40f2b12cb6c62ab6788344cfbfc3e74e",
    "extent": {
     "across": [
      -9.16,
@@ -381,8 +381,8 @@
      -22.5,
      22.5
     ],
-    "height": 29.345,
-    "draught": 5.0
+    "height": 31.345,
+    "draught": 3.0
    },
    "triangles": 3497,
    "from": [

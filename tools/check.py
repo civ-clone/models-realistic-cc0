@@ -189,7 +189,7 @@ def expected_credits(roster):
 
 def credits_md(roster, credits):
     s = roster['set']
-    lines = [f'# {s["name"]}: credits', '', s['licence']['attribution'], '']
+    lines = [f'# Credits for {s["name"]}', '', s['licence']['attribution'], '']
     lines += [f'- {credit_line(c)}' for c in credits]
     lines += ['', "Each model's own credit is also in its file's `asset.extras`."]
     return '\n'.join(lines) + '\n'
@@ -351,7 +351,7 @@ def main():
     present = set()
     for dirpath, _, files in os.walk(os.path.join(ROOT, 'models')):
         for f in files:
-            present.add(os.path.relpath(os.path.join(dirpath, f), os.path.join(ROOT, 'models')))
+            present.add(os.path.relpath(os.path.join(dirpath, f), os.path.join(ROOT, 'models')).replace(os.sep, '/'))
     for rel in sorted(present - listed):
         problem(f'models/{rel}: is neither a model in the manifest nor an extra in the roster')
     for rel in sorted(listed - present):

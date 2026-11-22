@@ -165,7 +165,7 @@ def measure(gltf, binary):
         raise Bad('it draws no triangles')
     extent = {'across': [round(lo[0], 3), round(hi[0], 3)], 'along': [round(lo[2], 3), round(hi[2], 3)],
               'height': round(hi[1], 3)}
-    if lo[1] < -1e-4:
+    if round(-lo[1], 3) > 0:
         extent['draught'] = round(-lo[1], 3)
     return {'triangles': tris, 'extent': extent, 'lowest': round(lo[1], 3),
             'animations': sorted(a.get('name', '') for a in gltf.get('animations', []))}
