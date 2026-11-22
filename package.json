@@ -1,0 +1,21 @@
+{
+  "name": "@civ-clone/models-realistic-cc0",
+  "version": "0.1.0",
+  "description": "Realistic units for civ.one's 3D map, made for it with Meshy and from Meshy community models (CC0 1.0)",
+  "repository": "https://github.com/civ-clone/models-realistic-cc0",
+  "author": "dom111 <dom111@users.noreply.github.com>",
+  "license": "(CC0-1.0 AND MIT)",
+  "private": true,
+  "files": [
+    "CREDITS.md",
+    "LICENSE.md",
+    "README.md",
+    "manifest.json",
+    "models",
+    "roster.json",
+    "tools"
+  ],
+  "scripts": {
+    "check": "python3 -I tools/check.py"
+  }
+}

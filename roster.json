@@ -1,0 +1,746 @@
+{
+  "set": {
+    "id": "realistic-cc0",
+    "name": "Realistic: CC0",
+    "licence": {
+      "name": "CC0 1.0",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
+    }
+  },
+  "date": "22 November 2026",
+  "scale": 0.093333,
+  "generated": {
+    "work": "Models generated for civ.one",
+    "author": "dom111",
+    "url": "https://github.com/civ-clone/models-realistic-cc0",
+    "licence": {
+      "name": "CC0 1.0",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "note": "Generated in Meshy (meshy.ai) on a paid plan, from text prompts: Meshy made an image from each prompt with Google's Nano Banana, then a model from the image. Owned by dom111 under Meshy's terms, and dedicated to the public domain under CC0. Made with AI."
+  },
+  "sources": {
+    "generated-settlers": {
+      "work": "Pioneer settlers with a handcart for Settlers (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic small group of three pioneer settlers travelling together, full bodies, seen in a three-quarter view from slightly above: a bearded man pulling a two-wheeled wooden handcart loaded with sacks of grain, a small barrel, rolled blankets, a shovel and a pickaxe; a woman in a long plain dress and shawl walking beside the cart carrying a bundle; a boy carrying a basket; all in simple homespun wool clothing and leather boots, standing close together on flat ground, no text, no insignia, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "bee9c5da2c0071a22a00bd703ca0e0c18334697659c13b8040a853be53e631a7"
+    },
+    "generated-warrior": {
+      "work": "Ancient tribal warrior for Warriors (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic ancient tribal warrior from the dawn of civilisation, full body, standing in A-pose, seen in a three-quarter front view from slightly to his right, muscular and bearded with long hair tied back, wearing a rough fur cloak over his shoulders, a belted leather tunic and leather wrappings on his shins, holding a heavy wooden club in his right hand and a round wooden shield covered in hide in his left hand, natural skin tones, no tattoos, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "67dc348d1e77743c680ff07e1493513a3e8805e2152e5a4e38d14ccb115c30a3"
+    },
+    "generated-knight": {
+      "work": "Mounted medieval knight for Knights (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic medieval knight in full steel plate armour and a closed great helm, mounted on a large brown warhorse with a plain dark blue cloth caparison, holding a long wooden lance upright in his right hand and a plain heater shield with no heraldry on his left arm, leather saddle and bridle, seen in a three-quarter side view from the front left, the whole horse and rider in frame with all four hooves on the ground, the horse standing still, no heraldry, no crosses, no flags, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "c4d00f818c4d92ab3ef07d91e139da3931a3d068a5262215513b5c3bd241aaa2"
+    },
+    "generated-explorer": {
+      "work": "Nineteenth-century explorer for Explorer (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic nineteenth-century explorer, full body, standing in A-pose, seen in a three-quarter front view from slightly to his right, wearing a white pith helmet, a khaki safari jacket with button pockets, khaki trousers tucked into tall brown leather boots, a leather satchel and a water canteen on straps across his body, a coiled rope at his belt, holding a brass telescope in one hand, natural skin tones, no badges, no insignia, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "9879886578b0d7cf635eac00f3a5279de951a35f62dc0221f9e0e8ecfe11e475"
+    },
+    "generated-sail": {
+      "work": "Fifteenth-century caravel for Sail (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic fifteenth-century caravel sailing ship, seen in a three-quarter view from slightly above and to the side, the whole ship in frame, a small rounded wooden hull with a raised stern castle, three masts with plain off-white canvas sails, one square sail and two triangular lateen sails, ropes and rigging, a small rowing boat lashed on deck, weathered dark wood planks, plain sails with no crosses, no emblems, no flags, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "6004ba1e5a4d0b8a9c28d6acb6e64d76f6b20d0da6494abb2977f49e7ca007d8"
+    },
+    "generated-rifleman": {
+      "work": "First World War era rifleman for Riflemen (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic First World War era infantry rifleman, full body, standing in A-pose, seen in a three-quarter front view from slightly to his right, wearing a khaki wool service tunic and trousers with puttees, brown leather ammunition pouches on a webbing belt, a soft khaki peaked cap, brown leather boots, a bolt-action rifle slung over his right shoulder by its sling, natural skin tones, no national insignia, no badges, no markings, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "6890c080d3a088f1a916443ee83b08eec1ec05771595b5236b355f9bb32db041"
+    },
+    "generated-cavalry": {
+      "work": "Mid-19th-century light cavalry trooper for Cavalry (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic mid-19th-century light cavalry trooper mounted on a brown horse, seen in a three-quarter side view from the front left, the whole horse and rider in frame with all four hooves on the ground, the horse standing still, the rider sitting upright in the saddle wearing a dark blue tunic with brass buttons, light blue trousers with a yellow stripe, black riding boots and a dark blue peaked cap, a curved sabre in its scabbard at his side, a carbine in a saddle holster, leather saddle and bridle, no flags, no national insignia, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "858b3f6985bc5a30c656a81d94d6dd7a4790832a7b2c45ec55113c43450e1266"
+    },
+    "generated-alpine-trooper": {
+      "work": "Second World War ski trooper for Alpine Troops (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic Second World War mountain infantry ski trooper, full body, standing in A-pose, seen in a three-quarter front view from slightly to his right so the full length of both skis is clearly visible on the ground, wearing a white hooded snow camouflage smock with the hood up over a white woollen cap, white over-trousers, grey wool gloves, a bolt-action rifle slung across his back, a small rucksack, standing on a pair of long wooden military skis about two metres long, two long ski poles held loosely in his hands, no helmet, no national insignia, no badges, no markings, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "4da4e6607bdf4df19373bfcdd514056a03a5fc54e0bb49f1d5f3529b818f1d3d"
+    },
+    "generated-partisan": {
+      "work": "Masked civilian resistance fighter for Partisans (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic masked civilian resistance fighter, full body, standing in A-pose, seen in a three-quarter front view from slightly to his right, wearing a black knitted balaclava with an eye slit, a dark grey hooded jacket, plain dark trousers and worn brown work boots, a small canvas shoulder bag, hands empty, plain clothes with no logos, no stripes, no brand marks, no insignia, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "ecd9162a90bd6bad8de07a2a78983779d6a0d1f7114733a3b6e51a8cf334c122"
+    },
+    "molotov": {
+      "work": "Lowpoly Molotov",
+      "author": "Lucian Pavel",
+      "url": "https://opengameart.org/content/lowpoly-molotov",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "file": "https://opengameart.org/sites/default/files/Molotov.zip (Molotov.fbx and Molotov.png)",
+      "sha256": "9cebfb670596ff251fcb2c9ad4ac3ea90db5b49cef55e00b67571286576d4bfd"
+    },
+    "generated-spy": {
+      "work": "Mid-twentieth-century female spy for Spy (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic female spy from the mid-twentieth century, full body, standing in A-pose, seen in a three-quarter front view from slightly to her right, wearing a belted beige trench coat with the collar turned up, a dark felt fedora hat tilted low, black leather gloves, dark trousers and black ankle boots, a small dark leather shoulder bag, hair tied back, hands empty, natural skin tones, plain clothes with no logos, no insignia, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "e2c79fd9c736045a180d975e542ab1a0d7f59f751dda1b8e7b732fb40b48f8b0"
+    },
+    "generated-bomber": {
+      "work": "Second World War four-engined bomber, second try (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic Second World War four-engined propeller heavy bomber aircraft parked on the ground, engines stopped, every propeller clearly visible with its three separate blades, no motion blur, seen in three-quarter view from slightly above, the whole aircraft in frame, natural bare aluminium finish with olive drab anti-glare panel on the nose, twin tail fins, no national insignia, no markings, no numbers, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "dfbf8303d4030e87afa7efd5fa12917d5a3d9389b6e683b92183c22e4421bea6"
+    },
+    "generated-ironclad": {
+      "work": "1860s steam ironclad for Ironclad (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic 1860s steam-powered ironclad warship, seen in a three-quarter view from slightly above and to the side, the whole ship in frame, a long low dark grey iron-armoured hull with a pointed ram bow, a sloped armoured casemate amidships with rows of gun ports and cannon muzzles, a single tall black smokestack, a short signal mast with no flag, riveted iron plates, weathered paint, no national markings, no flags, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "cdfe4a0d9f5e14d6ecfb64a782a7606e6b0f9732c16cf668c1dd22c026536ea7"
+    },
+    "generated-crusader": {
+      "work": "Mounted crusader knight for Crusaders (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana Pro, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic mounted crusader knight from around 1190, horse and rider, seen in a three-quarter side view from the front left, the whole horse and rider in frame with all four hooves on the ground, the horse standing still, the rider in a chainmail hauberk under a long white surcoat with a plain red cross on the chest, a flat-topped great helm, holding a long sword upright in his right hand, a kite shield with a plain red cross on his left arm, a grey warhorse with a plain white cloth caparison and a leather saddle and bridle, no flags, no banners, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "73f63d0662ac02a38e89c5349db0821d72329f4df8fe9853935abce19fc6828b"
+    },
+    "meshy-musketman": {
+      "work": "British Redcoat",
+      "author": "rossclark13693",
+      "url": "https://www.meshy.ai/posts/019d4ea4-f729-77e8-abb9-867439fcd1d8",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "A Meshy community model, CC0 under Meshy's Terms of Service. Made with AI.",
+      "ai": true,
+      "file": "Meshy's GLB download of the post",
+      "sha256": "c7a0c9d03291c3f720edf6289cfbdc5e8fc3010fb63925541fadf540b7431ac2"
+    },
+    "meshy-dragoon": {
+      "work": "Storm-Swept Redcoat Cavalry",
+      "author": "rossclark13693",
+      "url": "https://www.meshy.ai/posts/019d634e-94fe-7cae-a944-57370f297fb9",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "A Meshy community model, CC0 under Meshy's Terms of Service. Made with AI.",
+      "ai": true,
+      "file": "Meshy's GLB download of the post",
+      "sha256": "6c8d853b34f1d39d5a4d8e491da768376d9eff6e2c6a46a63276be24fe67b604"
+    },
+    "meshy-frigate": {
+      "work": "A Spanish treasure galleon",
+      "author": "acaley",
+      "url": "https://www.meshy.ai/posts/019caa3e-aa4e-7bf8-8a8c-5bdb282295bf",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "A Meshy community model, CC0 under Meshy's Terms of Service. Made with AI.",
+      "ai": true,
+      "file": "Meshy's GLB download of the post",
+      "sha256": "16760f8b9f20480ef38ccb47d9412730aedf756693afcfdf23d34638d5d97a3c"
+    },
+    "generated-marine": {
+      "work": "Modern marine infantryman for Marines (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic modern marine infantryman of an amphibious assault force, full body, standing in A-pose with his arms held out from his sides, seen in a three-quarter front view from slightly to his right, wearing a combat uniform in a large-blotch woodland camouflage of olive green, brown and black patches, not digital, not pixelated, a modern combat helmet with a plain olive cover and goggles on the brim, a coyote-brown plate-carrier vest with ammunition pouches, knee pads, tan combat boots, an assault rifle slung on his back by its sling, natural skin tones, no national insignia, no flags, no emblems, no patches, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "b6f25b6b847428f2d0d8054fe6ac7018798d6f6710b1401057df3526a1fb86e7"
+    },
+    "generated-engineer": {
+      "work": "Civil engineer for Engineers (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic civil engineer on a building site, full body, standing in A-pose, seen in a three-quarter front view from slightly to his right, wearing a plain white hard hat with no lettering, a bright orange high-visibility safety vest with silver reflective stripes over a blue work shirt with rolled sleeves, sturdy grey work trousers and brown leather work boots, a leather tool belt with a hammer and a tape measure, holding a rolled-up set of blueprint plans in his right hand, natural skin tones, no logos, no lettering, no badges, no insignia, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "ed82a31f8947e6011c874238b1b917b1c7a71a3d95bdbc83dfef729be5ebcfc5"
+    },
+    "generated-stealth-bomber": {
+      "work": "Flying-wing stealth bomber for Stealth Bombers (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana Pro, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic B-2 Spirit stealth bomber in flight, seen from above in a three-quarter view from the front left. It is a tailless flying wing shaped like a wide boomerang: two long straight swept-back leading edges meet at a pointed nose, and the rear edge is a zigzag sawtooth W shape. The top surface is smooth and flat with nothing sticking up: no tail, no fins, no rudders. A raised central body holds a small cockpit windshield, with flush engine intake slots on top either side. Dark charcoal grey, landing gear retracted, the whole aircraft in frame, no national insignia, no markings, no numbers, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "ec616ca2c648ae4ebd23406678e50269e323f394eb6c667d7b7228d9a77fedb7"
+    },
+    "generated-transport": {
+      "work": "Second World War cargo ship for Transport (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana Pro, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic Second World War cargo ship, a Liberty-ship-style steam freighter, seen in a three-quarter view from slightly above and to the side, the whole ship in frame with its whole hull out of the water, a long dark grey steel hull with red anti-fouling paint below the waterline, a raised forecastle, a central bridge superstructure with one tall funnel amidships, five cargo hatches with derrick cranes on short masts fore and aft, a straight stem bow and a rounded cruiser stern with its rudder and propeller, weathered paint, no flags, no names, no numbers, no text, no markings, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "485b9fbea3a82ddc4d4795218cf0142e956f040b312655e21afd4c5f0ac37cfd"
+    }
+  },
+  "models": {
+    "settlers": {
+      "units": [
+        "Settlers"
+      ],
+      "source": "generated-settlers",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3000,
+        "texture": 1024,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.85,
+        "turn": 0
+      },
+      "budget": 3000,
+      "made": "generated; rewrapped"
+    },
+    "warrior": {
+      "units": [
+        "Warrior"
+      ],
+      "source": "generated-warrior",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 2000,
+        "texture": 512,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 0
+      },
+      "budget": 2000,
+      "made": "generated; rewrapped"
+    },
+    "knight": {
+      "units": [
+        "Knight"
+      ],
+      "source": "generated-knight",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3000,
+        "texture": 1024,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "along",
+        "size": 2.4,
+        "turn": 0
+      },
+      "scale": 0.0875,
+      "budget": 3000,
+      "made": "generated; rewrapped"
+    },
+    "explorer": {
+      "units": [
+        "Explorer"
+      ],
+      "source": "generated-explorer",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 2000,
+        "texture": 512,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 0
+      },
+      "budget": 2000,
+      "made": "generated; rewrapped"
+    },
+    "sail": {
+      "units": [
+        "Sail"
+      ],
+      "source": "generated-sail",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3500,
+        "texture": 1024,
+        "depth": 8,
+        "solidify": 0.006
+      },
+      "stage": {
+        "measure": "along",
+        "size": 22,
+        "turn": 90,
+        "draught": 2.0
+      },
+      "scale": 0.013636,
+      "budget": 3500,
+      "made": "generated; sails thickened, rewrapped"
+    },
+    "rifleman": {
+      "units": [
+        "Rifleman"
+      ],
+      "source": "generated-rifleman",
+      "cut": {
+        "mode": "parts",
+        "tris": 2000,
+        "texture": 512
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 0
+      },
+      "budget": 2000,
+      "made": "generated; simplified"
+    },
+    "cavalry": {
+      "units": [
+        "Cavalry"
+      ],
+      "source": "generated-cavalry",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3000,
+        "texture": 1024,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 2.5,
+        "turn": 0
+      },
+      "scale": 0.090284,
+      "budget": 3000,
+      "made": "generated; rewrapped"
+    },
+    "alpine-trooper": {
+      "units": [
+        "AlpineTrooper"
+      ],
+      "source": "generated-alpine-trooper",
+      "cut": {
+        "mode": "parts",
+        "tris": 2000,
+        "texture": 512
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 0
+      },
+      "budget": 2000,
+      "made": "generated; simplified"
+    },
+    "partisan": {
+      "units": [
+        "Partisan"
+      ],
+      "source": "generated-partisan",
+      "cut": {
+        "mode": "parts",
+        "tris": 1800,
+        "texture": 512
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 0
+      },
+      "prop": {
+        "mode": "hand",
+        "source": "molotov",
+        "options": {
+          "height": 0.38,
+          "grip": 0.85,
+          "tris": 200
+        }
+      },
+      "budget": 2000,
+      "made": "generated figure, simplified; the molotov put in his right hand"
+    },
+    "spy": {
+      "units": [
+        "Spy"
+      ],
+      "source": "generated-spy",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 2000,
+        "texture": 512,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.75,
+        "turn": 0
+      },
+      "budget": 2000,
+      "made": "generated; rewrapped"
+    },
+    "bomber": {
+      "units": [
+        "Bomber"
+      ],
+      "source": "generated-bomber",
+      "cut": {
+        "mode": "parts",
+        "tris": 2500,
+        "texture": 1024
+      },
+      "stage": {
+        "measure": "along",
+        "size": 21,
+        "turn": 90
+      },
+      "scale": 0.008095,
+      "budget": 2500,
+      "made": "generated; simplified"
+    },
+    "ironclad": {
+      "units": [
+        "Ironclad"
+      ],
+      "source": "generated-ironclad",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3500,
+        "texture": 1024,
+        "depth": 9
+      },
+      "stage": {
+        "measure": "along",
+        "size": 60,
+        "turn": 90,
+        "draught": 4.0
+      },
+      "scale": 0.005167,
+      "budget": 3500,
+      "made": "generated; rewrapped"
+    },
+    "crusader": {
+      "units": [
+        "Crusader"
+      ],
+      "source": "generated-crusader",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3000,
+        "texture": 1024,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 2.6,
+        "turn": 0
+      },
+      "scale": 0.087866,
+      "budget": 3000,
+      "made": "generated; rewrapped"
+    },
+    "musketman": {
+      "units": [
+        "Musketman"
+      ],
+      "source": "meshy-musketman",
+      "cut": {
+        "mode": "parts",
+        "tris": 2000,
+        "texture": 512
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 0
+      },
+      "budget": 2000,
+      "made": "simplified"
+    },
+    "dragoon": {
+      "units": [
+        "Dragoon"
+      ],
+      "source": "meshy-dragoon",
+      "cut": {
+        "mode": "parts",
+        "tris": 3000,
+        "texture": 1024
+      },
+      "stage": {
+        "measure": "height",
+        "size": 2.5,
+        "turn": -48
+      },
+      "scale": 0.088,
+      "budget": 3000,
+      "made": "simplified"
+    },
+    "frigate": {
+      "units": [
+        "Frigate"
+      ],
+      "source": "meshy-frigate",
+      "cut": {
+        "mode": "parts",
+        "tris": 3500,
+        "texture": 1024
+      },
+      "stage": {
+        "measure": "along",
+        "size": 45,
+        "turn": 90,
+        "draught": 3.0
+      },
+      "scale": 0.007778,
+      "budget": 3500,
+      "made": "simplified"
+    },
+    "marine": {
+      "units": [
+        "Marine"
+      ],
+      "source": "generated-marine",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 2000,
+        "texture": 512,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 30
+      },
+      "budget": 2000,
+      "made": "generated; rewrapped"
+    },
+    "engineer": {
+      "units": [
+        "Engineer"
+      ],
+      "source": "generated-engineer",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 2000,
+        "texture": 512,
+        "depth": 8
+      },
+      "stage": {
+        "measure": "height",
+        "size": 1.8,
+        "turn": 10
+      },
+      "budget": 2000,
+      "made": "generated; rewrapped"
+    },
+    "stealth-bomber": {
+      "units": [
+        "StealthBomber"
+      ],
+      "source": "generated-stealth-bomber",
+      "cut": {
+        "mode": "parts",
+        "tris": 2500,
+        "texture": 1024
+      },
+      "stage": {
+        "measure": "along",
+        "size": 21,
+        "turn": 90
+      },
+      "scale": 0.004743,
+      "budget": 2500,
+      "made": "generated; simplified"
+    },
+    "transport": {
+      "units": [
+        "Transport"
+      ],
+      "source": "generated-transport",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3500,
+        "texture": 1024,
+        "depth": 9
+      },
+      "stage": {
+        "measure": "along",
+        "size": 135,
+        "turn": 90,
+        "draught": 8.5
+      },
+      "scale": 0.002815,
+      "budget": 3500,
+      "made": "generated; rewrapped"
+    }
+  },
+  "extras": {}
+}
