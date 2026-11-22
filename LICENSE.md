@@ -8,25 +8,31 @@ This repository holds two kinds of work under two licences.
 Universal Public Domain Dedication: https://creativecommons.org/publicdomain/zero/1.0/
 
 They come from three kinds of source, all CC0:
-- **Made for civ.one:** I generated these with [Meshy](https://www.meshy.ai) from text prompts, on a paid plan, which
-  makes them mine under Meshy's terms, and I dedicate them to the public domain. They're made with AI.
+- **Made for civ.one:** I generated these in [Meshy](https://www.meshy.ai) on a paid plan: from each text prompt,
+  Meshy made an image with Google's Nano Banana, then a model from the image. Meshy's terms make what I generate on a
+  paid plan mine, and I dedicate them to the public domain. They're made with AI.
 - **Meshy community models:** the Crusader, Musketman, Dragoon and Frigate are posts on Meshy's community, CC0 under
   Meshy's Terms of Service. They're made with AI.
-- **Lowpoly Molotov:** by [lucian-pavel](https://opengameart.org/content/lowpoly-molotov) on OpenGameArt, CC0.
+- **Lowpoly Molotov:** by [Lucian Pavel](https://opengameart.org/content/lowpoly-molotov) on OpenGameArt, CC0.
 
 I made these changes, and dedicate them to the public domain under CC0 1.0 too:
 - **Fewer triangles:** each is cut down, part by part or wrapped in one new surface, to no more than `roster.json`
   says, and its colour baked into one texture.
 - **Placing:** each is turned to face `+z`, sized in metres, and stood on the ground or floated at its waterline.
 - **Assembly:** the molotov is put in the Partisan's hand.
-- **Format:** each is a glTF binary with a JPEG texture, carrying its credit in `asset.extras`.
+- **Format:** each is a glTF binary with JPEG textures, carrying its credit in `asset.copyright` and
+  `asset.extras`.
 
 You may use, change and share them, for any purpose, with no conditions. A credit, though none is needed:
 
-> Models generated for civ.one by dom111 with Meshy, Meshy community models and lucian-pavel's Lowpoly Molotov, all
-> CC0 1.0: reduced, rebaked and converted by dom111. Some are made with AI.
+> Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all
+> CC0 1.0: reduced, rebaked and converted by dom111. All but the molotov are made with AI. Credits:
+> https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md
 
 [CREDITS.md](CREDITS.md) lists every source.
+
+CC0 covers only the rights that I, and the other sources' authors, hold. It grants nothing in anyone else's designs or
+trademarks, such as those of the real aircraft and ships some of these depict.
 
 ## The tools: MIT
 

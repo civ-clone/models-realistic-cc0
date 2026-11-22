@@ -9,7 +9,7 @@ MODE hat: prop on the head. Options: width (brim width, m), sink (how far down o
 MODE bonehat: as hat, but BASE is rigged and the hat is parented to bone=NAME, posed by action=NAME at frame 0.
 PROP may be .glb or .fbx (FBX read as data). Output keeps BASE's skeleton and animations in bonehat mode; otherwise all
 meshes are joined into one. Prints placement for the record."""
-import bpy, sys, os, math, json, mathutils
+import bpy, sys, os, math, json, mathutils, tempfile
 
 a = sys.argv[sys.argv.index("--") + 1:]
 mode, base, prop, out = a[:4]
@@ -92,6 +92,37 @@ if opt.get("texture"):  # FBX props whose texture path didn't resolve
         m.use_nodes = True; nt = m.node_tree; bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
         tex = next((n for n in nt.nodes if n.type == "TEX_IMAGE"), None) or nt.nodes.new("ShaderNodeTexImage")
         tex.image = img; nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+# Only the prop's colour is kept, opaque, at no more than PROP_TEXTURE px: its other maps (normal, roughness, emission,
+# alpha) are let go, so it exports as one JPEG, like the model it goes with.
+PROP_TEXTURE = 512
+for slot in P.material_slots:
+    m = slot.material
+    if not (m and m.use_nodes):
+        continue
+    nt = m.node_tree
+    bsdf = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    if bsdf is None:
+        continue
+    for link in list(nt.links):
+        to_gltf_output = link.to_node.type == "GROUP" and link.to_node.node_tree and "glTF" in link.to_node.node_tree.name
+        if (link.to_node == bsdf and link.to_socket.name != "Base Color") or to_gltf_output:  # occlusion goes there
+            nt.links.remove(link)
+    if bsdf.inputs.get("Alpha") is not None:
+        bsdf.inputs["Alpha"].default_value = 1.0
+    m.blend_method = "OPAQUE"
+    if hasattr(m, "surface_render_method"):
+        m.surface_render_method = "DITHERED"
+    for n in nt.nodes:
+        if n.type == "TEX_IMAGE" and n.image is not None:
+            img = n.image
+            if max(img.size) > PROP_TEXTURE:
+                f = PROP_TEXTURE / max(img.size)
+                img.scale(max(1, round(img.size[0] * f)), max(1, round(img.size[1] * f)))
+            img.alpha_mode = "NONE"
+            if img.packed_file is not None:  # the exporter copies packed bytes as they are: save what's there now
+                path = os.path.join(tempfile.mkdtemp(prefix="prop-texture."), "texture.png")
+                img.filepath_raw = path; img.file_format = "PNG"; img.save()
+                new = bpy.data.images.load(path); new.alpha_mode = "NONE"; n.image = new
 if opt.get("upright") == "pca":  # stand a tilted prop along its long axis, wider (burning) end up
     vs = [v.co.copy() for v in P.data.vertices]; c = sum(vs, mathutils.Vector()) / len(vs)
     cov = mathutils.Matrix(((0.0,) * 3,) * 3)

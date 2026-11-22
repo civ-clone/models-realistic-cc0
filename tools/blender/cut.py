@@ -4,9 +4,10 @@ keeping its parts, hierarchy and animations, and bake all its colour into one ne
 Args (after --): GLB OUTDIR TARGET [TEXSIZE] [MODE] [DEPTH]
 MODE "none" only takes the 'before' pictures (for models already within budget).
 MODE "parts" (default) cuts each part separately and keeps parts, hierarchy and animations.
-MODE "rewrap" wraps the whole model in one new surface (octree remesh at DEPTH, default 9), cuts that,
+MODE "rewrap" wraps the whole model in one new surface (a voxel remesh, its voxels the model's size / 2^DEPTH, DEPTH
+defaulting to 9; REWRAP_SOLIDIFY first thickens thin sheets by that fraction of its size), cuts that,
 and bakes from all the original parts: for models with too many parts to cut each one far enough.
-Writes OUTDIR/cut.glb, OUTDIR/colour.png, OUTDIR/compare.png (original above, cut below) and OUTDIR/stats.json.
+Writes OUTDIR/cut.glb, OUTDIR/colour.png, pictures before and after (OUTDIR/orig_*.png, cut_*.png) and OUTDIR/stats.json.
 Only reads the GLB as data; no scripts from it run (Blender is started with -Y and factory settings)."""
 import bpy, bmesh, sys, os, math, json, mathutils
 sys.path.insert(0, os.path.dirname(__file__))
@@ -194,7 +195,6 @@ for rnd in range(6 if mode == "parts" else 0):
             u.data = new
         if me.users == 0:
             bpy.data.meshes.remove(me)
-    pairs = [(o, h) for o, h in pairs]
     print("round", rnd, "ratio", round(ratio, 4), "triangles", scene_tris())
 if mode == "parts":
     stats["tris_out"] = scene_tris()

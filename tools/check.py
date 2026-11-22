@@ -11,12 +11,18 @@
   it reaches (`extent`), its animations, its sources' pages and what was done to it, all as the file and the roster
   say.
 - **Each file** in `models/` is a model in the manifest or an extra in the roster, and nothing else is there. Each is
-  a glTF 2 binary that reads nothing from outside itself and needs no extension:
-  - one JSON chunk and at most one binary chunk, each whole; every index in range;
+  a glTF 2 binary that reads nothing from outside itself (no `uri` anywhere in it, as civ.one's loader asks) and needs
+  no extension:
+  - one JSON chunk and at most one binary chunk, each whole; every index in range (textures, animations and skins
+    too);
   - triangles only, with positions, normals and one set of texture coordinates (and joints and weights where an extra
     keeps its skeleton): positions finite, normals a unit long, texture coordinates within 0 to 1;
   - images as JPEG or PNG, saying which;
-  - its credit, licence and changes in `asset.extras`, as build.py writes them, saying where it was made with AI.
+  - its credit, licence and changes in `asset.extras`, and its credit in `asset.copyright`, as build.py writes them,
+    saying where it was made with AI.
+- **Each model stands as its roster says:** on the ground (or floating at its draught), centred across and along, and
+  as tall or long as its size. A model with a prop is checked for its draught and grounding only, as its prop reaches
+  past it.
 - **The credits** in CREDITS.md are as build.py writes them.
 """
 import hashlib
@@ -95,10 +101,10 @@ def check_cut(where, cut):
         problem(f'{where}: mode should be parts or rewrap')
     if not whole(cut.get('tris')):
         problem(f'{where}: tris should be a whole number over 0')
-    if cut.get('texture') not in (256, 512, 1024, 2048):
+    if not whole(cut.get('texture')) or cut['texture'] not in (256, 512, 1024, 2048):
         problem(f'{where}: texture should be 256, 512, 1024 or 2048')
-    if cut.get('mode') == 'rewrap' and cut.get('depth') not in range(6, 11):
-        problem(f'{where}: a rewrap needs a depth from 6 to 10')
+    if cut.get('mode') == 'rewrap' and not (whole(cut.get('depth')) and 6 <= cut['depth'] <= 10):
+        problem(f'{where}: a rewrap needs a whole-number depth from 6 to 10')
     if 'solidify' in cut and not number(cut['solidify'], 0):
         problem(f'{where}: solidify should be a number over 0')
 
@@ -153,6 +159,19 @@ def expected_extras(roster, entry):
     return out
 
 
+def expected_copyright(roster, entry):
+    credits = '; '.join(credit_line(credit_of(roster, k)) for k in keys_of(entry))
+    return f'{credits}. Changed by dom111 for civ.one: {entry["made"]}.'
+
+
+def has_uri(value):
+    if isinstance(value, dict):
+        return 'uri' in value or any(has_uri(v) for v in value.values())
+    if isinstance(value, list):
+        return any(has_uri(v) for v in value)
+    return False
+
+
 def expected_credits(roster):
     credits, seen = [], set()
     for entry in list(roster['models'].values()) + list(roster['extras'].values()):
@@ -179,9 +198,8 @@ def check_file(rel, skinned_ok):
         gltf, binary = glb.read(path)
         if any(k in gltf for k in ('extensionsUsed', 'extensionsRequired', 'extensions')):
             raise glb.Bad('it uses an extension')
-        for kind in ('buffers', 'images'):
-            if any('uri' in x for x in gltf.get(kind, [])):
-                raise glb.Bad(f'its {kind} read from outside the file')
+        if has_uri(gltf):
+            raise glb.Bad('it names a uri, so it would read from outside the file')
         if len(gltf.get('buffers', [])) > 1 or (gltf.get('buffers') and gltf['buffers'][0].get('byteLength', 0) > len(binary)):
             raise glb.Bad('its buffer is not the binary chunk')
         for kind in ('meshes', 'materials', 'textures', 'images', 'nodes', 'accessors', 'animations', 'skins'):
@@ -198,9 +216,28 @@ def check_file(rel, skinned_ok):
             glb.item(gltf, 'images', t.get('source'))
         for m in gltf.get('materials', []):
             pbr = m.get('pbrMetallicRoughness', {})
-            for tex in (pbr.get('baseColorTexture'), pbr.get('metallicRoughnessTexture'), m.get('normalTexture')):
+            for tex in (pbr.get('baseColorTexture'), pbr.get('metallicRoughnessTexture'), m.get('normalTexture'),
+                        m.get('occlusionTexture'), m.get('emissiveTexture')):
                 if tex is not None:
                     glb.item(gltf, 'textures', tex.get('index'))
+        for t in gltf.get('textures', []):
+            if 'sampler' in t:
+                glb.item(gltf, 'samplers', t['sampler'])
+        for ai, anim in enumerate(gltf.get('animations', [])):
+            samplers = anim.get('samplers', [])
+            for s in samplers:
+                if len(glb.accessor(gltf, binary, s.get('input'))) != len(glb.accessor(gltf, binary, s.get('output'))) and s.get('interpolation', 'LINEAR') != 'CUBICSPLINE':
+                    raise glb.Bad(f'animation {ai} has a sampler whose times and values differ in number')
+            for ch in anim.get('channels', []):
+                if not isinstance(ch.get('sampler'), int) or not 0 <= ch['sampler'] < len(samplers):
+                    raise glb.Bad(f'animation {ai} has a channel whose sampler is out of range')
+                glb.item(gltf, 'nodes', ch.get('target', {}).get('node'))
+        for si, skin in enumerate(gltf.get('skins', [])):
+            joints = skin.get('joints', [])
+            for j in joints:
+                glb.item(gltf, 'nodes', j)
+            if 'inverseBindMatrices' in skin and len(glb.accessor(gltf, binary, skin['inverseBindMatrices'])) != len(joints):
+                raise glb.Bad(f'skin {si} has a matrix for each of a different number of joints')
         allowed = ATTRIBUTES | (SKIN_ATTRIBUTES if skinned_ok else set())
         if gltf.get('skins') and not skinned_ok:
             raise glb.Bad('it has a skeleton, which only an extra may keep')
@@ -222,14 +259,14 @@ def check_file(rel, skinned_ok):
                 if len(uv) != len(pos) or any(not -1e-4 <= c <= 1 + 1e-4 for t in uv for c in t):
                     raise glb.Bad(f'mesh {mi} has texture coordinates outside 0 to 1')
         return gltf, glb.measure(gltf, binary)
-    except (glb.Bad, KeyError, TypeError, ValueError) as e:
+    except (glb.Bad, KeyError, TypeError, ValueError, IndexError, AttributeError) as e:
         problem(f'models/{rel}: {e}')
         return None
 
 
 def main():
-    roster = json.load(open(os.path.join(ROOT, 'roster.json')))
-    manifest = json.load(open(os.path.join(ROOT, 'manifest.json')))
+    roster = json.load(open(os.path.join(ROOT, 'roster.json'), encoding='utf-8'))
+    manifest = json.load(open(os.path.join(ROOT, 'manifest.json'), encoding='utf-8'))
 
     # The roster.
     keys_ok('roster', roster, TOP)
@@ -314,6 +351,8 @@ def main():
         gltf, measured = got
         if gltf.get('asset', {}).get('extras') != expected_extras(roster, entry):
             problem(f'models/{rel}: its asset.extras should hold its credit, licence and changes as build.py writes them')
+        if gltf.get('asset', {}).get('copyright') != expected_copyright(roster, entry):
+            problem(f'models/{rel}: its asset.copyright should hold its credit as build.py writes it')
         if mid is None:
             continue
         m = mm.get(mid, {})
@@ -329,23 +368,28 @@ def main():
                 problem(f'manifest: {mid}.{k} should be {json.dumps(want.get(k))[:100]}, as its file and the roster say')
         if measured['triangles'] > entry['budget']:
             problem(f'models/{rel}: {measured["triangles"]} triangles, over its budget of {entry["budget"]}')
-        stage = entry['stage']
-        if 'draught' in stage:
-            if abs(measured['extent'].get('draught', 0) - stage['draught']) > 0.01:
-                problem(f'models/{rel}: floats {measured["extent"].get("draught", 0)} deep, not {stage["draught"]}')
-        elif 'draught' in measured['extent']:
-            problem(f'models/{rel}: reaches under the ground')
+        stage, ext = entry['stage'], measured['extent']
+        if abs(measured['lowest'] + stage.get('draught', 0)) > 0.002:
+            where = f'floats {-measured["lowest"]} deep' if measured['lowest'] < 0 else f'stands {measured["lowest"]} above the ground'
+            problem(f'models/{rel}: {where}, not ' + (f'{stage["draught"]} deep' if 'draught' in stage else 'on it'))
+        if 'prop' not in entry:
+            reach = ext['height'] - measured['lowest'] if stage['measure'] == 'height' else ext['along'][1] - ext['along'][0]
+            if abs(reach - stage['size']) > 0.005 * stage['size'] + 0.002:
+                problem(f'models/{rel}: is {reach:.3f} {"tall" if stage["measure"] == "height" else "long"}, not {stage["size"]}')
+            for axis in ('across', 'along'):
+                if abs(ext[axis][0] + ext[axis][1]) > 0.004:
+                    problem(f'models/{rel}: is not centred {axis} ({ext[axis]})')
 
     # The credits.
     path = os.path.join(ROOT, 'CREDITS.md')
-    if not os.path.exists(path) or open(path, encoding='utf-8').read() != credits_md(roster, credits):
+    if not os.path.exists(path) or open(path, encoding='utf-8', newline='').read() != credits_md(roster, credits):
         problem('CREDITS.md: should list the credits as build.py writes them')
 
 
 if __name__ == '__main__':
     try:
         main()
-    except (OSError, ValueError, KeyError, TypeError) as e:
+    except Exception as e:  # a roster or manifest too broken to check further
         problem(f'stopped: {e!r}')
     for p in problems:
         print(p)

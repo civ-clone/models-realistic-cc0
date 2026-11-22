@@ -2,8 +2,9 @@
 
 read(path) returns the file's JSON and binary chunks, or raises Bad saying what's wrong with its framing.
 measure(gltf, binary) returns what the manifest says of a model: its triangles, how far it reaches (extent, in glTF's
-axes: x across, z along with the front at +z, y up) and its animations' names. Points are placed as their nodes place
-them in the scene, as the file stands (not as an animation moves them); a skinned mesh is measured as it's bound.
+axes: x across, z along with the front at +z, y up) and its animations' names, and its lowest point. Points are
+placed as their nodes place them in the scene, as the file stands (not as an animation moves them); a skinned mesh is
+measured as it's bound.
 """
 import json
 import math
@@ -80,7 +81,15 @@ def accessor(gltf, binary, index):
 
 
 def multiply(a, b):
-    return [[sum(a[i][k] * b[k][j] for k in range(4)) for j in range(4)] for i in range(4)]
+    """a × b, adding in order (not with sum(), whose float rounding changed in Python 3.12)."""
+    out = [[0.0] * 4 for _ in range(4)]
+    for i in range(4):
+        for j in range(4):
+            total = 0.0
+            for k in range(4):
+                total += a[i][k] * b[k][j]
+            out[i][j] = total
+    return out
 
 
 def local_matrix(node):
@@ -155,5 +164,5 @@ def measure(gltf, binary):
               'height': round(hi[1], 3)}
     if lo[1] < -1e-4:
         extent['draught'] = round(-lo[1], 3)
-    return {'triangles': tris, 'extent': extent,
+    return {'triangles': tris, 'extent': extent, 'lowest': round(lo[1], 3),
             'animations': sorted(a.get('name', '') for a in gltf.get('animations', []))}

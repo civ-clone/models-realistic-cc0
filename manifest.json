@@ -7,7 +7,7 @@
  "licence": {
   "name": "CC0 1.0",
   "url": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models and lucian-pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked and converted by dom111. Some are made with AI."
+  "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
  },
  "credits": [
   {
@@ -21,7 +21,7 @@
   },
   {
    "work": "Lowpoly Molotov",
-   "author": "lucian-pavel",
+   "author": "Lucian Pavel",
    "url": "https://opengameart.org/content/lowpoly-molotov",
    "licence": {
     "name": "CC0 1.0",
@@ -69,7 +69,7 @@
  "models": {
   "settlers": {
    "file": "models/settlers.glb",
-   "sha256": "4f32eeb0a6e86d2a25fd59f51ffb4a44f74ae5e985dd9766b5e9740b913b72ce",
+   "sha256": "86710fa4f3947aa88c33c3127c31e3ba651096a8cadb0b65dae9dc7237eccb68",
    "extent": {
     "across": [
      -0.879,
@@ -89,7 +89,7 @@
   },
   "warrior": {
    "file": "models/warrior.glb",
-   "sha256": "31f90bd6d2ded52323e3c5521414d258f1d1e3cf5bdaa1debba0f667b1f3be40",
+   "sha256": "2ff109411d8cee6f67e485eeadb611c9e653a10879d346b69566ade66491c270",
    "extent": {
     "across": [
      -0.553,
@@ -110,7 +110,7 @@
   "knight": {
    "file": "models/knight.glb",
    "scale": 0.10224,
-   "sha256": "3e90a472d1a5fe60c6b3c8fea8222def150a34f7cc9e9ad7708fe279a4a14646",
+   "sha256": "9fe37537fb30736638acf9e6abd1dba0ca0e51157b878f98064e58e686917f52",
    "extent": {
     "across": [
      -0.425,
@@ -130,7 +130,7 @@
   },
   "explorer": {
    "file": "models/explorer.glb",
-   "sha256": "2e8684cc6d82ef6eeeead8d867d2256bcbb152df8767cefabb6fcbcd2dc82208",
+   "sha256": "50a94a6ebc2fc1b525a8723f2f7f2c05520ec37282252f1f535a272e30f0574b",
    "extent": {
     "across": [
      -0.528,
@@ -151,7 +151,7 @@
   "sail": {
    "file": "models/sail.glb",
    "scale": 0.013636,
-   "sha256": "ce0d40d536145b11b127cceab6c91e1b7766eb2b1a2d7e962bad1e36da4c3fd7",
+   "sha256": "10d7d9a73c4a2429e708052d3b744dc7790696662e22af3c1798ec6355c4e9d5",
    "extent": {
     "across": [
      -5.085,
@@ -172,7 +172,7 @@
   },
   "rifleman": {
    "file": "models/rifleman.glb",
-   "sha256": "eb620712f2309f9ed0fd608ae2512c1f5865ab79832005e94e67ba567d4c8b98",
+   "sha256": "4e5399ed2de46e3cf3b99cb70ebf5de6b8e1246c542afdd3947b89c60fb814b2",
    "extent": {
     "across": [
      -0.561,
@@ -193,7 +193,7 @@
   "cavalry": {
    "file": "models/cavalry.glb",
    "scale": 0.090284,
-   "sha256": "36e28a650aed6658df6a39ab6753203a340206343093e5d2cf55d579cd1e4878",
+   "sha256": "d3b0aa14011b3371dd008eb76efa90069649c1c564378a4ebf245ef592100d09",
    "extent": {
     "across": [
      -0.421,
@@ -213,7 +213,7 @@
   },
   "alpine-trooper": {
    "file": "models/alpine-trooper.glb",
-   "sha256": "685b84608497e155a90806e8753dd8415d1972655e27d7ea2c5bedbf233ce228",
+   "sha256": "aa0038ad094a5d1d297e8f40036479cf3ca54ca20549d978135e958c46cc5c1c",
    "extent": {
     "across": [
      -0.401,
@@ -233,7 +233,7 @@
   },
   "partisan": {
    "file": "models/partisan.glb",
-   "sha256": "98ea27bb2ca25879438f2433df978cbfeb8a81aff1c73ff074305668fcfad1f9",
+   "sha256": "a482620a3b82e9e598c4e40e80391d5499f0fc6edc10104c24fa8b91c2f9146f",
    "extent": {
     "across": [
      -0.492,
@@ -254,7 +254,7 @@
   },
   "spy": {
    "file": "models/spy.glb",
-   "sha256": "6c51f2fd6e1a0b44420df6063747f9be98ff67b6e49faef5a6c0ad47465700df",
+   "sha256": "e2d5245e9aafc6d75c99aa04c92b462602c75fe6fcf94e95b6cbce2363ff562d",
    "extent": {
     "across": [
      -0.541,
@@ -275,7 +275,7 @@
   "bomber": {
    "file": "models/bomber.glb",
    "scale": 0.008095,
-   "sha256": "c288c29064f7df24a53390b4810c5c9d08c4216f6a3183246d4f392600d50dbd",
+   "sha256": "81f2ed11dbd16ba4f89b9702ab1e218eda8427710461c116740e3c73247cf14f",
    "extent": {
     "across": [
      -14.969,
@@ -296,7 +296,7 @@
   "ironclad": {
    "file": "models/ironclad.glb",
    "scale": 0.005167,
-   "sha256": "4a99b6a5488034de32b41258869740a2ecf64be5461e713aa1e694332f28368d",
+   "sha256": "606e04d63d74434dbfa588f65890fcb885d8f0b58e621416db6f68a6b14503d2",
    "extent": {
     "across": [
      -7.719,
@@ -317,7 +317,7 @@
   },
   "crusader": {
    "file": "models/crusader.glb",
-   "sha256": "cb4645eb4e90f7feedbbff6c5ba118b72fbf8d0cca62e268dbfbc98e9010521d",
+   "sha256": "88c95ecd52d76a0139859bf18e8a854d3e6169caf817d96e82c9f39b3079ecd2",
    "extent": {
     "across": [
      -0.517,
@@ -337,7 +337,7 @@
   },
   "musketman": {
    "file": "models/musketman.glb",
-   "sha256": "62bb68bd6cfbd86faa4a6b44198cf1333de6b775ff81c1d8ea55cb4ec222314e",
+   "sha256": "5d7ef4d3d67362fe71dece0c9aee0600f7eba6135681d6b392d9098d12898ffd",
    "extent": {
     "across": [
      -0.526,
@@ -358,15 +358,15 @@
   "dragoon": {
    "file": "models/dragoon.glb",
    "scale": 0.088,
-   "sha256": "f367d446c610b327e650e4aac1aac6fd6ff6b3376019f727c2420b8e359642b6",
+   "sha256": "658592127431710aef87b0b888257f03613f6008a28dd1b8f33f2291dcef2fe5",
    "extent": {
     "across": [
-     -1.07,
-     1.07
+     -0.628,
+     0.628
     ],
     "along": [
-     -0.974,
-     0.974
+     -1.258,
+     1.258
     ],
     "height": 2.5
    },
@@ -379,7 +379,7 @@
   "frigate": {
    "file": "models/frigate.glb",
    "scale": 0.007778,
-   "sha256": "33a1aa84eff89e7f5a975b4d9ff98187826ebb5f8d7990bdc556d7d50ebc23c2",
+   "sha256": "b8861d16fd4d43672be0f2c10d52612d1da1cb364f2632c1ddcd742c3115e3b6",
    "extent": {
     "across": [
      -9.16,
@@ -400,7 +400,7 @@
   },
   "marine": {
    "file": "models/marine.glb",
-   "sha256": "2d424dd0247d523ae8487a40c1b52f47c541b1580a45ce95d736caa7a25a756d",
+   "sha256": "2153306564e9c70e1d4dd9323d10d9d086a2b247a61d57a0b7d596ae8c949e24",
    "extent": {
     "across": [
      -0.501,
@@ -420,7 +420,7 @@
   },
   "engineer": {
    "file": "models/engineer.glb",
-   "sha256": "55c5c7539e2fc962bd24389b47adde9e2a8eb74c1301716b7b62ee65ad524ed4",
+   "sha256": "5e26dfee9eb2c03d1b49229a762a83af17b137aec1277f66c2cbaa0ea77fcb10",
    "extent": {
     "across": [
      -0.353,
@@ -441,7 +441,7 @@
   "stealth-bomber": {
    "file": "models/stealth-bomber.glb",
    "scale": 0.004743,
-   "sha256": "d4e4c6323977078524bb6a568022b16cd8cfb5fb9370ebd9178dd150b609f68b",
+   "sha256": "4a3b9fc874ce2ecd24131336c9c5c1ea078d502d8067cdac62d33ec38e96e18f",
    "extent": {
     "across": [
      -25.285,

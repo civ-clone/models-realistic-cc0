@@ -40,13 +40,14 @@ def sha256(path):
     return h.hexdigest()
 
 
-def stamp(path, extras):
-    """Puts extras in the file's asset.extras, keeping the rest of it as it is."""
+def stamp(path, extras, copyright):
+    """Puts extras in the file's asset.extras and its credit in asset.copyright, keeping the rest of it as it is."""
     b = open(path, 'rb').read()
     n = struct.unpack('<I', b[12:16])[0]
     j = json.loads(b[20:20 + n])
     rest = b[20 + n:]
     j.setdefault('asset', {})['extras'] = extras
+    j['asset']['copyright'] = copyright
     js = json.dumps(j, separators=(',', ':'), ensure_ascii=False).encode()
     js += b' ' * (-len(js) % 4)
     body = struct.pack('<II', len(js), 0x4E4F534A) + js + rest
@@ -97,7 +98,7 @@ class Blender:
         stage = {slug: {'src': cut, **entry['stage'], 'out': os.path.basename(staged)}}
         stage_path = os.path.join(self.work, 'stage', slug + '.json')
         os.makedirs(os.path.dirname(stage_path), exist_ok=True)
-        json.dump(stage, open(stage_path, 'w'), indent=1)
+        json.dump(stage, open(stage_path, 'w', encoding='utf-8'), indent=1)
         self.run('normalise.py', stage_path, os.path.dirname(staged), slug)
         if prop:
             options = dict(prop['options'])
@@ -132,7 +133,7 @@ def finish(roster, built):
             shutil.copyfile(built[rel], dst)
         if not os.path.exists(dst):
             sys.exit(f'models/{rel} is missing: build it with --originals')
-        stamp(dst, check.expected_extras(roster, e))
+        stamp(dst, check.expected_extras(roster, e), check.expected_copyright(roster, e))
         if mid is None:
             continue
         measured = glb.measure(*glb.read(dst))
@@ -153,7 +154,7 @@ def finish(roster, built):
     with open(os.path.join(ROOT, 'manifest.json'), 'w', encoding='utf-8') as f:
         json.dump(manifest, f, indent=1, ensure_ascii=False)
         f.write('\n')
-    with open(os.path.join(ROOT, 'CREDITS.md'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(ROOT, 'CREDITS.md'), 'w', encoding='utf-8', newline='') as f:
         f.write(check.credits_md(roster, credits))
     print(f'{s["id"]}: {len(models)} models, {len(names)} unit types, {len(credits)} credits')
 
@@ -166,6 +167,9 @@ def main():
     ap.add_argument('names', nargs='*', help='only these models (by id) or extras (by path in models/)')
     a = ap.parse_args()
     roster = json.load(open(os.path.join(ROOT, 'roster.json'), encoding='utf-8'))
+    unknown = set(a.names) - set(roster['models']) - set(roster['extras'])
+    if unknown:
+        sys.exit(f'Not in the roster: {", ".join(sorted(unknown))}')
     built = {}
     if a.originals:
         if not a.blender:
