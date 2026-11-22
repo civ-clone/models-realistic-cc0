@@ -59,8 +59,8 @@ python3 -I tools/build.py --blender /path/to/blender --originals /path/to/origin
 ```
 
 Name models to build only those. Blender runs with its factory settings and with scripts in files turned off, and
-reads the originals only as data. Without `--originals`, `build.py` only writes each model's `asset.extras`, the
-manifest and the credits.
+reads the originals only as data. Without `--originals`, `build.py` only writes each model's `asset.copyright` and
+`asset.extras`, the manifest and the credits.
 
 The originals:
 - **Mine:** generated in my Meshy account, and too big to keep here (up to 140 MB each). I've kept them.

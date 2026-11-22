@@ -170,6 +170,8 @@ def main():
     unknown = set(a.names) - set(roster['models']) - set(roster['extras'])
     if unknown:
         sys.exit(f'Not in the roster: {", ".join(sorted(unknown))}')
+    if a.names and not a.originals:
+        sys.exit('Naming models builds them, which needs --blender and --originals')
     built = {}
     if a.originals:
         if not a.blender:

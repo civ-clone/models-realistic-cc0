@@ -11,8 +11,8 @@ They come from three kinds of source, all CC0:
 - **Made for civ.one:** I generated these in [Meshy](https://www.meshy.ai) on a paid plan: from each text prompt,
   Meshy made an image with Google's Nano Banana, then a model from the image. Meshy's terms make what I generate on a
   paid plan mine, and I dedicate them to the public domain. They're made with AI.
-- **Meshy community models:** the Crusader, Musketman, Dragoon and Frigate are posts on Meshy's community, CC0 under
-  Meshy's Terms of Service. They're made with AI.
+- **Meshy community models:** the Musketman, Dragoon and Frigate are posts on Meshy's community, CC0 under Meshy's
+  Terms of Service. They're made with AI.
 - **Lowpoly Molotov:** by [Lucian Pavel](https://opengameart.org/content/lowpoly-molotov) on OpenGameArt, CC0.
 
 I made these changes, and dedicate them to the public domain under CC0 1.0 too:

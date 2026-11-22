@@ -29,15 +29,6 @@
    }
   },
   {
-   "work": "Gray Templar Knight",
-   "author": "trabajos.estampa",
-   "url": "https://www.meshy.ai/posts/0197d280-0cab-7d4b-80f9-a0ae1c8c1820",
-   "licence": {
-    "name": "CC0 1.0",
-    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
-   }
-  },
-  {
    "work": "British Redcoat",
    "author": "rossclark13693",
    "url": "https://www.meshy.ai/posts/019d4ea4-f729-77e8-abb9-867439fcd1d8",
@@ -317,23 +308,24 @@
   },
   "crusader": {
    "file": "models/crusader.glb",
-   "sha256": "88c95ecd52d76a0139859bf18e8a854d3e6169caf817d96e82c9f39b3079ecd2",
+   "scale": 0.087866,
+   "sha256": "16f4aa6da8d1eaa640274921eb2a2291abafd6c7228fbc2cf305a8a89482b206",
    "extent": {
     "across": [
-     -0.517,
-     0.517
+     -0.491,
+     0.491
     ],
     "along": [
-     -0.394,
-     0.394
+     -1.196,
+     1.196
     ],
-    "height": 1.85
+    "height": 2.6
    },
-   "triangles": 2000,
+   "triangles": 2996,
    "from": [
-    "https://www.meshy.ai/posts/0197d280-0cab-7d4b-80f9-a0ae1c8c1820"
+    "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "simplified"
+   "made": "generated; rewrapped"
   },
   "musketman": {
    "file": "models/musketman.glb",
@@ -462,7 +454,7 @@
   "transport": {
    "file": "models/transport.glb",
    "scale": 0.002815,
-   "sha256": "2600181dea01be3e35d2a0b9f13c32135c818dc7ca624fa48e92cd6e9a315ebb",
+   "sha256": "75572e1188c54c2340f785ae5f088de54cf6a9227a8039d227a8e31e97b14b31",
    "extent": {
     "across": [
      -10.093,
@@ -479,7 +471,7 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; simplified"
+   "made": "generated; rewrapped"
   }
  },
  "names": {

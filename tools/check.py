@@ -17,8 +17,8 @@
     too);
   - triangles only, with positions, normals and one set of texture coordinates (and joints and weights where an extra
     keeps its skeleton): positions finite, normals a unit long, texture coordinates within 0 to 1;
-  - images as JPEG or PNG, saying which: the first the baked texture, as big as the roster says, and none bigger;
-  - each primitive drawn with a material that has a colour texture;
+  - images as JPEG, saying so: the first the baked texture, as big as the roster says, and none bigger;
+  - each primitive drawn opaque, with a material that has a colour texture;
   - its credit, licence and changes in `asset.extras`, and its credit in `asset.copyright`, as build.py writes them,
     saying where it was made with AI.
 - **Each model stands as its roster says:** on the ground (or floating at its draught), centred across and along, and
@@ -135,6 +135,8 @@ def check_build_entry(where, e, allowed, sources):
             check_cut(f'{where}.prop.cut', p['cut'])
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
+    elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
+        problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
 
 
 def credit_of(roster, key):
@@ -211,9 +213,8 @@ def check_file(rel, skinned_ok, texture):
         for i, img in enumerate(gltf.get('images', [])):
             view = glb.item(gltf, 'bufferViews', img.get('bufferView'))
             head = binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + 8]
-            kind = 'image/jpeg' if head[:3] == b'\xff\xd8\xff' else 'image/png' if head == b'\x89PNG\r\n\x1a\n' else None
-            if kind is None or img.get('mimeType') != kind:
-                raise glb.Bad(f'image {i} is not a JPEG or PNG, or says it is something else')
+            if head[:3] != b'\xff\xd8\xff' or img.get('mimeType') != 'image/jpeg':
+                raise glb.Bad(f'image {i} is not a JPEG, or says it is something else')
             sides = imgsize.size(binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + view.get('byteLength', 0)])
             if sides is None or max(sides) > texture or (i == 0 and max(sides) != texture):
                 raise glb.Bad(f'image {i} is {sides}: the baked texture should be {texture} px, and no other bigger')
@@ -254,6 +255,8 @@ def check_file(rel, skinned_ok, texture):
                 mat = glb.item(gltf, 'materials', prim.get('material'))
                 if 'baseColorTexture' not in mat.get('pbrMetallicRoughness', {}):
                     raise glb.Bad(f'mesh {mi} is not drawn with a colour texture')
+                if mat.get('alphaMode', 'OPAQUE') != 'OPAQUE':
+                    raise glb.Bad(f'mesh {mi} is drawn see-through ({mat["alphaMode"]})')
                 glb.triangles(gltf, binary, prim)
                 pos = glb.accessor(gltf, binary, attrs['POSITION'])
                 if any(not all(math.isfinite(c) for c in p) for p in pos):

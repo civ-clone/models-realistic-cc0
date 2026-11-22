@@ -224,18 +224,21 @@
       "file": "the generated GLB, kept by me, not published",
       "sha256": "cdfe4a0d9f5e14d6ecfb64a782a7606e6b0f9732c16cf668c1dd22c026536ea7"
     },
-    "meshy-crusader": {
-      "work": "Gray Templar Knight",
-      "author": "trabajos.estampa",
-      "url": "https://www.meshy.ai/posts/0197d280-0cab-7d4b-80f9-a0ae1c8c1820",
+    "generated-crusader": {
+      "work": "Mounted crusader knight for Crusaders (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/dom111",
       "licence": {
         "name": "CC0 1.0",
         "url": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
-      "note": "A Meshy community model, CC0 under Meshy's Terms of Service. Made with AI.",
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
       "ai": true,
-      "file": "Meshy's GLB download of the post",
-      "sha256": "72cba0dbf676324e8b89b02a3e3d1c8eb5129ff84e3417776fe2fee0b13a6e3f"
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana Pro, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic mounted crusader knight from around 1190, horse and rider, seen in a three-quarter side view from the front left, the whole horse and rider in frame with all four hooves on the ground, the horse standing still, the rider in a chainmail hauberk under a long white surcoat with a plain red cross on the chest, a flat-topped great helm, holding a long sword upright in his right hand, a kite shield with a plain red cross on his left arm, a grey warhorse with a plain white cloth caparison and a leather saddle and bridle, no flags, no banners, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "73f63d0662ac02a38e89c5349db0821d72329f4df8fe9853935abce19fc6828b"
     },
     "meshy-musketman": {
       "work": "British Redcoat",
@@ -587,19 +590,21 @@
       "units": [
         "Crusader"
       ],
-      "source": "meshy-crusader",
+      "source": "generated-crusader",
       "cut": {
-        "mode": "parts",
-        "tris": 2000,
-        "texture": 512
+        "mode": "rewrap",
+        "tris": 3000,
+        "texture": 1024,
+        "depth": 8
       },
       "stage": {
         "measure": "height",
-        "size": 1.85,
+        "size": 2.6,
         "turn": 0
       },
-      "budget": 2000,
-      "made": "simplified"
+      "scale": 0.087866,
+      "budget": 3000,
+      "made": "generated; rewrapped"
     },
     "musketman": {
       "units": [
@@ -734,7 +739,7 @@
       },
       "scale": 0.002815,
       "budget": 3500,
-      "made": "generated; simplified"
+      "made": "generated; rewrapped"
     }
   },
   "extras": {}
