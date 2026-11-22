@@ -8,4 +8,6 @@ gone = [o.name for o in list(bpy.context.scene.objects) if o.name in names]
 for n in gone:
     bpy.data.objects.remove(bpy.data.objects[n])
 print("DROPPED", sorted(gone), "missing", sorted(names - set(gone)))
+if names - set(gone):
+    raise RuntimeError(f"Error: no part named {sorted(names - set(gone))}")
 bpy.ops.export_scene.gltf(filepath=dst, export_format="GLB", export_animations=True)

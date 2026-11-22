@@ -13,7 +13,7 @@
   "generated": {
     "work": "Models generated for civ.one",
     "author": "dom111",
-    "url": "https://github.com/dom111",
+    "url": "https://github.com/civ-clone/models-realistic-cc0",
     "licence": {
       "name": "CC0 1.0",
       "url": "https://creativecommons.org/publicdomain/zero/1.0/"
@@ -323,6 +323,22 @@
       "prompt": "A realistic B-2 Spirit stealth bomber in flight, seen from above in a three-quarter view from the front left. It is a tailless flying wing shaped like a wide boomerang: two long straight swept-back leading edges meet at a pointed nose, and the rear edge is a zigzag sawtooth W shape. The top surface is smooth and flat with nothing sticking up: no tail, no fins, no rudders. A raised central body holds a small cockpit windshield, with flush engine intake slots on top either side. Dark charcoal grey, landing gear retracted, the whole aircraft in frame, no national insignia, no markings, no numbers, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
       "file": "the generated GLB, kept by me, not published",
       "sha256": "ec616ca2c648ae4ebd23406678e50269e323f394eb6c667d7b7228d9a77fedb7"
+    },
+    "generated-transport": {
+      "work": "Second World War cargo ship for Transport (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/dom111",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana Pro, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "prompt": "A realistic Second World War cargo ship, a Liberty-ship-style steam freighter, seen in a three-quarter view from slightly above and to the side, the whole ship in frame with its whole hull out of the water, a long dark grey steel hull with red anti-fouling paint below the waterline, a raised forecastle, a central bridge superstructure with one tall funnel amidships, five cargo hatches with derrick cranes on short masts fore and aft, a straight stem bow and a rounded cruiser stern with its rudder and propeller, weathered paint, no flags, no names, no numbers, no text, no markings, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "485b9fbea3a82ddc4d4795218cf0142e956f040b312655e21afd4c5f0ac37cfd"
     }
   },
   "models": {
@@ -697,6 +713,27 @@
       },
       "scale": 0.004743,
       "budget": 2500,
+      "made": "generated; simplified"
+    },
+    "transport": {
+      "units": [
+        "Transport"
+      ],
+      "source": "generated-transport",
+      "cut": {
+        "mode": "rewrap",
+        "tris": 3500,
+        "texture": 1024,
+        "depth": 9
+      },
+      "stage": {
+        "measure": "along",
+        "size": 135,
+        "turn": 90,
+        "draught": 8.5
+      },
+      "scale": 0.002815,
+      "budget": 3500,
       "made": "generated; simplified"
     }
   },

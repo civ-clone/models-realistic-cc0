@@ -137,6 +137,9 @@ def triangles(gltf, binary, prim):
         raise Bad('a primitive is not triangles')
     n = item(gltf, 'accessors', prim['attributes']['POSITION'])['count']
     if 'indices' in prim:
+        a = item(gltf, 'accessors', prim['indices'])
+        if a.get('componentType') not in (5121, 5123, 5125) or a.get('type') != 'SCALAR':
+            raise Bad('a primitive\'s indices are not unsigned whole numbers')
         idx = [v[0] for v in accessor(gltf, binary, prim['indices'])]
     else:
         idx = list(range(n))

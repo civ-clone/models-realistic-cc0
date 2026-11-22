@@ -4,9 +4,9 @@ Realistic units for [civ.one](https://civ.one)'s 3D map, under [CC0 1.0](https:/
 
 Most of these I made for civ.one in [Meshy](https://www.meshy.ai): from each text prompt, Meshy made an image with
 Google's Nano Banana, then a model from the image. The rest are Meshy community models and a molotov from OpenGameArt,
-all CC0. All but the molotov are made with AI, and each file says so. The set draws 19 unit
+all CC0. All but the molotov are made with AI, and each file says so. The set draws 20 unit
 types: Settlers, Warriors, Knights, Explorer, Sail, Crusaders, Musketmen, Riflemen, Cavalry, Dragoons, Alpine Troops,
-Partisans, Spy, Marines, Engineers, Bomber, Stealth Bomber, Frigate and Ironclad.
+Partisans, Spy, Marines, Engineers, Bomber, Stealth Bomber, Frigate, Ironclad and Transport.
 
 [models-realistic-by](https://github.com/civ-clone/models-realistic-by) draws the later units made from CC BY models.
 Some of these types are drawn by [models-0ad](https://github.com/civ-clone/models-0ad) and
@@ -15,7 +15,7 @@ Some of these types are drawn by [models-0ad](https://github.com/civ-clone/model
 ## What's here
 
 - **`models/*.glb`:** one glTF binary for each model, facing `+z`, with one baked colour texture (JPEG, 512 px for
-  people and 1024 px for the rest); the Partisans have a second, for their molotov. Each was cut down to its budget
+  people and 1024 px for the rest); the Partisans have a second, for their molotov. Each was cut down to its budget where it was over
   (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500 for an aircraft, 3,500 for a ship),
   and its colour baked into the texture. Each carries its credit in `asset.copyright`, and its credit, licence and
   what was done to it in `asset.extras`.
@@ -37,8 +37,8 @@ Some of these types are drawn by [models-0ad](https://github.com/civ-clone/model
     where it isn't the set's.
 
   The set's scale draws a 1.8 m person as tall as the other sets' people, 0.168 squares. The 3D map draws units
-  bigger than life, so the rest have scales of their own, matched to models-cimpletoon's sizes: riders about 0.21
-  squares long, aircraft 0.17 to 0.24 across their longest side, ships 0.30 to 0.35 long.
+  bigger than life, so the rest have scales of their own, close to models-cimpletoon's sizes: riders 0.21 to 0.22
+  squares long, aircraft about 0.24 across their wings, ships 0.30 to 0.38 long.
 - **`tools/`:** the build (`build.py`, with the Blender scripts it runs in `tools/blender/`) and the check CI runs
   (`check.py`).
 - **`CREDITS.md`:** everyone whose work is here.

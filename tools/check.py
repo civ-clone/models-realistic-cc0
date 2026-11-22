@@ -17,7 +17,8 @@
     too);
   - triangles only, with positions, normals and one set of texture coordinates (and joints and weights where an extra
     keeps its skeleton): positions finite, normals a unit long, texture coordinates within 0 to 1;
-  - images as JPEG or PNG, saying which;
+  - images as JPEG or PNG, saying which: the first the baked texture, as big as the roster says, and none bigger;
+  - each primitive drawn with a material that has a colour texture;
   - its credit, licence and changes in `asset.extras`, and its credit in `asset.copyright`, as build.py writes them,
     saying where it was made with AI.
 - **Each model stands as its roster says:** on the ground (or floating at its draught), centred across and along, and
@@ -34,6 +35,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import glb  # noqa: E402
+import imgsize  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 problems = []
@@ -88,7 +90,7 @@ def keys_ok(where, entry, allowed):
 
 
 def check_licence(where, lic):
-    if not isinstance(lic, dict) or LICENCES.get(lic.get('name')) != lic.get('url'):
+    if not isinstance(lic, dict) or lic.get('name') not in LICENCES or LICENCES[lic['name']] != lic.get('url'):
         problem(f'{where}: licence should be one of {sorted(LICENCES)}, with its url')
         return None
     return lic['name']
@@ -191,7 +193,7 @@ def credits_md(roster, credits):
     return '\n'.join(lines) + '\n'
 
 
-def check_file(rel, skinned_ok):
+def check_file(rel, skinned_ok, texture):
     """Checks one GLB; returns its gltf and measurements, or None."""
     path = os.path.join(ROOT, 'models', rel)
     try:
@@ -212,6 +214,9 @@ def check_file(rel, skinned_ok):
             kind = 'image/jpeg' if head[:3] == b'\xff\xd8\xff' else 'image/png' if head == b'\x89PNG\r\n\x1a\n' else None
             if kind is None or img.get('mimeType') != kind:
                 raise glb.Bad(f'image {i} is not a JPEG or PNG, or says it is something else')
+            sides = imgsize.size(binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + view.get('byteLength', 0)])
+            if sides is None or max(sides) > texture or (i == 0 and max(sides) != texture):
+                raise glb.Bad(f'image {i} is {sides}: the baked texture should be {texture} px, and no other bigger')
         for t in gltf.get('textures', []):
             glb.item(gltf, 'images', t.get('source'))
         for m in gltf.get('materials', []):
@@ -246,14 +251,15 @@ def check_file(rel, skinned_ok):
                 attrs = prim.get('attributes', {})
                 if not {'POSITION', 'NORMAL', 'TEXCOORD_0'} <= set(attrs) or set(attrs) - allowed:
                     raise glb.Bad(f'mesh {mi} has attributes {sorted(attrs)}')
-                if 'material' in prim:
-                    glb.item(gltf, 'materials', prim['material'])
+                mat = glb.item(gltf, 'materials', prim.get('material'))
+                if 'baseColorTexture' not in mat.get('pbrMetallicRoughness', {}):
+                    raise glb.Bad(f'mesh {mi} is not drawn with a colour texture')
                 glb.triangles(gltf, binary, prim)
                 pos = glb.accessor(gltf, binary, attrs['POSITION'])
                 if any(not all(math.isfinite(c) for c in p) for p in pos):
                     raise glb.Bad(f'mesh {mi} has a point that is not a finite number')
                 nor = glb.accessor(gltf, binary, attrs['NORMAL'])
-                if len(nor) != len(pos) or any(abs(math.sqrt(sum(c * c for c in n)) - 1) > 0.01 for n in nor):
+                if len(nor) != len(pos) or any(not all(math.isfinite(c) for c in n) or abs(math.sqrt(sum(c * c for c in n)) - 1) > 0.01 for n in nor):
                     raise glb.Bad(f'mesh {mi} has a normal that is not a unit long')
                 uv = glb.accessor(gltf, binary, attrs['TEXCOORD_0'])
                 if len(uv) != len(pos) or any(not -1e-4 <= c <= 1 + 1e-4 for t in uv for c in t):
@@ -279,6 +285,9 @@ def main():
     gen = roster.get('generated', {})
     if check_licence('roster.generated', gen.get('licence')) != 'CC0 1.0' or gen.get('author') != 'dom111':
         problem('roster.generated: the generated models\' credit is dom111\'s, CC0 1.0')
+    for f in ('work', 'url'):
+        if not isinstance(gen.get(f), str) or not gen[f]:
+            problem(f'roster.generated: needs {f}, as the manifest\'s credits need it')
     sources = roster.get('sources', {})
     for k, src in sources.items():
         where = f'roster.sources.{k}'
@@ -292,8 +301,10 @@ def main():
                 problem(f'{where}: needs {f}')
         if not isinstance(src.get('sha256'), str) or not SHA.match(src['sha256']):
             problem(f'{where}: needs the SHA-256 of the file it was built from')
-        if src.get('generated') and (lic != 'CC0 1.0' or not src.get('prompt')):
-            problem(f'{where}: a generated source is CC0 1.0 and gives its prompt')
+        if src.get('generated') and (lic != 'CC0 1.0' or not src.get('prompt') or src.get('ai') is not True):
+            problem(f'{where}: a generated source is CC0 1.0, gives its prompt and says it is made with AI ("ai": true)')
+        if 'ai' in src and not isinstance(src['ai'], bool):
+            problem(f'{where}: ai should be true or false')
     models = roster.get('models', {})
     drawn = {}
     for mid, e in models.items():
@@ -345,7 +356,7 @@ def main():
     for rel in sorted(listed & present):
         mid = rel[:-4] if rel in {f'{m}.glb' for m in models} else None
         entry = models[mid] if mid else roster['extras'][rel]
-        got = check_file(rel, skinned_ok=mid is None)
+        got = check_file(rel, skinned_ok=mid is None, texture=entry['cut']['texture'])
         if got is None:
             continue
         gltf, measured = got

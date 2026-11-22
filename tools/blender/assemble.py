@@ -112,17 +112,25 @@ for slot in P.material_slots:
     m.blend_method = "OPAQUE"
     if hasattr(m, "surface_render_method"):
         m.surface_render_method = "DITHERED"
+    done = {}
     for n in nt.nodes:
         if n.type == "TEX_IMAGE" and n.image is not None:
             img = n.image
+            if img.name in done:  # an image two nodes share is made once
+                n.image = done[img.name]
+                continue
+            img.alpha_mode = "NONE"  # first: changing it reloads the image, which would undo a scale
             if max(img.size) > PROP_TEXTURE:
                 f = PROP_TEXTURE / max(img.size)
                 img.scale(max(1, round(img.size[0] * f)), max(1, round(img.size[1] * f)))
-            img.alpha_mode = "NONE"
+            new = img
             if img.packed_file is not None:  # the exporter copies packed bytes as they are: save what's there now
                 path = os.path.join(tempfile.mkdtemp(prefix="prop-texture."), "texture.png")
                 img.filepath_raw = path; img.file_format = "PNG"; img.save()
                 new = bpy.data.images.load(path); new.alpha_mode = "NONE"; n.image = new
+            done[img.name] = new
+            if max(new.size) > PROP_TEXTURE:
+                raise RuntimeError(f"Error: the prop's texture {new.name} is still {tuple(new.size)}")
 if opt.get("upright") == "pca":  # stand a tilted prop along its long axis, wider (burning) end up
     vs = [v.co.copy() for v in P.data.vertices]; c = sum(vs, mathutils.Vector()) / len(vs)
     cov = mathutils.Matrix(((0.0,) * 3,) * 3)
