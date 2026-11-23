@@ -20,21 +20,26 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   - `slide`: the whole figure moved across and along, [x, z], in metres;
   - `hips`: the hips moved from where they stand, [x, y, z], in metres, and `plant`: feet (`L`, `R`) kept on the
     ground, the ankle at a place [x, z] (as the posed figure stands in the file; or `true`: where it stands), the
-    legs bent to reach them, so the hips can drop, lean and shift their weight, and a foot can step, without the feet
-    sliding. Between keys a foot is put down and lifted smoothly;
-  - `ease`: how the key is met: `stop` (easing to it where the movement turns back), `through` (on at speed, as an
-    arm at a throw's release), `hit` (arriving at speed, as a body hitting the ground), or `snap` (thrown to it,
-    leaving the key before at speed, as a body a shot strikes);
+    legs bent to reach them (the knees bending forward from where the keys put them), so the hips can drop, lean and
+    shift their weight, and a foot can step, without the feet sliding, even as the whole figure turns. Between keys
+    a foot is put down and lifted smoothly. The figure is still stood on its lowest point, so nothing else should go
+    lower than a planted foot (the report's `planted` says how far one was lifted off);
+  - `ease`: how the key is met: `stop` (easing to it where the movement turns back, on through it where it doesn't),
+    `through` (on at speed, as an arm at a throw's release, which may overshoot), `hit` (arriving at twice the speed
+    of a straight line from the key before, as a body hitting the ground, and leaving from rest), or `snap` (leaving
+    the key before at twice that speed, even one hit, as a body a shot strikes, and met as `stop` meets a key). Feet
+    are put down and lifted as `stop` whatever the key's ease;
   - `late`: bones that meet the key after the rest of the figure, by a time in seconds, as arms and a head reach the
     ground after the body they hang from.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
 
-  Between keys each bone turns smoothly, on a curve through them that doesn't overshoot them (it eases to a stop at a
-  key where it turns back, or where two keys are the same, and at the ends of a clip that plays once), unless a key
-  is met `through`. A clip that
-  plays once starts at the stance, as the key at 0 must be; a loop's last frame is its first. The figure is stood on
+  Between keys each bone turns smoothly, on a curve through them that doesn't overshoot them (but for a key met
+  `through`): it eases to a stop at a key where it turns back, where two keys are the same, and at the ends of a clip
+  that plays once, but for a last key hit, a second key snapped to, and `through` there, which is `stop`. A clip that
+  plays once starts at the stance, as the key at 0 must be; a loop's last frame is its first, and its first key has
+  no late bones. The figure is stood on
   the ground in every frame, by its lowest point (the prop's included, at its size), as stance.py stands it.
   - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`) and the joint it
     leaves from (`joint`). The map reads the joint's place then, and draws what flies. For now a shot leaves from the
@@ -86,7 +91,7 @@ def read_rig(rig):
         if role not in LOOPS | ONCE:
             fail(f'{where}: a clip is one of {sorted(LOOPS | ONCE)}')
         if not isinstance(clip, dict) or set(clip) - {'length', 'keys', 'shots', 'lag'} or not number(clip.get('length'), 0):
-            fail(f'{where}: a clip has a length over 0 and keys, and may have shots')
+            fail(f'{where}: a clip has a length over 0 and keys, and may have shots and lag')
         keys = clip.get('keys')
         if not isinstance(keys, list) or not keys:
             fail(f'{where}: keys should be a list of poses')
@@ -128,6 +133,8 @@ def read_rig(rig):
             fail(f'{where}: its keys should come in order of time, none at the same time')
         if role in LOOPS and not (times[0] == 0 and times[-1] < clip['length']):
             fail(f'{where}: a loop\'s keys run from 0 to before its length (its last frame is its first)')
+        if role in LOOPS and keys[0].get('late'):
+            fail(f'{where}: a loop\'s first key has no late bones (they would jump where the loop starts again)')
         for b in sorted({b for k in keys for b in k.get('late', {})}):
             bt = [k['at'] + k.get('late', {}).get(b, 0) for k in keys]
             if any(y <= x for x, y in zip(bt, bt[1:])) or not (bt[-1] < clip['length'] if role in LOOPS else bt[-1] <= clip['length']):
@@ -201,7 +208,9 @@ def reach(hip, target, a, b, pole):
     n = min(max(n, abs(a - b) + 1e-4), a + b - 1e-4)
     cos = (a * a + n * n - b * b) / (2 * a * n)
     side = pole - (pole @ u) * u
-    side /= max(float(np.linalg.norm(side)), 1e-9)
+    if np.linalg.norm(side) < 1e-9:  # a pole along the leg gives no way to bend it: any way across will do
+        side = np.cross(u, [1.0, 0, 0] if abs(u[0]) < 0.9 else [0, 0, 1.0])
+    side /= float(np.linalg.norm(side))
     return hip + a * (cos * u + math.sqrt(max(0.0, 1 - cos * cos)) * side), hip + n * u
 
 
@@ -457,8 +466,8 @@ def main():
         q /= np.linalg.norm(q, axis=2, keepdims=True)
         deg = curve(kt, np.array(turns)[:, None], t, loop, length, None, eases)[:, 0]
         off = curve(kt, np.array(hips_off, dtype=float), t, loop, length, None, eases)
-        held_w = np.clip(curve(kt, np.array(weights), t, loop, length, None, eases), 0, 1)
-        held_at = curve(kt, np.array(targets), t, loop, length, None, eases).reshape(len(t), 2, 3)
+        held_w = np.clip(curve(kt, np.array(weights), t, loop, length), 0, 1)  # feet go down and up as `stop`
+        held_at = curve(kt, np.array(targets), t, loop, length).reshape(len(t), 2, 3)
         if loop:
             off[-1], held_w[-1], held_at[-1] = off[0], held_w[0], held_at[0]
         sl = curve(kt, np.array(slides, dtype=float), t, loop, length, None, eases)
@@ -471,28 +480,39 @@ def main():
                 p = parents[n]
                 rot[n] = matrix(q[f, i]) if p is None else rot[p] @ matrix(q[f, i])
                 moved[n] = heads[n] + off[f] if p is None else rot[p] @ (heads[n] - heads[p]) + moved[p]
-            for j, s in enumerate(SIDES):
-                if held_w[f, j] <= 0:
-                    continue
-                # A planted foot: the leg bent to put the ankle where it's planted, the knee forward, the foot as
-                #  it stands; blended with the leg as the keys turn it while the foot is put down or lifted.
-                th, sh, ft = f'thigh.{s}', f'shin.{s}', f'foot.{s}'
-                a, b = (np.linalg.norm(skeleton[x][1] - skeleton[x][0]) for x in (th, sh))
-                knee, ankle = reach(moved[th], held_at[f, j], a, b, rot['hips'] @ np.array([0.0, 0.0, 1.0]))
-                r_th = turn(rot['hips'] @ (skeleton[th][1] - skeleton[th][0]), knee - moved[th]) @ rot['hips']
-                r_sh = turn(r_th @ (skeleton[sh][1] - skeleton[sh][0]), ankle - knee) @ r_th
-                for n, r in ((th, r_th), (sh, r_sh), (ft, rot_s[ft])):
-                    rot[n] = blend(rot[n], r, held_w[f, j])
-                for n in (sh, ft):
-                    p = parents[n]
-                    moved[n] = rot[p] @ (heads[n] - heads[p]) + moved[p]
-            m = world(rot, moved)
+            # The whole figure's turn and slide, which a planted foot's leg reaches through.
             whole = np.eye(4)
             if axis is not None and deg[f]:
                 r = about(axis, math.radians(deg[f]))
                 whole[:3, :3], whole[:3, 3] = r, place - r @ place
             whole[0, 3] += sl[f, 0]
             whole[2, 3] += sl[f, 1]
+            back = np.linalg.inv(whole)
+            for j, s in enumerate(SIDES):
+                if held_w[f, j] <= 0:
+                    continue
+                # A planted foot: the leg bent to put the ankle where it's planted once the figure is turned, the
+                #  foot as it stands; blended with the leg as the keys turn it while the foot is put down or lifted.
+                th, sh, ft = f'thigh.{s}', f'shin.{s}', f'foot.{s}'
+                a, b = (np.linalg.norm(skeleton[x][1] - skeleton[x][0]) for x in (th, sh))
+                hip, knee_k, ankle_k = moved[th], moved[sh], moved[ft]  # the leg as the keys turn it
+                target = back[:3, :3] @ (held_at[f, j] - shift) + back[:3, 3] + shift
+                # The knee bends forward, but from where the keys put it: as far from where a leg bent forward would
+                #  put it for the keys' ankle as it is, so a foot planted where the keys put it leaves the leg be.
+                fwd = rot['hips'] @ np.array([0.0, 0.0, 1.0])
+                ideal_k, _ = reach(hip, ankle_k, a, b, fwd)
+                ideal_t, _ = reach(hip, target, a, b, fwd)
+                swing = turn(ankle_k - hip, target - hip)
+                knee, ankle = reach(hip, target, a, b, ideal_t + swing @ (knee_k - ideal_k) - hip)
+                r_th = turn(rot[th] @ (skeleton[th][1] - skeleton[th][0]), knee - hip) @ rot[th]
+                carried = r_th @ rot[th].T @ rot[sh]
+                r_sh = turn(carried @ (skeleton[sh][1] - skeleton[sh][0]), ankle - knee) @ carried
+                for n, r in ((th, r_th), (sh, r_sh), (ft, whole[:3, :3].T @ rot_s[ft])):
+                    rot[n] = blend(rot[n], r, held_w[f, j])
+                for n in (sh, ft):
+                    p = parents[n]
+                    moved[n] = rot[p] @ (heads[n] - heads[p]) + moved[p]
+            m = world(rot, moved)
             frames[f, :nb] = np.einsum('ab,jbc->jac', whole, m)
             if rig.get('prop'):
                 frames[f, nb] = frames[f, names.index(rig['prop']['bone'])] @ carry
@@ -535,10 +555,17 @@ def main():
         grown = np.array(grown)
         worst = int(grown.max(axis=1).argmax())
         start_off = float(np.abs(frames[0] - bind).max())
+        # How far a planted foot's ankle is from where it's planted, once the figure is stood on the ground: more
+        #  than a few millimetres says something else (the other foot, the hem of a coat) went below the ground.
+        off_plant = [np.linalg.norm(frames[f, names.index(f'foot.{s}'), :3, 3] - (held_at[f, j] - shift))
+                     for j, s in enumerate(SIDES) for f in range(len(t)) if held_w[f, j] > 0.999]
         report[role] = {'from bind': round(start_off, 6), 'frames': len(t), 'grown': round(float(grown.max()), 2), 'at': round(float(t[worst]), 3),
-                        'over 1.4x': int((grown > 1.4).any(axis=0).sum()), 'dropped': round(float(dropped.max()), 3)}
+                        'over 1.4x': int((grown > 1.4).any(axis=0).sum()), 'dropped': round(float(dropped.max()), 3),
+                        'planted': round(float(max(off_plant, default=0)), 3)}
         if os.environ.get('RIG_FRAMES'):  # each frame's points, to check a player against
             np.save(os.path.join(os.environ['RIG_FRAMES'], f'{role}.npy'), final.astype(np.float32))
+            np.savez(os.path.join(os.environ['RIG_FRAMES'], f'{role}-feet.npz'), weight=held_w, target=held_at - shift,
+                     joints=frames[:, :, :3, 3], names=np.array(joints), low=low)
 
     # The file: POSED's, with the skin's and clips' data after its own.
     data = bytearray(binary)

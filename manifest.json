@@ -244,7 +244,7 @@
    "made": "generated figure, simplified; the molotov put in his right hand; the owner's colour on the hoodie; posed, his arms at his sides and the molotov held low",
    "rigged": {
     "file": "models/rigged/partisan.glb",
-    "sha256": "7baad183ce56ae077b30c1dc70d185236e8f5a1ffa013e66f897e5289d3afa5a",
+    "sha256": "dcc8b56a7837ae60a3c62fc0f4c6cb0c23f38c88e781b6e34b5c7029792c538d",
     "clips": {
      "idle": "idle",
      "move": "move",

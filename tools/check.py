@@ -310,6 +310,8 @@ def check_rig(where, rig, stance):
             if any(y <= x for x, y in zip(bt, bt[1:])) or not (bt[-1] < length if role in LOOPS else bt[-1] <= length):
                 problem(f'{at}: late keys of {b} should still come in order of time, '
                         + ('before the loop\'s length' if role in LOOPS else 'none late at its last key'))
+        if role in LOOPS and isinstance(keys[0].get('late'), dict) and keys[0]['late']:
+            problem(f'{at}: a loop\'s first key has no late bones (they would jump where the loop starts again)')
         shots = clip.get('shots', [])
         if not isinstance(shots, list) or not all(
                 isinstance(x, dict) and prop is not None and x.get('joint') == 'prop' and
