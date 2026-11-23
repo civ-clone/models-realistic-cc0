@@ -45,8 +45,10 @@ map draws each type from one set.
   normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
 - **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
   skeleton it was posed with, with four clips: `idle` (3 s, breathing and looking about) and `move` (a 1 s stride in
-  place), which loop, and `fight` (1.5 s: he throws the molotov, which flies 6 m and is back in his hand by the end)
-  and `die` (1.6 s: he falls on his back and lies still), which play once.
+  place), which loop, and `fight` (1.5 s: he throws the molotov, which is gone from his hand at 0.5 s and back in it
+  by the end) and `die` (1.6 s: he falls on his back and lies still), which play once. The map draws what flies: the
+  manifest gives each clip's shots (`rigged.shots`), each the time it leaves and the joint it leaves from (here the
+  molotov's, `prop`, whose origin is the bottle's middle).
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with. Each clip is made from key poses, in the stance's terms (which way each bone
@@ -60,7 +62,7 @@ map draws each type from one set.
   - the scale it's drawn at, and any model's own where it isn't the set's;
   - each model's file and its SHA-256, its triangles, how far it reaches (`extent`, in metres), where it's from and
     what was done to it;
-  - a rigged model's rigged file, its SHA-256, and its clips by role (`rigged`);
+  - a rigged model's rigged file, its SHA-256, its clips by role, and where its shots leave from, by clip (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I

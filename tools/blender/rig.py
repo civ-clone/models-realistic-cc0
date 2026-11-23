@@ -7,8 +7,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
 
 - **The skeleton** is stance.py's, bound where the stance put it: each bone a joint (named as the bone), under a root
   node `skeleton`. Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one.
-- **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, which follows a bone (`bone`)
-  unless a clip throws it.
+- **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, which follows a bone
+  (`bone`) as it is held, its origin at the part's middle (so a shot from it leaves from there).
 - **`clips`:** by role: `idle`, `move` and `work` loop; `fight`, `die` and `settle` play once. Each has a `length` in
   seconds and its `keys`, each a pose at a time (`at`):
   - `aim` and `twist`, as a stance's, laid over the stance's own: a bone a key names is aimed (or twisted) as the key
@@ -21,9 +21,9 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   Between keys each bone turns smoothly, on a curve through them (eased to a stop at the ends of a clip that plays
   once). A clip that plays once starts at the stance, as the key at 0 must be; a loop's last frame is its first. The
   figure is stood on the ground in every frame (by its lowest point, leaving out the prop).
-  - `throw`, in a clip: the prop leaves the hand at `at`, flies to land on the ground at `to` ([x, z]) at `lands`,
-    turning over by `spin` degrees about the figure's x axis, is gone when it lands, and is back in the hand, grown
-    from nothing, by `back`.
+  - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`) and the joint it
+    leaves from (`joint`). The map reads the joint's place then, and draws what flies. A shot from the prop throws it:
+    it's gone from just after `at`, and back in the hand, grown from nothing over 0.2 s, by `back`.
 
 Every clip keys every joint's turn, the root's place, and the prop's place, turn and size, so none leaves a joint as
 another left it. Clips are sampled at about FPS frames a second (a whole number of frames over each clip), played
@@ -48,7 +48,6 @@ from skeleton import about, fail, finite, forward, read_aim, read_rule, turn  # 
 FPS = 24
 LOOPS = {'idle', 'move', 'work'}
 ONCE = {'fight', 'die', 'settle'}
-GRAVITY = 9.81
 INFLUENCES = 4
 
 
@@ -68,8 +67,8 @@ def read_rig(rig):
         where = f'clip {role}'
         if role not in LOOPS | ONCE:
             fail(f'{where}: a clip is one of {sorted(LOOPS | ONCE)}')
-        if not isinstance(clip, dict) or set(clip) - {'length', 'keys', 'throw'} or not number(clip.get('length'), 0):
-            fail(f'{where}: a clip has a length over 0 and keys, and may have a throw')
+        if not isinstance(clip, dict) or set(clip) - {'length', 'keys', 'shots'} or not number(clip.get('length'), 0):
+            fail(f'{where}: a clip has a length over 0 and keys, and may have shots')
         keys = clip.get('keys')
         if not isinstance(keys, list) or not keys:
             fail(f'{where}: keys should be a list of poses')
@@ -103,15 +102,20 @@ def read_rig(rig):
                 fail(f'{where}: a clip that plays once has keys at 0 and at its length')
             if set(keys[0]) != {'at'}:
                 fail(f'{where}: a clip that plays once starts at the stance, its first key only a time')
-        if 'throw' in clip:
-            th = clip['throw']
-            if prop is None:
-                fail(f'{where}: a throw needs a prop')
-            if not (isinstance(th, dict) and set(th) == {'at', 'lands', 'to', 'spin', 'back'} and finite(th['to'], 2) and
-                    number(th['spin']) and all(number(th[k], 0) for k in ('at', 'lands', 'back')) and
-                    th['at'] < th['lands'] < th['back'] - 0.2 + 1e-9 and th['back'] <= clip['length']):
-                fail(f'{where}: a throw has at < lands < back - 0.2, back no later than the clip\'s length, a place to '
-                     'land (to, [x, z]) and a spin')
+        shots = clip.get('shots', [])
+        if not isinstance(shots, list) or not all(
+                isinstance(x, dict) and x.get('joint') in BONES | ({'prop'} if prop else set()) and
+                set(x) == ({'at', 'joint', 'back'} if x.get('joint') == 'prop' else {'at', 'joint'}) and
+                number(x['at'], 0) and x['at'] < clip['length'] for x in shots):
+            fail(f'{where}: shots should each be a time in the clip (at) and a joint, and a shot from the prop when it '
+                 'is back (back)')
+        if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
+            fail(f'{where}: its shots should come in order of time')
+        thrown = [x for x in shots if x['joint'] == 'prop']
+        if not all(number(x['back']) and x['at'] < x['back'] - 0.2 and x['back'] <= clip['length'] for x in thrown) or any(
+                b['at'] < a['back'] for a, b in zip(thrown, thrown[1:])):
+            fail(f'{where}: a thrown prop is back (back) after at + 0.2, no later than the clip\'s length, and before '
+                 'it is thrown again')
     return rig
 
 
@@ -249,8 +253,12 @@ def main():
         return out
 
     bind = world(rot_s, moved_s)
-    if rig.get('prop'):  # the prop's joint bound where its bone is
-        bind = np.concatenate([bind, bind[names.index(rig['prop']['bone'])][None]])
+    if rig.get('prop'):  # the prop's joint turned as its bone is, at the middle of the part
+        held = bind[names.index(rig['prop']['bone'])].copy()
+        mid = held.copy()
+        mid[:3, 3] = (pos[used].min(axis=0) + pos[used].max(axis=0)) / 2
+        bind = np.concatenate([bind, mid[None]])
+        carry = np.linalg.inv(held) @ mid  # the prop's place on its bone
     inverse = np.linalg.inv(bind)
     stance_local = {n: rot_s[n] if parents[n] is None else rot_s[parents[n]].T @ rot_s[n] for n in names}
 
@@ -324,35 +332,17 @@ def main():
             whole[2, 3] += sl[f, 1]
             frames[f, :nb] = np.einsum('ab,jbc->jac', whole, m)
             if rig.get('prop'):
-                frames[f, nb] = frames[f, names.index(rig['prop']['bone'])]
+                frames[f, nb] = frames[f, names.index(rig['prop']['bone'])] @ carry
         # Stood on the ground: each frame lifted or lowered so its lowest point (the prop left out) is on it.
         placed_pts = skinned(frames)
         low = placed_pts[:, body, 1].min(axis=1)
         frames[:, :, 1, 3] -= low[:, None]
-        # The prop's own track: following its bone, or thrown.
+        # The prop's size: gone from just after each shot that throws it, and grown back in the hand by its `back`.
         scale = np.ones(len(t))
-        th = clip.get('throw')
-        if th:
-            hand = names.index(rig['prop']['bone'])
-            f0 = int(np.searchsorted(t, th['at']))
-            start_m = frames[f0, hand].copy()
-            p0 = start_m[:3, 3]
-            land = np.array([th['to'][0], 0.0, th['to'][1]])
-            flight = th['lands'] - t[f0]
-            v = (land - p0 - 0.5 * np.array([0, -GRAVITY, 0]) * flight ** 2) / flight
-            for f in range(len(t)):
-                if t[f] < t[f0]:
-                    continue
-                if t[f] < th['lands']:
-                    tau = t[f] - t[f0]
-                    m = start_m.copy()
-                    m[:3, :3] = about([1, 0, 0], math.radians(th['spin']) * tau / flight) @ start_m[:3, :3]
-                    m[:3, 3] = p0 + v * tau + 0.5 * np.array([0, -GRAVITY, 0]) * tau ** 2
-                    frames[f, nb] = m
-                elif t[f] < th['back'] - 0.2:
-                    scale[f] = 0.001
-                else:
-                    scale[f] = max(0.001, min(1.0, 1 - (th['back'] - t[f]) / 0.2))
+        for x in clip.get('shots', []):
+            if x['joint'] == 'prop':
+                gone = (t > x['at']) & (t <= x['back'])
+                scale[gone] = np.clip(1 - (x['back'] - t[gone]) / 0.2, 0, 1)
         # Joints' local turns (and the root's and the prop's places) for the file.
         rots = np.zeros((len(t), len(joints), 4))
         for f in range(len(t)):
@@ -371,7 +361,10 @@ def main():
         animations.append((role, t, rots, root_t, prop_t, scale))
         # What it does to the figure, for the report: how far the first frame is from the bind, and how far the
         #  figure's edges grow (the prop's left out), frame by frame.
-        final = skinned(frames)
+        shown = frames.copy()  # as the file plays: the prop at its size
+        if rig.get('prop'):
+            shown[:, nb, :3, :3] *= scale[:, None, None]
+        final = skinned(shown)
         body_faces = body[faces].all(axis=1)
         e0 = np.stack([np.linalg.norm(pos[faces[:, i]] - pos[faces[:, (i + 1) % 3]], axis=1) for i in range(3)], 1)
         grown = []

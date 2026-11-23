@@ -35,12 +35,13 @@
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
   and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before
   its length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds
-  whole, and any throw within its clip. Its figure, `models/rigged/<model>.glb`, has one skin whose joints are the
+  whole, and any shots within its clip, each from a joint (and a thrown prop back in the hand by its end). Its figure, `models/rigged/<model>.glb`, has one skin whose joints are the
   stance's bones (and the prop), each where its inverse bind matrix undoes, so it stands as its model does; its mesh,
   materials and images are its model's, with four joints and weights to a point, the weights adding up to one; and
   its clips are the rig's, each running from 0 to its length, keying the same joints (every joint's turn and the
-  root's place) linearly, a clip played once starting where the figure stands and a loop ending where it starts. The
-  manifest gives its file, SHA-256 and clips (`rigged`).
+  root's place) linearly, a clip played once starting where the figure stands and a loop ending where it starts, and a
+  thrown prop gone (its size 0) from just after the shot until it grows back. The manifest gives its file, SHA-256,
+  clips, and any shots by clip (`rigged`).
 """
 import hashlib
 import json
@@ -83,7 +84,7 @@ OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smoot
 STANCE = {'joints', 'aim', 'twist', 'whole'}
 # A rig, as blender/rig.py reads it, and its clips by role: those that loop, and those that play once.
 RIG = {'prop', 'clips'}
-CLIP = {'length', 'keys', 'throw'}
+CLIP = {'length', 'keys', 'shots'}
 KEY = {'at', 'aim', 'twist', 'turn', 'slide'}
 LOOPS = {'idle', 'move', 'work'}
 ONCE = {'fight', 'die', 'settle'}
@@ -282,17 +283,21 @@ def check_rig(where, rig, stance):
             problem(f'{at}: a loop\'s keys run from 0 to before its length')
         if role in ONCE and not (times[0] == 0 and times[-1] == length and set(keys[0]) == {'at'}):
             problem(f'{at}: a clip that plays once starts at the stance (its first key only at 0) and has a key at its length')
-        if 'throw' in clip:
-            th = clip['throw']
-            if prop is None:
-                problem(f'{at}: a throw needs a prop')
-            elif not (isinstance(th, dict) and set(th) == {'at', 'lands', 'to', 'spin', 'back'} and
-                      all(number(th[k], 0) for k in ('at', 'lands', 'back')) and number(th['spin']) and
-                      isinstance(th['to'], list) and len(th['to']) == 2 and all(number(v) for v in th['to']) and
-                      th['at'] < th['lands'] < th['back'] - 0.2 + 1e-9 and th['back'] <= length):
-                problem(f'{at}: a throw has at < lands < back - 0.2, back no later than the clip\'s length, a place to '
-                        'land (to, [x, z]) and a spin')
-
+        shots = clip.get('shots', [])
+        if not isinstance(shots, list) or not all(
+                isinstance(x, dict) and x.get('joint') in BONES | ({'prop'} if prop is not None else set()) and
+                set(x) == ({'at', 'joint', 'back'} if x.get('joint') == 'prop' else {'at', 'joint'}) and
+                number(x['at']) and 0 < x['at'] < length for x in shots):
+            problem(f'{at}: shots should each be a time in the clip (at) and a joint (the prop, or a bone), and a '
+                    'shot from the prop when it is back (back)')
+            continue
+        if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
+            problem(f'{at}: its shots should come in order of time')
+        thrown = [x for x in shots if x['joint'] == 'prop']
+        if not all(number(x['back']) and x['at'] < x['back'] - 0.2 and x['back'] <= length for x in thrown) or any(
+                b['at'] < a['back'] for a, b in zip(thrown, thrown[1:])):
+            problem(f'{at}: a thrown prop is back (back) after at + 0.2, no later than the clip\'s length, and before '
+                    'it is thrown again')
 
 def check_build_entry(where, e, allowed, sources):
     if not keys_ok(where, e, allowed):
@@ -514,6 +519,12 @@ def check_file(rel, skinned_ok, texture, owner, posed):
         return None
 
 
+def shots_of(rig):
+    """The manifest's shots for a rig: by clip, each a time and the joint the shot leaves from."""
+    return {role: [{'at': x['at'], 'joint': x['joint']} for x in clip['shots']]
+            for role, clip in rig['clips'].items() if clip.get('shots')}
+
+
 def same(a, b, path, tolerance):
     """Whether two keyed values are the same, a turn's quaternion either way round."""
     if len(a) != len(b):
@@ -607,6 +618,17 @@ def check_rigged(rel, entry):
                 if role in LOOPS and not same(values[0], values[-1], path_, 1e-5):
                     raise glb.Bad(f'clip {role} should end where it starts, as it loops')
                 got.add((nodes[node]['name'], path_))
+            for x in rig['clips'][role].get('shots', []):
+                if x['joint'] not in names:
+                    raise glb.Bad(f'clip {role} has a shot from {x["joint"]}, which is not a joint')
+                if x['joint'] == 'prop':
+                    ch = next((c for c in anim['channels'] if nodes[c['target']['node']].get('name') == 'prop' and
+                               c['target'].get('path') == 'scale'), None)
+                    sampler = anim['samplers'][ch['sampler']] if ch else None
+                    times = [t[0] for t in glb.accessor(gltf, binary, sampler['input'])] if sampler else []
+                    sizes = glb.accessor(gltf, binary, sampler['output']) if sampler else []
+                    if not sizes or any(abs(v) > 1e-6 for t, s in zip(times, sizes) if x['at'] + 0.05 <= t <= x['back'] - 0.2 for v in s):
+                        raise glb.Bad(f'clip {role} should hide the prop (its size 0) after it is thrown at {x["at"]} s')
             if keyed is None:
                 keyed = got
             if got != keyed or not {(n, 'rotation') for n in want} | {('hips', 'translation')} <= got:
@@ -739,6 +761,9 @@ def main():
             want['rigged'] = {'file': f'models/rigged/{rel}',
                               'sha256': hashlib.sha256(open(rp, 'rb').read()).hexdigest() if os.path.exists(rp) else None,
                               'clips': {r: r for r in entry['rig']['clips']}}
+            shots = shots_of(entry['rig'])
+            if shots:
+                want['rigged']['shots'] = shots
         for k in sorted(set(want) | set(m)):
             if m.get(k) != want.get(k):
                 problem(f'manifest: {mid}.{k} should be {json.dumps(want.get(k))[:100]}, as its file and the roster say')

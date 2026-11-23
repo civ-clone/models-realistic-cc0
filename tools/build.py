@@ -188,6 +188,8 @@ def finish(roster, built):
             rigged = os.path.join(ROOT, 'models', 'rigged', rel)
             m['rigged'] = {'file': f'models/rigged/{rel}', 'sha256': sha256(rigged),
                            'clips': {role: role for role in e['rig']['clips']}}
+            if check.shots_of(e['rig']):
+                m['rigged']['shots'] = check.shots_of(e['rig'])
         models[mid] = m
         for u in e['units']:
             names[u] = mid
