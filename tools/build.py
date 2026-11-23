@@ -6,8 +6,9 @@
 With --originals, it builds each model the roster lists (or only those NAMEd, by model id or extra path) in Blender:
 it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, cuts it to its budget and bakes
 its colour into one texture (blender/cut.py), turns, sizes and grounds it, or floats it at its draught
-(blender/normalise.py), and puts in its prop (blender/assemble.py). Blender runs with factory settings and with
-scripts in files turned off (-b --factory-startup -Y), and reads the originals only as data.
+(blender/normalise.py), puts in its prop (blender/assemble.py), and puts its owner's colour where the roster says
+(blender/owner.py). Blender runs with factory settings and with scripts in files turned off (-b --factory-startup -Y),
+and reads the originals only as data.
 
 Then, with or without --originals, it writes each model into models/ with its credit, licence and changes in its
 `asset.extras`, and writes manifest.json and CREDITS.md from the files and the roster. That last step needs only
@@ -64,7 +65,8 @@ class Blender:
                 self.by_sha.setdefault(sha256(p), p)
 
     def run(self, script, *args, env=None):
-        cmd = [self.exe, '-b', '--factory-startup', '-Y', '--python', os.path.join(BLENDER_SCRIPTS, script), '--', *map(str, args)]
+        cmd = [self.exe, '-b', '--factory-startup', '-Y', '--python-exit-code', '1', '--python',
+               os.path.join(BLENDER_SCRIPTS, script), '--', *map(str, args)]
         p = subprocess.run(cmd, capture_output=True, text=True, env={**os.environ, **(env or {})})
         bad = [line for line in (p.stdout + p.stderr).splitlines() if 'Traceback' in line or 'Error' in line]
         if p.returncode or bad:
@@ -118,6 +120,12 @@ class Blender:
         else:
             os.makedirs(os.path.dirname(out), exist_ok=True)
             shutil.copyfile(staged, out)
+        if 'owner' in entry:
+            rule = os.path.join(self.work, 'owner', slug + '.json')
+            os.makedirs(os.path.dirname(rule), exist_ok=True)
+            with open(rule, 'w', encoding='utf-8') as f:
+                json.dump(entry['owner'], f)
+            self.run('owner.py', out, rule)
 
 
 def finish(roster, built):

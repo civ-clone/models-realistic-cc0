@@ -1,6 +1,6 @@
 # Credits for Realistic: CC0
 
-Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md
+Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md
 
 - "Models generated for civ.one" by dom111 (https://github.com/civ-clone/models-realistic-cc0), CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 - "Lowpoly Molotov" by Lucian Pavel (https://opengameart.org/content/lowpoly-molotov), CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)

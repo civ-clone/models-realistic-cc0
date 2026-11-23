@@ -5,7 +5,7 @@
     "licence": {
       "name": "CC0 1.0",
       "url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
+      "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
     }
   },
   "date": "22 November 2026",
@@ -361,8 +361,42 @@
         "size": 1.85,
         "turn": 0
       },
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              20,
+              55
+            ],
+            "s": [
+              0.05,
+              0.4
+            ],
+            "v": [
+              0.42,
+              1
+            ]
+          }
+        ],
+        "within": [
+          {
+            "x": [
+              -0.65,
+              0.15
+            ],
+            "y": [
+              0.6,
+              1.85
+            ],
+            "z": [
+              -1.1,
+              0.3
+            ]
+          }
+        ]
+      },
       "budget": 3000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the cart's load"
     },
     "warrior": {
       "units": [
@@ -380,8 +414,42 @@
         "size": 1.8,
         "turn": 0
       },
+      "owner": {
+        "colours": [
+          {
+            "v": [
+              0,
+              0.15
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.3,
+              1.6
+            ]
+          }
+        ],
+        "without": [
+          {
+            "x": [
+              -0.13,
+              0.13
+            ],
+            "y": [
+              1.46,
+              1.6
+            ],
+            "z": [
+              -0.15,
+              0.25
+            ]
+          }
+        ]
+      },
       "budget": 2000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the cloak"
     },
     "knight": {
       "units": [
@@ -400,8 +468,26 @@
         "turn": 0
       },
       "scale": 0.0875,
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              195,
+              235
+            ],
+            "s": [
+              0.3,
+              1
+            ],
+            "v": [
+              0.12,
+              1
+            ]
+          }
+        ]
+      },
       "budget": 3000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the caparison"
     },
     "explorer": {
       "units": [
@@ -419,8 +505,34 @@
         "size": 1.8,
         "turn": 0
       },
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              25,
+              55
+            ],
+            "s": [
+              0.15,
+              0.55
+            ],
+            "v": [
+              0.3,
+              0.85
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.85,
+              1.5
+            ]
+          }
+        ]
+      },
       "budget": 2000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the jacket"
     },
     "sail": {
       "units": [
@@ -441,8 +553,30 @@
         "draught": 2.0
       },
       "scale": 0.013636,
+      "owner": {
+        "colours": [
+          {
+            "s": [
+              0,
+              0.3
+            ],
+            "v": [
+              0.62,
+              1
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              2.5,
+              16
+            ]
+          }
+        ]
+      },
       "budget": 3500,
-      "made": "generated; sails thickened, rewrapped"
+      "made": "generated; sails thickened, rewrapped; the owner's colour on the sails"
     },
     "rifleman": {
       "units": [
@@ -459,8 +593,61 @@
         "size": 1.8,
         "turn": 0
       },
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              25,
+              70
+            ],
+            "s": [
+              0.2,
+              0.75
+            ],
+            "v": [
+              0.12,
+              0.5
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.85,
+              1.5
+            ]
+          }
+        ],
+        "without": [
+          {
+            "x": [
+              -0.28,
+              0.28
+            ],
+            "y": [
+              1.055,
+              1.165
+            ]
+          },
+          {
+            "x": [
+              -0.21,
+              -0.13
+            ],
+            "y": [
+              1.165,
+              1.5
+            ],
+            "z": [
+              -0.2,
+              -0.1
+            ]
+          }
+        ],
+        "cut": true
+      },
       "budget": 2000,
-      "made": "generated; simplified"
+      "made": "generated; simplified; the owner's colour on the tunic"
     },
     "cavalry": {
       "units": [
@@ -479,8 +666,43 @@
         "turn": 0
       },
       "scale": 0.090284,
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              195,
+              250
+            ],
+            "s": [
+              0.25,
+              1
+            ],
+            "v": [
+              0.08,
+              1
+            ]
+          }
+        ],
+        "share": 0.35,
+        "without": [
+          {
+            "x": [
+              -0.1,
+              0.1
+            ],
+            "y": [
+              2.25,
+              2.42
+            ],
+            "z": [
+              -0.32,
+              -0.2
+            ]
+          }
+        ]
+      },
       "budget": 3000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the uniform and saddle cloth"
     },
     "alpine-trooper": {
       "units": [
@@ -497,8 +719,30 @@
         "size": 1.8,
         "turn": 0
       },
+      "owner": {
+        "colours": [
+          {
+            "s": [
+              0,
+              0.15
+            ],
+            "v": [
+              0.6,
+              1
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.85,
+              1.55
+            ]
+          }
+        ]
+      },
       "budget": 2000,
-      "made": "generated; simplified"
+      "made": "generated; simplified; the owner's colour on the jacket"
     },
     "partisan": {
       "units": [
@@ -524,8 +768,26 @@
           "tris": 200
         }
       },
+      "owner": {
+        "colours": [
+          {
+            "v": [
+              0,
+              0.35
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.85,
+              1.55
+            ]
+          }
+        ]
+      },
       "budget": 2000,
-      "made": "generated figure, simplified; the molotov put in his right hand"
+      "made": "generated figure, simplified; the molotov put in his right hand; the owner's colour on the hoodie"
     },
     "spy": {
       "units": [
@@ -543,8 +805,34 @@
         "size": 1.75,
         "turn": 0
       },
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              10,
+              50
+            ],
+            "s": [
+              0.08,
+              0.45
+            ],
+            "v": [
+              0.42,
+              0.95
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0,
+              1.45
+            ]
+          }
+        ]
+      },
       "budget": 2000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the coat"
     },
     "bomber": {
       "units": [
@@ -562,8 +850,33 @@
         "turn": 90
       },
       "scale": 0.008095,
+      "owner": {
+        "within": [
+          {
+            "x": [
+              -15,
+              -8.4
+            ],
+            "z": [
+              -12,
+              5.6
+            ]
+          },
+          {
+            "x": [
+              8.4,
+              15
+            ],
+            "z": [
+              -12,
+              5.6
+            ]
+          }
+        ],
+        "cut": true
+      },
       "budget": 2500,
-      "made": "generated; simplified"
+      "made": "generated; simplified; the owner's colour on the wingtips"
     },
     "ironclad": {
       "units": [
@@ -583,8 +896,20 @@
         "draught": 4.0
       },
       "scale": 0.005167,
+      "owner": {
+        "within": [
+          {
+            "y": [
+              0,
+              2.2
+            ]
+          }
+        ],
+        "sides": 0.5,
+        "cut": true
+      },
       "budget": 3500,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on a band along the hull"
     },
     "crusader": {
       "units": [
@@ -603,8 +928,34 @@
         "turn": 0
       },
       "scale": 0.087866,
+      "owner": {
+        "colours": [
+          {
+            "s": [
+              0,
+              0.12
+            ],
+            "v": [
+              0.6,
+              1
+            ]
+          }
+        ],
+        "without": [
+          {
+            "y": [
+              1.2,
+              2.1
+            ],
+            "z": [
+              0.75,
+              1.3
+            ]
+          }
+        ]
+      },
       "budget": 3000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the surcoat, caparison and shield"
     },
     "musketman": {
       "units": [
@@ -621,8 +972,26 @@
         "size": 1.8,
         "turn": 0
       },
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              335,
+              8
+            ],
+            "s": [
+              0.5,
+              1
+            ],
+            "v": [
+              0.2,
+              1
+            ]
+          }
+        ]
+      },
       "budget": 2000,
-      "made": "simplified"
+      "made": "simplified; the owner's colour on the coat"
     },
     "dragoon": {
       "units": [
@@ -640,8 +1009,34 @@
         "turn": -48
       },
       "scale": 0.088,
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              340,
+              18
+            ],
+            "s": [
+              0.55,
+              1
+            ],
+            "v": [
+              0.18,
+              1
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              1.3,
+              2.4
+            ]
+          }
+        ]
+      },
       "budget": 3000,
-      "made": "simplified"
+      "made": "simplified; the owner's colour on the coat"
     },
     "frigate": {
       "units": [
@@ -660,8 +1055,30 @@
         "draught": 3.0
       },
       "scale": 0.007778,
+      "owner": {
+        "colours": [
+          {
+            "s": [
+              0,
+              0.3
+            ],
+            "v": [
+              0.6,
+              1
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              4.5,
+              32
+            ]
+          }
+        ]
+      },
       "budget": 3500,
-      "made": "simplified"
+      "made": "simplified; the owner's colour on the sails"
     },
     "marine": {
       "units": [
@@ -679,8 +1096,40 @@
         "size": 1.8,
         "turn": 30
       },
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              25,
+              100
+            ],
+            "s": [
+              0.12,
+              1
+            ],
+            "v": [
+              0,
+              0.6
+            ]
+          },
+          {
+            "v": [
+              0,
+              0.2
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.9,
+              1.45
+            ]
+          }
+        ]
+      },
       "budget": 2000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the shirt"
     },
     "engineer": {
       "units": [
@@ -698,8 +1147,35 @@
         "size": 1.8,
         "turn": 10
       },
+      "owner": {
+        "colours": [
+          {
+            "h": [
+              5,
+              40
+            ],
+            "s": [
+              0.45,
+              1
+            ],
+            "v": [
+              0.5,
+              1
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.9,
+              1.55
+            ]
+          }
+        ],
+        "cut": true
+      },
       "budget": 2000,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on the vest"
     },
     "stealth-bomber": {
       "units": [
@@ -717,8 +1193,25 @@
         "turn": 90
       },
       "scale": 0.004743,
+      "owner": {
+        "within": [
+          {
+            "x": [
+              -26,
+              -17
+            ]
+          },
+          {
+            "x": [
+              17,
+              26
+            ]
+          }
+        ],
+        "cut": true
+      },
       "budget": 2500,
-      "made": "generated; simplified"
+      "made": "generated; simplified; the owner's colour on the wingtips"
     },
     "transport": {
       "units": [
@@ -738,8 +1231,20 @@
         "draught": 8.5
       },
       "scale": 0.002815,
+      "owner": {
+        "within": [
+          {
+            "y": [
+              0,
+              7
+            ]
+          }
+        ],
+        "sides": 0.5,
+        "cut": true
+      },
       "budget": 3500,
-      "made": "generated; rewrapped"
+      "made": "generated; rewrapped; the owner's colour on a band along the hull"
     }
   },
   "extras": {}
