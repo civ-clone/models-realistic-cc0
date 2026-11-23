@@ -46,17 +46,19 @@ map draws each type from one set.
 - **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
   skeleton it was posed with, with four clips: `idle` (3 s, breathing and looking about) and `move` (a 1 s stride in
   place), which loop, and `fight` (1.5 s: he throws the molotov, which is gone from his hand at 0.5 s and back in it
-  by the end) and `die` (1.6 s: he falls on his back and lies still), which play once. The map draws what flies: the
-  manifest gives each clip's shots (`rigged.shots`), each the time it leaves and the joint it leaves from (here the
-  molotov's, `prop`, whose origin is the bottle's middle).
+  by the end) and `die` (1.6 s: he falls on his back, his feet where he stood, and lies still), which play once. The
+  map draws what flies: the manifest gives each clip's shots (`rigged.shots`), each the time it leaves and the joint
+  it leaves from (here the molotov's, `prop`, whose origin is the bottle's middle as he stands).
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with. Each clip is made from key poses, in the stance's terms (which way each bone
   points, and how it's twisted), with the whole figure turned where it falls. Between keys the bones turn on smooth
-  curves. Every frame is stood on the ground, and played in place: the map moves units from square to square itself.
-  The file has a root node, `skeleton`, holding a joint for each bone (named as the stance's) and one for the
-  molotov, `prop`. Each clip keys every joint's turn, the root's place, and the prop's place and size. A clip that
-  plays once starts as the model stands, and a loop ends where it starts.
+  curves that don't overshoot the keys. Every frame is stood on the ground by its lowest point, and played in place:
+  the map moves units from square to square itself. The file has a root node, `skeleton`, holding a joint for each
+  bone (named as the stance's, which three.js reads without the dot: `hand.R` is `handR`), and the molotov's, `prop`,
+  a child of his right hand's. Each clip keys every joint's turn, the root's place, and the molotov's size (it's 0
+  from just after the throw until it grows back in his hand). A clip that plays once starts as the model stands, and
+  a loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;

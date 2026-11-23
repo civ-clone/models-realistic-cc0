@@ -7,8 +7,9 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
 
 - **The skeleton** is stance.py's, bound where the stance put it: each bone a joint (named as the bone), under a root
   node `skeleton`. Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one.
-- **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, which follows a bone
-  (`bone`) as it is held, its origin at the part's middle (so a shot from it leaves from there).
+- **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, a child of the bone
+  that holds it (`bone`), with its origin at the middle of the part as it stands (so a shot from it leaves from
+  there). Only its size is keyed: it never leaves the hand.
 - **`clips`:** by role: `idle`, `move` and `work` loop; `fight`, `die` and `settle` play once. Each has a `length` in
   seconds and its `keys`, each a pose at a time (`at`):
   - `aim` and `twist`, as a stance's, laid over the stance's own: a bone a key names is aimed (or twisted) as the key
@@ -18,15 +19,18 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     share their axis and place;
   - `slide`: the whole figure moved across and along, [x, z], in metres.
 
-  Between keys each bone turns smoothly, on a curve through them (eased to a stop at the ends of a clip that plays
-  once). A clip that plays once starts at the stance, as the key at 0 must be; a loop's last frame is its first. The
-  figure is stood on the ground in every frame (by its lowest point, leaving out the prop).
+  Between keys each bone turns smoothly, on a curve through them that doesn't overshoot them (it eases to a stop at a
+  key where it turns back, or where two keys are the same, and at the ends of a clip that plays once). A clip that
+  plays once starts at the stance, as the key at 0 must be; a loop's last frame is its first. The figure is stood on
+  the ground in every frame, by its lowest point (the prop's included, at its size), as stance.py stands it.
   - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`) and the joint it
-    leaves from (`joint`). The map reads the joint's place then, and draws what flies. A shot from the prop throws it:
-    it's gone from just after `at`, and back in the hand, grown from nothing over 0.2 s, by `back`.
+    leaves from (`joint`). The map reads the joint's place then, and draws what flies. For now a shot leaves from the
+    prop (three.js renames joints whose names have a dot, so the bones' can't be found by name): it throws the prop,
+    which is gone 1 ms after `at`, hidden for at least 0.05 s, and grown back in the hand over the 0.2 s before
+    `back`.
 
-Every clip keys every joint's turn, the root's place, and the prop's place, turn and size, so none leaves a joint as
-another left it. Clips are sampled at about FPS frames a second (a whole number of frames over each clip), played
+Every clip keys every joint's turn, the root's place, and the prop's size, so none leaves a joint as another left
+it. Clips are sampled at about FPS frames a second (a whole number of frames over each clip), played
 between frames by turning each joint linearly. It prints a report: for each clip, how far its first frame is from the
 bind, the most any edge of the figure grows and when, how many faces grow over 1.4 times, and the most weight any
 point lost to the four kept.
@@ -104,18 +108,18 @@ def read_rig(rig):
                 fail(f'{where}: a clip that plays once starts at the stance, its first key only a time')
         shots = clip.get('shots', [])
         if not isinstance(shots, list) or not all(
-                isinstance(x, dict) and x.get('joint') in BONES | ({'prop'} if prop else set()) and
+                isinstance(x, dict) and prop and x.get('joint') == 'prop' and
                 set(x) == ({'at', 'joint', 'back'} if x.get('joint') == 'prop' else {'at', 'joint'}) and
                 number(x['at'], 0) and x['at'] < clip['length'] for x in shots):
-            fail(f'{where}: shots should each be a time in the clip (at) and a joint, and a shot from the prop when it '
-                 'is back (back)')
+            fail(f'{where}: shots should each be a time in the clip (at), the joint they leave from (prop, for now: '
+                 'three.js renames the bones), and when the prop is back (back)')
         if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
             fail(f'{where}: its shots should come in order of time')
         thrown = [x for x in shots if x['joint'] == 'prop']
-        if not all(number(x['back']) and x['at'] < x['back'] - 0.2 and x['back'] <= clip['length'] for x in thrown) or any(
+        if not all(number(x['back']) and x['at'] + 0.05 <= x['back'] - 0.2 and x['back'] <= clip['length'] for x in thrown) or any(
                 b['at'] < a['back'] for a, b in zip(thrown, thrown[1:])):
-            fail(f'{where}: a thrown prop is back (back) after at + 0.2, no later than the clip\'s length, and before '
-                 'it is thrown again')
+            fail(f'{where}: a thrown prop is back (back) no sooner than at + 0.25, no later than the clip\'s length, and '
+                 'before it is thrown again')
     return rig
 
 
@@ -146,17 +150,22 @@ def matrix(q):
 
 
 def curve(times, values, t, loop, length):
-    """values (keys x n) at times, at each time in t, on a cubic curve through them: tangents from the keys either
-    side (a loop wraps round; a clip played once stops at its ends)."""
+    """values (keys x n) at times, at each time in t, on a cubic curve through them that doesn't overshoot them: a loop
+    wraps round; a clip played once stops at its ends."""
     times, values = np.asarray(times, dtype=float), np.asarray(values, dtype=float)
     if loop:
         times = np.concatenate([[times[-1] - length], times, [times[0] + length, times[1 % len(times)] + length]])
         values = np.concatenate([values[-1:], values, values[:1], values[1 % len(values):][:1]])
     n = len(times)
     tangent = np.zeros_like(values)
-    for k in range(n):
-        if 0 < k < n - 1:
-            tangent[k] = (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1])
+    for k in range(1, n - 1):
+        # From the keys either side, but none where the curve turns back or is flat at the key, and no steeper than
+        #  three times the slope either side, so it never overshoots a key (Fritsch and Carlson's limits).
+        before = (values[k] - values[k - 1]) / (times[k] - times[k - 1])
+        after = (values[k + 1] - values[k]) / (times[k + 1] - times[k])
+        m = (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1])
+        m = np.clip(m, -3 * np.minimum(np.abs(before), np.abs(after)), 3 * np.minimum(np.abs(before), np.abs(after)))
+        tangent[k] = np.where(before * after > 0, m, 0)
     out = np.empty((len(t), values.shape[1]))
     for i, x in enumerate(t):
         k = int(np.clip(np.searchsorted(times, x, side='right') - 1, 0, n - 2))
@@ -165,6 +174,20 @@ def curve(times, values, t, loop, length):
         h00, h10, h01, h11 = 2 * u ** 3 - 3 * u ** 2 + 1, u ** 3 - 2 * u ** 2 + u, -2 * u ** 3 + 3 * u ** 2, u ** 3 - u ** 2
         out[i] = h00 * values[k] + h10 * dt * tangent[k] + h01 * values[k + 1] + h11 * dt * tangent[k + 1]
     return out
+
+
+def prop_size(clip, length):
+    """The prop's size through a clip, as times and sizes: 1 but where a shot throws it, when it's 0 from 1 ms after
+    the shot to 0.2 s before it's back, then grows back."""
+    times, sizes = [0.0], [1.0]
+    for x in clip.get('shots', []):
+        if x['joint'] == 'prop':
+            times += [x['at'], x['at'] + 0.001, x['back'] - 0.2, x['back']]
+            sizes += [1.0, 0.0, 0.0, 1.0]
+    if times[-1] < length:
+        times.append(float(length))
+        sizes.append(1.0)
+    return times, sizes
 
 
 def main():
@@ -242,7 +265,7 @@ def main():
     #  to stand it on the ground).
     shift = np.array(side['shift'], dtype=float)
     heads = {n: skeleton[n][0] for n in names}
-    parents = {n: skeleton[n][2] for n in names}
+    parents = {n: skeleton[n][2] for n in names}  # (and the prop's, below)
     rot_s, moved_s = forward(skeleton, stance.get('aim', {}), stance.get('twist', {}))
 
     def world(rot, moved):
@@ -259,6 +282,7 @@ def main():
         mid[:3, 3] = (pos[used].min(axis=0) + pos[used].max(axis=0)) / 2
         bind = np.concatenate([bind, mid[None]])
         carry = np.linalg.inv(held) @ mid  # the prop's place on its bone
+        parents['prop'] = rig['prop']['bone']
     inverse = np.linalg.inv(bind)
     stance_local = {n: rot_s[n] if parents[n] is None else rot_s[parents[n]].T @ rot_s[n] for n in names}
 
@@ -333,38 +357,33 @@ def main():
             frames[f, :nb] = np.einsum('ab,jbc->jac', whole, m)
             if rig.get('prop'):
                 frames[f, nb] = frames[f, names.index(rig['prop']['bone'])] @ carry
-        # Stood on the ground: each frame lifted or lowered so its lowest point (the prop left out) is on it.
-        placed_pts = skinned(frames)
-        low = placed_pts[:, body, 1].min(axis=1)
+        # The prop's size: gone 1 ms after each shot that throws it, and grown back in the hand by its `back`.
+        size_t, size_v = prop_size(clip, length)
+        scale = np.interp(t, size_t, size_v)
+        # Stood on the ground: each frame lifted or lowered so its lowest point (the prop's included, at its size) is on
+        #  it, as stance.py stood the figure.
+        shown = frames.copy()
+        if rig.get('prop'):
+            shown[:, nb, :3, :3] *= scale[:, None, None]
+        low = skinned(shown)[:, :, 1].min(axis=1)
         frames[:, :, 1, 3] -= low[:, None]
-        # The prop's size: gone from just after each shot that throws it, and grown back in the hand by its `back`.
-        scale = np.ones(len(t))
-        for x in clip.get('shots', []):
-            if x['joint'] == 'prop':
-                gone = (t > x['at']) & (t <= x['back'])
-                scale[gone] = np.clip(1 - (x['back'] - t[gone]) / 0.2, 0, 1)
-        # Joints' local turns (and the root's and the prop's places) for the file.
+        shown[:, :, 1, 3] -= low[:, None]
+        # Joints' local turns (and the root's place) for the file.
         rots = np.zeros((len(t), len(joints), 4))
         for f in range(len(t)):
-            for i, n in enumerate(names):
+            for i, n in enumerate(joints):
                 p = parents[n]
-                lm = frames[f, i] if p is None else np.linalg.inv(frames[f, names.index(p)]) @ frames[f, i]
+                lm = frames[f, i] if p is None else np.linalg.inv(frames[f, joints.index(p)]) @ frames[f, i]
                 rots[f, i] = quat(lm[:3, :3])
-            if rig.get('prop'):
-                rots[f, nb] = quat(frames[f, nb, :3, :3])
         for j in range(len(joints)):  # each the nearer of q and -q to the frame before
             for f in range(1, len(t)):
                 if rots[f, j] @ rots[f - 1, j] < 0:
                     rots[f, j] *= -1
         root_t = frames[:, 0, :3, 3]
-        prop_t = frames[:, nb, :3, 3] if rig.get('prop') else None
-        animations.append((role, t, rots, root_t, prop_t, scale))
+        animations.append((role, t, rots, root_t, (size_t, size_v)))
         # What it does to the figure, for the report: how far the first frame is from the bind, and how far the
         #  figure's edges grow (the prop's left out), frame by frame.
-        shown = frames.copy()  # as the file plays: the prop at its size
-        if rig.get('prop'):
-            shown[:, nb, :3, :3] *= scale[:, None, None]
-        final = skinned(shown)
+        final = skinned(shown)  # as the file plays: the prop at its size
         body_faces = body[faces].all(axis=1)
         e0 = np.stack([np.linalg.norm(pos[faces[:, i]] - pos[faces[:, (i + 1) % 3]], axis=1) for i in range(3)], 1)
         grown = []
@@ -407,14 +426,14 @@ def main():
     nodes = gltf['nodes']
     first = len(nodes)
     index = {n: first + 1 + i for i, n in enumerate(joints)}
-    root = {'name': 'skeleton', 'children': [index[n] for n in names if parents[n] is None] + ([index['prop']] if 'prop' in index else [])}
+    root = {'name': 'skeleton', 'children': [index[n] for n in names if parents[n] is None]}
     nodes.append(root)
     for i, n in enumerate(joints):
-        p = parents.get(n)
-        lm = bind[i] if p is None else np.linalg.inv(bind[names.index(p)]) @ bind[i]
+        p = parents[n]
+        lm = bind[i] if p is None else np.linalg.inv(bind[joints.index(p)]) @ bind[i]
         node = {'name': n, 'rotation': [float(v) for v in quat(lm[:3, :3]).astype(np.float32)],
                 'translation': [float(v) for v in lm[:3, 3].astype(np.float32)]}
-        kids = [index[c] for c in names if parents[c] == n]
+        kids = [index[c] for c in joints if parents[c] == n]
         if kids:
             node['children'] = kids
         nodes.append(node)
@@ -433,11 +452,11 @@ def main():
                         add(top32[s:s + n], 'VEC4', 5126, 34962))
         p['attributes']['JOINTS_0'], p['attributes']['WEIGHTS_0'] = done[pa]
     gltf['animations'] = []
-    for role, t, rots, root_t, prop_t, scale in animations:
+    for role, t, rots, root_t, (size_t, size_v) in animations:
         anim = {'name': role, 'samplers': [], 'channels': []}
-        times = add(t.astype(np.float32), 'SCALAR', 5126, minmax=True)
+        frame_times = add(t.astype(np.float32), 'SCALAR', 5126, minmax=True)
 
-        def channel(node, path, values, kind):
+        def channel(node, path, values, kind, times=frame_times):
             anim['samplers'].append({'input': times, 'output': add(values.astype(np.float32), kind, 5126),
                                      'interpolation': 'LINEAR'})
             anim['channels'].append({'sampler': len(anim['samplers']) - 1, 'target': {'node': node, 'path': path}})
@@ -445,9 +464,9 @@ def main():
         for j, n in enumerate(joints):
             channel(index[n], 'rotation', rots[:, j], 'VEC4')
         channel(index[names[0]], 'translation', root_t, 'VEC3')
-        if prop_t is not None:
-            channel(index['prop'], 'translation', prop_t, 'VEC3')
-            channel(index['prop'], 'scale', np.repeat(scale[:, None], 3, axis=1), 'VEC3')
+        if 'prop' in index:  # its size, on times of its own, so it's gone just after a shot
+            channel(index['prop'], 'scale', np.repeat(np.array(size_v)[:, None], 3, axis=1), 'VEC3',
+                    add(np.array(size_t, dtype=np.float32), 'SCALAR', 5126, minmax=True))
         gltf['animations'].append(anim)
     while len(data) % 4:
         data.append(0)

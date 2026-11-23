@@ -22,7 +22,8 @@ The rule gives the figure's skeleton as it stands in the file, and how to pose i
 Each point moves with the bones near it, as Blender's automatic weights share it among them; the file's own points and
 normals are moved, and nothing else in it changes but for the mesh's `extras`, which then say it's posed (so it isn't
 posed twice). Where a point's normal was its face's (flat shading), it's the posed face's again. The figure is then
-stood on the ground and centred again (the figure itself, leaving out any part held whole, such as a prop).
+stood on the ground by its lowest point, and centred again on the figure itself (leaving out any part held whole, such
+as a prop).
 """
 import json
 import os
@@ -262,8 +263,8 @@ def main():
     if not (np.isfinite(new_pos).all() and np.isfinite(new_nor).all()):
         fail('posing gave points or normals that are not numbers')
 
-    # Stood on the ground and centred across and along again: the figure itself, leaving out any part held whole (a
-    #  prop such as a torch), which would pull the figure off its place.
+    # Stood on the ground by its lowest point, and centred across and along again on the figure itself, leaving out any
+    #  part held whole (a prop such as a torch), which would pull the figure off its place.
     body = new_pos[~loose] if (~loose).any() else new_pos
     lo, hi = body.min(axis=0), body.max(axis=0)
     shift = np.array([(lo[0] + hi[0]) / 2, new_pos[:, 1].min(), (lo[2] + hi[2]) / 2])

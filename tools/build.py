@@ -160,6 +160,9 @@ def rigged_path(out):
 def finish(roster, built):
     """Writes models/ (from built where a model was built now), manifest.json and CREDITS.md."""
     s = roster['set']
+    clash = sorted(f'rigged/{mid}.glb' for mid, e in roster['models'].items() if 'rig' in e and f'rigged/{mid}.glb' in roster['extras'])
+    if clash:
+        sys.exit(f'models/{clash[0]} would be both an extra and a rigged model\'s figure')
     models, names = {}, {}
     entries = [(f'{mid}.glb', mid, e) for mid, e in roster['models'].items()]
     entries += [(rel, None, e) for rel, e in roster['extras'].items()]
