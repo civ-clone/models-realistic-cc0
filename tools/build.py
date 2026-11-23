@@ -71,6 +71,9 @@ class Blender:
         bad = [line for line in (p.stdout + p.stderr).splitlines() if 'Traceback' in line or 'Error' in line]
         if p.returncode or bad:
             sys.exit(f'{script} failed on {args[:2]}:\n' + '\n'.join(bad[:10] or (p.stdout + p.stderr).splitlines()[-10:]))
+        for line in p.stdout.splitlines():
+            if line.startswith(('OWNER ', 'POSE ')):
+                print('  ' + line, flush=True)
 
     def original(self, roster, key):
         src = roster['sources'][key]

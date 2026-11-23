@@ -21,7 +21,7 @@ The rule gives the figure's skeleton as it stands in the file, and how to pose i
 Each point moves with the bones near it, as Blender's automatic weights share it among them; the file's own points and
 normals are moved, and nothing else in it changes but for the mesh's `extras`, which then say it's posed (so it isn't
 posed twice). Where a point's normal was its face's (flat shading), it's the posed face's again. The figure is then
-stood on the ground and centred again.
+stood on the ground and centred again (the figure itself, leaving out any part held whole, such as a prop).
 """
 import json
 import math
@@ -252,13 +252,18 @@ def main():
     moving = [names.index(n) for n in sorted(set(rule.get('aim', {})) | set(rule.get('twist', {})))]
     w, weighted = weights(welded, wf, skeleton, moving)
     held = np.zeros(len(welded), dtype=bool)
+    loose = np.zeros(len(pos), dtype=bool)  # points of parts held whole (props)
     for b in rule.get('whole', []):
         if 'part' in b:
             # a primitive: the points its faces use
             if not 0 <= b['part'] < len(prims):
                 fail(f'whole: there is no part {b["part"]!r}; the mesh has {len(prims)}, numbered from 0')
             p = prims[b['part']]
-            used = start[p['attributes']['POSITION']] + np.unique(np.array(glb.triangles(gltf, binary, p)))
+            pa = p['attributes']['POSITION']
+            if sum(q['attributes']['POSITION'] == pa for q in prims) > 1:
+                fail(f'whole: part {b["part"]} shares its points with another part, so it is not a piece of its own')
+            used = start[pa] + np.unique(np.array(glb.triangles(gltf, binary, p)))
+            loose[used] = True
             inside = np.zeros(len(welded), dtype=bool)
             inside[back[used]] = True
         elif 'line' in b:
@@ -350,9 +355,11 @@ def main():
     if not (np.isfinite(new_pos).all() and np.isfinite(new_nor).all()):
         fail('posing gave points or normals that are not numbers')
 
-    # Stood on the ground and centred across and along again.
-    lo, hi = new_pos.min(axis=0), new_pos.max(axis=0)
-    new_pos -= np.array([(lo[0] + hi[0]) / 2, lo[1], (lo[2] + hi[2]) / 2])
+    # Stood on the ground and centred across and along again: the figure itself, leaving out any part held whole (a
+    #  prop such as a torch), which would pull the figure off its place.
+    body = new_pos[~loose] if (~loose).any() else new_pos
+    lo, hi = body.min(axis=0), body.max(axis=0)
+    new_pos -= np.array([(lo[0] + hi[0]) / 2, new_pos[:, 1].min(), (lo[2] + hi[2]) / 2])
 
     data = bytearray(binary)
     jobs = []

@@ -77,10 +77,11 @@ JOINTS = {'pelvis', 'chest', 'neck', 'head', 'top'} | {f'{j}.{s}' for s in 'LR' 
 BONES = {'hips', 'spine', 'chest', 'neck', 'head'} | {f'{b}.{s}' for s in 'LR' for b in (
     'shoulder', 'upper_arm', 'forearm', 'hand', 'thigh', 'shin', 'foot')}
 # The joints at each end of a bone (the hips and shoulder bones start where stance.py works out, so are checked apart).
-BONE_ENDS = {'spine': ('pelvis', 'chest'), 'chest': ('chest', 'neck'), 'neck': ('neck', 'head'), 'head': ('head', 'top')}
+BONE_ENDS = {'spine': ('pelvis', 'chest'), 'chest': ('chest', 'neck'), 'neck': ('neck', 'head'),
+             'head': ('head', 'top')}
 BONE_ENDS |= {f'{b}.{s}': (f'{h}.{s}', f'{t}.{s}') for s in 'LR' for b, h, t in (
-    ('upper_arm', 'shoulder', 'elbow'), ('forearm', 'elbow', 'wrist'), ('hand', 'wrist', 'hand'), ('thigh', 'hip', 'knee'),
-    ('shin', 'knee', 'ankle'), ('foot', 'ankle', 'toe'))}
+    ('upper_arm', 'shoulder', 'elbow'), ('forearm', 'elbow', 'wrist'), ('hand', 'wrist', 'hand'),
+    ('thigh', 'hip', 'knee'), ('shin', 'knee', 'ankle'), ('foot', 'ankle', 'toe'))}
 ATTRIBUTES = {'POSITION', 'NORMAL', 'TEXCOORD_0'}
 SKIN_ATTRIBUTES = {'JOINTS_0', 'WEIGHTS_0'}
 # Points over a face, where it's sampled to find its owner's colour (as blender/owner.py samples it).
@@ -185,7 +186,8 @@ def check_stance(where, rule):
             problem(f'{where}: bones shorter than 5 mm, their joints too close: {sorted(short)}')
     aim = rule.get('aim', {})
     if not isinstance(aim, dict) or set(aim) - BONES or not all(
-            isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and any(d) for d in aim.values()):
+            isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
+            for d in aim.values()):
         problem(f'{where}: aim should give bones a way to point [x, y, z]')
     twist = rule.get('twist', {})
     if not isinstance(twist, dict) or set(twist) - BONES or not all(number(v) for v in twist.values()):
