@@ -39,10 +39,10 @@ map draws each type from one set.
   arms at their sides. The Warriors, Musketmen, Alpine Troops, Engineers and the Settlers stood naturally already, and
   the riders sit their horses.
 
-  A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it
-  where it stands in the file, the way each bone should point, and any pieces that move whole (a rifle, a
-  torch). Blender weights each point to the bones near it, and the file's points and normals are moved; nothing
-  else in it changes.
+  A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
+  it stands in the file, the way each bone should point, and any pieces that move whole (the Partisan's molotov, the
+  Marine's slung rifle). Blender weights each point to the bones near it, and the file's points and normals are moved;
+  nothing else in it changes but a mark on the mesh (`extras.posed`).
 - **Not yet:** nothing is rigged or animated.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;

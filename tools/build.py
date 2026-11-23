@@ -7,8 +7,8 @@ With --originals, it builds each model the roster lists (or only those NAMEd, by
 it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, cuts it to its budget and bakes
 its colour into one texture (blender/cut.py), turns, sizes and grounds it, or floats it at its draught
 (blender/normalise.py), puts in its prop (blender/assemble.py), puts its owner's colour where the roster says
-(blender/owner.py), and stands a figure in a natural pose (blender/stance.py). Blender runs with factory settings and with scripts in files turned off (-b --factory-startup -Y),
-and reads the originals only as data.
+(blender/owner.py), and stands a figure in a natural pose (blender/stance.py). Blender runs with factory settings
+and with scripts in files turned off (-b --factory-startup -Y), and reads the originals only as data.
 
 Then, with or without --originals, it writes each model into models/ with its credit, licence and changes in its
 `asset.extras`, and writes manifest.json and CREDITS.md from the files and the roster. That last step needs only
@@ -127,6 +127,10 @@ class Blender:
                 json.dump(entry['owner'], f)
             self.run('owner.py', out, rule)
         if 'stance' in entry:
+            check.problems.clear()
+            check.check_stance(f'{name}.stance', entry['stance'])
+            if check.problems:
+                sys.exit('\n'.join(check.problems))
             rule = os.path.join(self.work, 'stance', slug + '.json')
             os.makedirs(os.path.dirname(rule), exist_ok=True)
             with open(rule, 'w', encoding='utf-8') as f:
