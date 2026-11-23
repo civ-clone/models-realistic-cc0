@@ -7,11 +7,12 @@ With --originals, it builds each model the roster lists (or only those NAMEd, by
 it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, cuts it to its budget and bakes
 its colour into one texture (blender/cut.py), turns, sizes and grounds it, or floats it at its draught
 (blender/normalise.py), puts in its prop (blender/assemble.py), puts its owner's colour where the roster says
-(blender/owner.py), and stands a figure in a natural pose (blender/stance.py). Blender runs with factory settings
-and with scripts in files turned off (-b --factory-startup -Y), and reads the originals only as data.
+(blender/owner.py), stands a figure in a natural pose (blender/stance.py), and rigs it with its clips into
+models/rigged/ where the roster gives it a rig (blender/rig.py). Blender runs with factory settings and with scripts in
+files turned off (-b --factory-startup -Y), and reads the originals only as data.
 
-Then, with or without --originals, it writes each model into models/ with its credit, licence and changes in its
-`asset.extras`, and writes manifest.json and CREDITS.md from the files and the roster. That last step needs only
+Then, with or without --originals, it writes each model (and its rigged figure) into models/ with its credit,
+licence and changes in its `asset.extras`, and writes manifest.json and CREDITS.md from the files and the roster. That last step needs only
 Python 3.10 or later.
 """
 import argparse
@@ -72,7 +73,7 @@ class Blender:
         if p.returncode or bad:
             sys.exit(f'{script} failed on {args[:2]}:\n' + '\n'.join(bad[:10] or (p.stdout + p.stderr).splitlines()[-10:]))
         for line in p.stdout.splitlines():
-            if line.startswith(('OWNER ', 'POSE ')):
+            if line.startswith(('OWNER ', 'POSE ', 'RIG ')):
                 print('  ' + line, flush=True)
 
     def original(self, roster, key):
@@ -89,7 +90,8 @@ class Blender:
         return os.path.join(out, 'cut.glb')
 
     def build(self, roster, name, entry, out):
-        """Builds one model or extra into the file out."""
+        """Builds one model or extra into the file out (and, where it has a rig, its rigged figure into rigged/ beside
+        out)."""
         slug = name.replace('/', '-').removesuffix('.glb')
         src = self.original(roster, entry['source'])
         if entry.get('drop'):
@@ -132,29 +134,49 @@ class Blender:
         if 'stance' in entry:
             check.problems.clear()
             check.check_stance(f'{name}.stance', entry['stance'])
+            if 'rig' in entry:
+                check.check_rig(f'{name}.rig', entry['rig'], entry['stance'])
             if check.problems:
                 sys.exit('\n'.join(check.problems))
             rule = os.path.join(self.work, 'stance', slug + '.json')
+            weights = os.path.join(self.work, 'stance', slug + '-weights.json')
             os.makedirs(os.path.dirname(rule), exist_ok=True)
             with open(rule, 'w', encoding='utf-8') as f:
                 json.dump(entry['stance'], f)
-            self.run('stance.py', out, rule)
+            self.run('stance.py', out, rule, *([weights] if 'rig' in entry else []))
+            if 'rig' in entry:
+                rig = os.path.join(self.work, 'rig', slug + '.json')
+                os.makedirs(os.path.dirname(rig), exist_ok=True)
+                with open(rig, 'w', encoding='utf-8') as f:
+                    json.dump(entry['rig'], f)
+                self.run('rig.py', out, weights, rule, rig, rigged_path(out))
+
+
+def rigged_path(out):
+    """Where a model's rigged figure is, beside the model."""
+    return os.path.join(os.path.dirname(out), 'rigged', os.path.basename(out))
 
 
 def finish(roster, built):
     """Writes models/ (from built where a model was built now), manifest.json and CREDITS.md."""
     s = roster['set']
+    clash = sorted(f'rigged/{mid}.glb' for mid, e in roster['models'].items() if 'rig' in e and f'rigged/{mid}.glb' in roster['extras'])
+    if clash:
+        sys.exit(f'models/{clash[0]} would be both an extra and a rigged model\'s figure')
     models, names = {}, {}
     entries = [(f'{mid}.glb', mid, e) for mid, e in roster['models'].items()]
     entries += [(rel, None, e) for rel, e in roster['extras'].items()]
     for rel, mid, e in entries:
+        files = [rel] + ([f'rigged/{rel}'] if mid is not None and 'rig' in e else [])
+        for f in files:
+            dst = os.path.join(ROOT, 'models', f)
+            if f in built:
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copyfile(built[f], dst)
+            if not os.path.exists(dst):
+                sys.exit(f'models/{f} is missing: build it with --originals')
+            stamp(dst, check.expected_extras(roster, e), check.expected_copyright(roster, e))
         dst = os.path.join(ROOT, 'models', rel)
-        if rel in built:
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.copyfile(built[rel], dst)
-        if not os.path.exists(dst):
-            sys.exit(f'models/{rel} is missing: build it with --originals')
-        stamp(dst, check.expected_extras(roster, e), check.expected_copyright(roster, e))
         if mid is None:
             continue
         measured = glb.measure(*glb.read(dst))
@@ -165,6 +187,12 @@ def finish(roster, built):
                   'from': [check.credit_of(roster, k)['url'] for k in check.keys_of(e)], 'made': e['made']})
         if measured['animations']:
             m['animations'] = measured['animations']
+        if 'rig' in e:
+            rigged = os.path.join(ROOT, 'models', 'rigged', rel)
+            m['rigged'] = {'file': f'models/rigged/{rel}', 'sha256': sha256(rigged),
+                           'clips': {role: role for role in e['rig']['clips']}}
+            if check.shots_of(e['rig']):
+                m['rigged']['shots'] = check.shots_of(e['rig'])
         models[mid] = m
         for u in e['units']:
             names[u] = mid
@@ -206,6 +234,8 @@ def main():
             print('building', rel, flush=True)
             b.build(roster, rel, e, out)
             built[rel] = out
+            if 'rig' in e and rel.removesuffix('.glb') in roster['models']:
+                built[f'rigged/{rel}'] = rigged_path(out)
         print('steps in between are in', work)
     finish(roster, built)
 

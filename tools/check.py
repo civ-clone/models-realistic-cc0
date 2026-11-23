@@ -10,13 +10,14 @@
 - **Each model's entry** names its file, that file's SHA-256, its triangles (no more than the roster's budget), how far
   it reaches (`extent`), its animations, its sources' pages and what was done to it, all as the file and the roster
   say.
-- **Each file** in `models/` is a model in the manifest or an extra in the roster, and nothing else is there. Each is
-  a glTF 2 binary that reads nothing from outside itself (no `uri` anywhere in it, as civ.one's loader asks) and needs
-  no extension:
+- **Each file** in `models/` is a model in the manifest, a rigged model's figure or an extra in the roster, and
+  nothing else is there. Each is a glTF 2 binary that reads nothing from outside itself (no `uri` anywhere in it, as
+  civ.one's loader asks) and needs no extension:
   - one JSON chunk and at most one binary chunk, each whole; every index in range (textures, animations and skins
     too);
   - triangles only, with positions, normals and one set of texture coordinates (and joints and weights where an extra
-    keeps its skeleton): positions finite, normals a unit long, texture coordinates within 0 to 1;
+    keeps its skeleton, or a figure is rigged): positions finite, normals a unit long, texture coordinates within 0
+    to 1;
   - images as JPEG, saying so: the first the baked texture, as big as the roster says, and none bigger;
   - each primitive drawn opaque, with a material that has a colour texture;
   - where the roster gives a model an `owner` rule, and only there, its owner's colour: materials saying
@@ -31,6 +32,22 @@
 - **The credits** in CREDITS.md are as build.py writes them.
 - **Each stance** names every joint of the skeleton blender/stance.py fits, none of its bones shorter than 5 mm, and
   only its bones; a model with one says "posed" in its `made`, and its mesh says `extras.posed`, and only then.
+- **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
+  and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before
+  its length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds
+  whole, and any shots within its clip, each from the prop, which is back in the hand by the clip's end.
+- **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
+  - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
+    stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints
+    and weights to each point, the weights adding up to one, no joint twice;
+  - its clips are the rig's, each running from 0 to its length (its times' min and max given), keying the same
+    joints (every joint's turn and the root's place) linearly, with values that are numbers and turns that are unit
+    quaternions. A clip played once starts where the figure stands, and a loop ends where it starts. Clips play in
+    place: only the root's place is keyed (and the prop's size), and the root stays within 0.25 m of where it starts
+    across the ground in a loop, and 2.5 m in a clip played once. Each joint's property is keyed once. The prop's
+    part moves with the prop's joint alone, which is a child of its bone, kept as it is held: its size is 1 but
+    while it's thrown, and 0 from just after each shot until it grows back;
+  - the manifest gives its file, SHA-256, clips, and any shots by clip (`rigged`).
 """
 import hashlib
 import json
@@ -64,13 +81,19 @@ NAME = re.compile(r'[a-z0-9][a-z0-9-]*\Z')
 SHA = re.compile(r'[0-9a-f]{64}\Z')
 TOP = {'set', 'date', 'scale', 'generated', 'sources', 'models', 'extras'}
 SOURCE = {'work', 'author', 'url', 'licence', 'note', 'ai', 'generated', 'made', 'prompt', 'file', 'sha256'}
-MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'scale', 'budget', 'made'}
+MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'rig', 'scale', 'budget', 'made'}
 EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
 CUT = {'mode', 'tris', 'texture', 'depth', 'solidify'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
 STANCE = {'joints', 'aim', 'twist', 'whole'}
+# A rig, as blender/rig.py reads it, and its clips by role: those that loop, and those that play once.
+RIG = {'prop', 'clips'}
+CLIP = {'length', 'keys', 'shots'}
+KEY = {'at', 'aim', 'twist', 'turn', 'slide'}
+LOOPS = {'idle', 'move', 'work'}
+ONCE = {'fight', 'die', 'settle'}
 # A figure's joints and bones, as blender/stance.py names them.
 JOINTS = {'pelvis', 'chest', 'neck', 'head', 'top'} | {f'{j}.{s}' for s in 'LR' for j in (
     'shoulder', 'elbow', 'wrist', 'hand', 'hip', 'knee', 'ankle', 'toe')}
@@ -205,6 +228,84 @@ def check_stance(where, rule):
         problem(f'{where}: whole should be a list, each a bone with a part, a line and radius, or a box of x, y or z ranges')
 
 
+def direction(d):
+    return isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
+
+
+def check_rig(where, rig, stance):
+    """A rig says only what blender/rig.py reads, with values of the right kind, on a figure with a stance."""
+    if not keys_ok(where, rig, RIG):
+        return
+    if not isinstance(stance, dict):
+        problem(f'{where}: a rig binds the skeleton a stance fits, so needs a stance')
+        return
+    prop = rig.get('prop')
+    if prop is not None and not (isinstance(prop, dict) and set(prop) == {'part', 'bone'} and
+                                 {'part': prop.get('part'), 'bone': prop.get('bone')} in stance.get('whole', [])):
+        problem(f'{where}.prop: should be a part and its bone, as the stance holds it whole')
+    clips = rig.get('clips')
+    if not isinstance(clips, dict) or not clips:
+        problem(f'{where}: needs clips')
+        return
+    for role, clip in clips.items():
+        at = f'{where}.clips.{role}'
+        if role not in LOOPS | ONCE:
+            problem(f'{at}: a clip is one of {sorted(LOOPS | ONCE)}')
+        if not keys_ok(at, clip, CLIP):
+            continue
+        length, keys = clip.get('length'), clip.get('keys')
+        if not number(length, 0) or not isinstance(keys, list) or not keys or not all(isinstance(k, dict) for k in keys):
+            problem(f'{at}: needs a length over 0 and a list of keys')
+            continue
+        turns = []
+        for k in keys:
+            for f in sorted(set(k) - KEY):
+                problem(f'{at}: a key says {f!r}, which blender/rig.py does not read')
+            aim, twist = k.get('aim', {}), k.get('twist', {})
+            if not number(k.get('at')) or k['at'] < 0:
+                problem(f'{at}: each key needs a time (at), from 0')
+            if not isinstance(aim, dict) or set(aim) - BONES or not all(d is None or direction(d) for d in aim.values()):
+                problem(f'{at}: aim should give bones a way to point [x, y, z], or null')
+            if not isinstance(twist, dict) or set(twist) - BONES or not all(number(v) for v in twist.values()):
+                problem(f'{at}: twist should give bones a number of degrees')
+            if 'turn' in k:
+                t = k['turn']
+                if not (isinstance(t, dict) and set(t) == {'axis', 'degrees', 'about'} and direction(t['axis']) and
+                        number(t['degrees']) and isinstance(t['about'], list) and len(t['about']) == 3 and
+                        all(number(v) for v in t['about'])):
+                    problem(f'{at}: a turn has an axis, degrees and a place to turn about')
+                else:
+                    turns.append(t)
+            if 'slide' in k and not (isinstance(k['slide'], list) and len(k['slide']) == 2 and all(number(v) for v in k['slide'])):
+                problem(f'{at}: slide should be [x, z]')
+        if any(t['axis'] != turns[0]['axis'] or t['about'] != turns[0]['about'] for t in turns):
+            problem(f'{at}: its turns should share their axis and the place they turn about')
+        times = [k.get('at') for k in keys]
+        if not all(number(t) for t in times):
+            continue
+        if any(b <= a for a, b in zip(times, times[1:])):
+            problem(f'{at}: its keys should come in order of time, none at the same time')
+        if role in LOOPS and not (times[0] == 0 and times[-1] < length):
+            problem(f'{at}: a loop\'s keys run from 0 to before its length')
+        if role in ONCE and not (times[0] == 0 and times[-1] == length and set(keys[0]) == {'at'}):
+            problem(f'{at}: a clip that plays once starts at the stance (its first key only at 0) and has a key at its length')
+        shots = clip.get('shots', [])
+        if not isinstance(shots, list) or not all(
+                isinstance(x, dict) and prop is not None and x.get('joint') == 'prop' and
+                set(x) == ({'at', 'joint', 'back'} if x.get('joint') == 'prop' else {'at', 'joint'}) and
+                number(x['at']) and 0 < x['at'] < length for x in shots):
+            problem(f'{at}: shots should each be a time in the clip (at), the joint they leave from (prop, for now: '
+                    'three.js renames the bones), and when the prop is back (back)')
+            continue
+        if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
+            problem(f'{at}: its shots should come in order of time')
+        thrown = [x for x in shots if x['joint'] == 'prop']
+        if not all(number(x['back']) and x['back'] - x['at'] >= 0.25 - 1e-9 and x['back'] <= length for x in thrown) or any(
+                b['at'] <= a['back'] for a, b in zip(thrown, thrown[1:])):
+            problem(f'{at}: a thrown prop is back (back) no sooner than at + 0.25, no later than the clip\'s length, and '
+                    'before it is thrown again')
+
+
 def check_build_entry(where, e, allowed, sources):
     if not keys_ok(where, e, allowed):
         return
@@ -231,6 +332,8 @@ def check_build_entry(where, e, allowed, sources):
         check_owner(f'{where}.owner', e['owner'])
     if 'stance' in e:
         check_stance(f'{where}.stance', e['stance'])
+    if 'rig' in e:
+        check_rig(f'{where}.rig', e['rig'], e.get('stance'))
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
@@ -423,6 +526,183 @@ def check_file(rel, skinned_ok, texture, owner, posed):
         return None
 
 
+def shots_of(rig):
+    """The manifest's shots for a rig: by clip, each a time and the joint the shot leaves from."""
+    return {role: [{'at': x['at'], 'joint': x['joint']} for x in clip['shots']]
+            for role, clip in rig['clips'].items() if clip.get('shots')}
+
+
+def same(a, b, path, tolerance):
+    """Whether two keyed values are the same, a turn's quaternion either way round."""
+    if len(a) != len(b):
+        return False
+    close = all(abs(x - y) <= tolerance for x, y in zip(a, b))
+    return close or (path == 'rotation' and all(abs(x + y) <= tolerance for x, y in zip(a, b)))
+
+
+def check_rigged(rel, entry):
+    """A rigged figure is its model bound to the stance's skeleton, with the rig's clips: checks what civ.one's player
+    and the static model need of it, adding any problem."""
+    path = os.path.join(ROOT, 'models', rel)
+    static_rel = rel.split('/', 1)[1]
+    try:
+        gltf, binary = glb.read(path)
+        static, static_bin = glb.read(os.path.join(ROOT, 'models', static_rel))
+        rig = entry['rig']
+        skins = gltf.get('skins', [])
+        if len(skins) != 1:
+            raise glb.Bad('it should have one skin')
+        nodes = gltf['nodes']
+        joints = skins[0]['joints']
+        names = [nodes[j].get('name') for j in joints]
+        parent = {c: i for i, n in enumerate(nodes) for c in n.get('children', [])}
+        want = BONES | ({'prop'} if 'prop' in rig else set())
+        if len(set(names)) != len(names) or set(names) != want:
+            raise glb.Bad(f'its joints should be the stance\'s bones{" and the prop" if "prop" in rig else ""}, each once')
+        placed = glb.placed_meshes(gltf)
+        meshed = [n for n in nodes if 'mesh' in n]
+        if len(placed) != 1 or len(meshed) != 1 or meshed[0].get('skin') != 0 or any(
+                k in meshed[0] for k in ('matrix', 'translation', 'rotation', 'scale')):
+            raise glb.Bad('it should be one mesh, on a node of its own with the skin and no transform')
+        # Bound where the model stands: the same points, normals, texture coordinates, faces and materials.
+        prims, static_prims = gltf['meshes'][placed[0][0]]['primitives'], static['meshes'][glb.placed_meshes(static)[0][0]]['primitives']
+        if len(prims) != len(static_prims) or gltf.get('materials') != static.get('materials') or \
+                gltf.get('textures') != static.get('textures'):
+            raise glb.Bad(f'its parts and materials should be models/{static_rel}\'s')
+        for (img, simg) in zip(gltf.get('images', []), static.get('images', [])):
+            def data(g, b, i):
+                v = g['bufferViews'][i['bufferView']]
+                return b[v.get('byteOffset', 0):v.get('byteOffset', 0) + v['byteLength']]
+            if data(gltf, binary, img) != data(static, static_bin, simg):
+                raise glb.Bad(f'its images should be models/{static_rel}\'s')
+        if len(gltf.get('images', [])) != len(static.get('images', [])):
+            raise glb.Bad(f'its images should be models/{static_rel}\'s')
+        if any('targets' in p for p in prims) or any('weights' in m for m in gltf.get('meshes', [])):
+            raise glb.Bad('it has morph targets, which civ.one\'s map doesn\'t play')
+        for p, sp in zip(prims, static_prims):
+            if p.get('material') != sp.get('material') or set(p['attributes']) != ATTRIBUTES | SKIN_ATTRIBUTES or \
+                    glb.triangles(gltf, binary, p) != glb.triangles(static, static_bin, sp) or any(
+                    glb.accessor(gltf, binary, p['attributes'][a]) != glb.accessor(static, static_bin, sp['attributes'][a])
+                    for a in ATTRIBUTES):
+                raise glb.Bad(f'its mesh should be models/{static_rel}\'s as it stands, with joints and weights')
+            ja, wa = (gltf['accessors'][p['attributes'][a]] for a in ('JOINTS_0', 'WEIGHTS_0'))
+            if ja.get('count') != gltf['accessors'][p['attributes']['POSITION']].get('count') or wa.get('count') != ja.get('count'):
+                raise glb.Bad('its joints and weights should be one to a point')
+            if ja.get('type') != 'VEC4' or ja.get('componentType') not in (5121, 5123) or wa.get('type') != 'VEC4' or \
+                    wa.get('componentType') != 5126 or ja.get('normalized') or wa.get('normalized'):
+                raise glb.Bad('its joints should be whole numbers and its weights floats, four to a point')
+            for js, ws in zip(glb.accessor(gltf, binary, p['attributes']['JOINTS_0']),
+                              glb.accessor(gltf, binary, p['attributes']['WEIGHTS_0'])):
+                if any(j >= len(joints) for j in js) or any(not 0 <= w <= 1 for w in ws) or abs(sum(ws) - 1) > 1e-3:
+                    raise glb.Bad('a point\'s joints are out of range, or its weights don\'t add up to one')
+                used = [j for j, w in zip(js, ws) if w > 0]
+                if len(set(used)) != len(used):
+                    raise glb.Bad('a point has two weights on one joint')
+        if 'prop' in rig:
+            # The prop's part on the prop's joint alone, and no other point on it; the joint a child of its bone.
+            prop_j = names.index('prop')
+            held = {(p['attributes']['POSITION'], i) for p in [prims[rig['prop']['part']]]
+                    for f in glb.triangles(gltf, binary, p) for i in f}
+            for p in prims:
+                pa = p['attributes']['POSITION']
+                for i, (js, ws) in enumerate(zip(glb.accessor(gltf, binary, p['attributes']['JOINTS_0']),
+                                                 glb.accessor(gltf, binary, p['attributes']['WEIGHTS_0']))):
+                    on = sum(w for j, w in zip(js, ws) if j == prop_j)
+                    if ((pa, i) in held and abs(on - 1) > 1e-6) or ((pa, i) not in held and on > 0):
+                        raise glb.Bad('the prop\'s part should move with the prop\'s joint alone, and nothing else with it')
+            if parent.get(joints[prop_j]) != joints[names.index(rig['prop']['bone'])]:
+                raise glb.Bad(f'the prop\'s joint should be a child of {rig["prop"]["bone"]}, which holds it')
+        # Standing as bound: each joint where its inverse bind matrix undoes.
+
+        def world(i, local=None):
+            m = (local or {}).get(i) or glb.local_matrix(nodes[i])
+            return m if i not in parent else glb.multiply(world(parent[i], local), m)
+
+        ibm = glb.accessor(gltf, binary, skins[0]['inverseBindMatrices'])
+        for j, inv in zip(joints, ibm):
+            m = glb.multiply(world(j), [[inv[c * 4 + r] for c in range(4)] for r in range(4)])
+            if any(abs(m[r][c] - (r == c)) > 1e-4 for r in range(4) for c in range(4)):
+                raise glb.Bad(f'joint {nodes[j].get("name")} is not where it is bound, so the figure would not stand as models/{static_rel} does')
+        # The clips: by role, each keying the same joints' turns and places, from 0 to its length.
+        anims = {a.get('name'): a for a in gltf.get('animations', [])}
+        if set(anims) != set(rig['clips']) or len(anims) != len(gltf.get('animations', [])):
+            raise glb.Bad(f'its clips should be {sorted(rig["clips"])}, each once')
+        keyed = None
+        for role, anim in anims.items():
+            length = rig['clips'][role]['length']
+            got = set()
+            targets = [(c['target'].get('node'), c['target'].get('path')) for c in anim['channels']]
+            if len(set(targets)) != len(targets):
+                raise glb.Bad(f'clip {role} keys one joint\'s one property twice')
+            for ch in anim['channels']:
+                sampler = anim['samplers'][ch['sampler']]
+                node, path_ = ch['target'].get('node'), ch['target'].get('path')
+                if node not in joints or sampler.get('interpolation', 'LINEAR') != 'LINEAR':
+                    raise glb.Bad(f'clip {role} moves a node that is not a joint, or not linearly')
+                times = [t[0] for t in glb.accessor(gltf, binary, sampler['input'])]
+                if times[0] != 0 or abs(times[-1] - length) > 1e-4 or any(b <= a for a, b in zip(times, times[1:])):
+                    raise glb.Bad(f'clip {role} should run from 0 to its length, {length} s')
+                ia = gltf['accessors'][sampler['input']]
+                if ia.get('min') != [times[0]] or ia.get('max') != [times[-1]]:
+                    raise glb.Bad(f'clip {role} has times without their least and most (min and max), as glTF asks')
+                values = glb.accessor(gltf, binary, sampler['output'])
+                if any(not math.isfinite(v) for value in values for v in value) or (path_ == 'rotation' and any(
+                        abs(math.sqrt(sum(v * v for v in q)) - 1) > 1e-3 for q in values)):
+                    raise glb.Bad(f'clip {role} has a value that is not a number, or a turn that is not a unit quaternion')
+                if path_ == 'translation' and nodes[node].get('name') != 'hips' or path_ == 'scale' and nodes[node].get('name') != 'prop':
+                    raise glb.Bad(f'clip {role} moves {nodes[node].get("name")} ({path_}); only the root\'s place, and the '
+                                  'prop\'s size, are keyed beside the turns')
+                if path_ == 'rotation' and nodes[node].get('name') == 'prop' and not all(
+                        same(v, nodes[node].get('rotation', (0, 0, 0, 1)), path_, 1e-5) for v in values):
+                    raise glb.Bad(f'clip {role} turns the prop in the hand, where it should stay as it is held')
+                if path_ == 'scale':
+                    out = [x for x in rig['clips'][role].get('shots', []) if x['joint'] == 'prop']
+                    if any(not same(v, (1, 1, 1), path_, 1e-6) for t, v in zip(times, values)
+                           if not any(x['at'] + 1e-4 < t < x['back'] - 1e-4 for x in out)):
+                        raise glb.Bad(f'clip {role} should keep the prop in the hand, its size 1, but while it is thrown')
+                if path_ == 'translation' and nodes[node].get('name') == 'hips':
+                    reach = max(math.hypot(v[0] - values[0][0], v[2] - values[0][2]) for v in values)
+                    if reach > (0.25 if role in LOOPS else 2.5):
+                        raise glb.Bad(f'clip {role} moves the figure {reach:.2f} m across the ground; clips play in '
+                                      'place (a loop within 0.25 m, a clip played once within 2.5 m)')
+                if path_ == 'scale' and nodes[node].get('name') == 'prop' and not (
+                        same(values[0], (1, 1, 1), path_, 1e-6) and same(values[-1], (1, 1, 1), path_, 1e-6)):
+                    raise glb.Bad(f'clip {role} should start and end with the prop in the hand, its size 1')
+                rest = nodes[node].get(path_, {'rotation': (0, 0, 0, 1), 'scale': (1, 1, 1)}.get(path_, (0, 0, 0)))
+                if role in ONCE and not same(values[0], rest, path_, 1e-4):
+                    raise glb.Bad(f'clip {role} should start where the figure stands')
+                if role in LOOPS and not same(values[0], values[-1], path_, 1e-5):
+                    raise glb.Bad(f'clip {role} should end where it starts, as it loops')
+                got.add((nodes[node]['name'], path_))
+            for x in rig['clips'][role].get('shots', []):
+                if x['joint'] not in names:
+                    raise glb.Bad(f'clip {role} has a shot from {x["joint"]}, which is not a joint')
+                if x['joint'] == 'prop':
+                    ch = next((c for c in anim['channels'] if nodes[c['target']['node']].get('name') == 'prop' and
+                               c['target'].get('path') == 'scale'), None)
+                    sampler = anim['samplers'][ch['sampler']] if ch else None
+                    times = [t[0] for t in glb.accessor(gltf, binary, sampler['input'])] if sampler else []
+                    sizes = glb.accessor(gltf, binary, sampler['output']) if sampler else []
+                    def size_at(when):
+                        k = max(i for i, t in enumerate(times) if t <= when)
+                        if k == len(times) - 1:
+                            return sizes[k]
+                        u = (when - times[k]) / (times[k + 1] - times[k])
+                        return [a + u * (b - a) for a, b in zip(sizes[k], sizes[k + 1])]
+                    steps = int((x['back'] - 0.21 - x['at'] - 0.01) / 0.005)
+                    if not sizes or any(abs(v) > 1e-4 for i in range(steps + 1) for v in size_at(x['at'] + 0.01 + 0.005 * i)):
+                        raise glb.Bad(f'clip {role} should hide the prop (its size 0) after it is thrown at {x["at"]} s')
+                    if any(abs(v - 1) > 1e-4 for when in (x['at'], x['back']) for v in size_at(when)):
+                        raise glb.Bad(f'clip {role} should have the prop whole in the hand as it\'s thrown at {x["at"]} s, '
+                                      f'and again by {x["back"]} s')
+            if keyed is None:
+                keyed = got
+            if got != keyed or not {(n, 'rotation') for n in want} | {('hips', 'translation')} <= got:
+                raise glb.Bad(f'clip {role} should key every joint\'s turn and the root\'s place, as every clip does')
+    except (glb.Bad, KeyError, TypeError, ValueError, IndexError, AttributeError) as e:
+        problem(f'models/{rel}: {e}')
+
+
 def main():
     roster = json.load(open(os.path.join(ROOT, 'roster.json'), encoding='utf-8'))
     manifest = json.load(open(os.path.join(ROOT, 'manifest.json'), encoding='utf-8'))
@@ -477,6 +757,9 @@ def main():
             problem(f'{where}: needs a budget (a whole number) and any scale over 0')
     for rel, e in roster.get('extras', {}).items():
         check_build_entry(f'roster.extras.{rel}', e, EXTRA, sources)
+    rigged = {f'rigged/{mid}.glb': mid for mid, e in models.items() if 'rig' in e}
+    for rel in sorted(set(rigged) & set(roster.get('extras', {}))):
+        problem(f'models/{rel}: is both an extra and a rigged model\'s figure')
     if problems:
         return
 
@@ -497,7 +780,7 @@ def main():
         problem(f'manifest: model {mid} is in only one of the manifest and the roster')
 
     # The files.
-    listed = {f'{mid}.glb' for mid in models} | set(roster.get('extras', {}))
+    listed = {f'{mid}.glb' for mid in models} | set(roster.get('extras', {})) | set(rigged)
     present = set()
     for dirpath, _, files in os.walk(os.path.join(ROOT, 'models')):
         for f in files:
@@ -507,6 +790,17 @@ def main():
     for rel in sorted(listed - present):
         problem(f'models/{rel}: is missing')
     for rel in sorted(listed & present):
+        if rel in rigged:
+            entry = models[rigged[rel]]
+            got = check_file(rel, skinned_ok=True, texture=entry['cut']['texture'], owner='owner' in entry, posed=True)
+            if got is None:
+                continue
+            if got[0].get('asset', {}).get('extras') != expected_extras(roster, entry) or \
+                    got[0].get('asset', {}).get('copyright') != expected_copyright(roster, entry):
+                problem(f'models/{rel}: its asset.extras and asset.copyright should be its model\'s, as build.py writes them')
+            if f'{rigged[rel]}.glb' in present:
+                check_rigged(rel, entry)
+            continue
         mid = rel[:-4] if rel in {f'{m}.glb' for m in models} else None
         entry = models[mid] if mid else roster['extras'][rel]
         got = check_file(rel, skinned_ok=mid is None, texture=entry['cut']['texture'], owner='owner' in entry,
@@ -528,6 +822,14 @@ def main():
             want['scale'] = entry['scale']
         if measured['animations']:
             want['animations'] = measured['animations']
+        if 'rig' in entry:
+            rp = os.path.join(ROOT, 'models', 'rigged', rel)
+            want['rigged'] = {'file': f'models/rigged/{rel}',
+                              'sha256': hashlib.sha256(open(rp, 'rb').read()).hexdigest() if os.path.exists(rp) else None,
+                              'clips': {r: r for r in entry['rig']['clips']}}
+            shots = shots_of(entry['rig'])
+            if shots:
+                want['rigged']['shots'] = shots
         for k in sorted(set(want) | set(m)):
             if m.get(k) != want.get(k):
                 problem(f'manifest: {mid}.{k} should be {json.dumps(want.get(k))[:100]}, as its file and the roster say')
