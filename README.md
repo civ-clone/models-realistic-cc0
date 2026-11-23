@@ -43,19 +43,31 @@ map draws each type from one set.
   it stands in the file, the way each bone should point, and any pieces that move whole (the Partisan's molotov, the
   Riflemen's and Marines' slung rifles). Blender weights each point to the bones near it, and the file's points and
   normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
-- **Not yet:** nothing is rigged or animated.
+- **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
+  skeleton it was posed with, with four clips: `idle` (3 s, breathing and looking about) and `move` (a 1 s stride in
+  place), which loop, and `fight` (1.5 s: he throws the molotov, which flies 6 m and is back in his hand by the end)
+  and `die` (1.6 s: he falls on his back and lies still), which play once.
+
+  A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
+  of the weights it was posed with. Each clip is made from key poses, in the stance's terms (which way each bone
+  points, and how it's twisted), with the whole figure turned where it falls. Between keys the bones turn on smooth
+  curves. Every frame is stood on the ground, and played in place: the map moves units from square to square itself.
+  The file has a root node, `skeleton`, holding a joint for each bone (named as the stance's) and one for the
+  molotov, `prop`. Each clip keys every joint's turn, the root's place, and the prop's place and size. A clip that
+  plays once starts as the model stands, and a loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;
   - each model's file and its SHA-256, its triangles, how far it reaches (`extent`, in metres), where it's from and
     what was done to it;
+  - a rigged model's rigged file, its SHA-256, and its clips by role (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
     made, the prompt;
   - each model: the unit types it draws, its source, how it's cut (part by part, or wrapped in one new surface), how
     it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov), where its owner's colour
-    goes, how a figure is posed, its budget, and its scale where it isn't the set's.
+    goes, how a figure is posed, how it's rigged and its clips, its budget, and its scale where it isn't the set's.
 
   The set's scale draws a 1.8 m person as tall as the other sets' people, 0.168 squares. The 3D map draws units
   bigger than life, so the rest have scales of their own, close to models-cimpletoon's sizes: riders 0.21 to 0.22

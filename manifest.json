@@ -241,7 +241,17 @@
     "https://github.com/civ-clone/models-realistic-cc0",
     "https://opengameart.org/content/lowpoly-molotov"
    ],
-   "made": "generated figure, simplified; the molotov put in his right hand; the owner's colour on the hoodie; posed, his arms at his sides and the molotov held low"
+   "made": "generated figure, simplified; the molotov put in his right hand; the owner's colour on the hoodie; posed, his arms at his sides and the molotov held low",
+   "rigged": {
+    "file": "models/rigged/partisan.glb",
+    "sha256": "eeef193182e9738934482ea7899404235d837df96ac2e5a248f41c8d315621e1",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "fight": "fight",
+     "die": "die"
+    }
+   }
   },
   "spy": {
    "file": "models/spy.glb",
