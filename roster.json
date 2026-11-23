@@ -640,7 +640,23 @@
             ]
           }
         ],
-        "share": 0.35
+        "share": 0.35,
+        "without": [
+          {
+            "x": [
+              -0.1,
+              0.1
+            ],
+            "y": [
+              2.25,
+              2.42
+            ],
+            "z": [
+              -0.32,
+              -0.2
+            ]
+          }
+        ]
       },
       "budget": 3000,
       "made": "generated; rewrapped; the owner's colour on the uniform and saddle cloth"

@@ -74,6 +74,10 @@ Name models to build only those. Blender runs with its factory settings and with
 reads the originals only as data. Without `--originals`, `build.py` only writes each model's `asset.copyright` and
 `asset.extras`, the manifest and the credits.
 
+The owner's colour goes on last, and `owner.py` won't colour a file that has it already, so a changed `owner`
+rule takes effect only when its model is built again from its original. `check.py` checks each rule's form, not
+that the file follows it.
+
 The originals:
 - **Mine:** generated in my Meshy account, and too big to keep here (up to 140 MB each). I've kept them.
 - **Meshy community models:** each post's GLB download, which needs a Meshy account.

@@ -53,12 +53,15 @@ def fail(text):
 
 def read_jpeg(data):
     """The JPEG's pixels as an array of rows from the top, RGB from 0 to 1 as stored (sRGB)."""
-    path = os.path.join(tempfile.mkdtemp(prefix='owner-texture.'), 'texture.jpg')
-    open(path, 'wb').write(data)
-    img = bpy.data.images.load(path)
-    w, h = img.size
-    px = np.empty(w * h * 4, dtype=np.float32)
-    img.pixels.foreach_get(px)
+    with tempfile.TemporaryDirectory(prefix='owner-texture.') as folder:
+        path = os.path.join(folder, 'texture.jpg')
+        with open(path, 'wb') as f:
+            f.write(data)
+        img = bpy.data.images.load(path)
+        w, h = img.size
+        px = np.empty(w * h * 4, dtype=np.float32)
+        img.pixels.foreach_get(px)
+        bpy.data.images.remove(img)
     return px.reshape(h, w, 4)[::-1, :, :3].copy()
 
 
@@ -130,9 +133,12 @@ def main():
         fail(f'{path} already has an owner\'s colour')
 
     parts = [(mi, pi, world) for mi, world in glb.placed_meshes(gltf) for pi in range(len(gltf['meshes'][mi]['primitives']))]
-    if [mi for mi, _ in glb.placed_meshes(gltf)].count(parts[rule.get('part', 0)][0]) > 1:
+    part = rule.get('part', 0)
+    if not isinstance(part, int) or not 0 <= part < len(parts):
+        fail(f'there is no part {part}: the file\'s parts are numbered from 0 to {len(parts) - 1}')
+    if [mi for mi, _ in glb.placed_meshes(gltf)].count(parts[part][0]) > 1:
         fail('the part\'s mesh is placed more than once')
-    mi, pi, world = parts[rule.get('part', 0)]
+    mi, pi, world = parts[part]
     prim = gltf['meshes'][mi]['primitives'][pi]
     if 'indices' not in prim:
         fail('the part has no indices')
