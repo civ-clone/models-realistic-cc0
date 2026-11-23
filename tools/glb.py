@@ -1,6 +1,7 @@
 """glb.py : reads a glTF 2 binary as data, for build.py and check.py. Standard library only.
 
-read(path) returns the file's JSON and binary chunks, or raises Bad saying what's wrong with its framing.
+read(path) returns the file's JSON and binary chunks, or raises Bad saying what's wrong with its framing;
+read_bytes(data) does the same for a file's bytes.
 measure(gltf, binary) returns what the manifest says of a model: its triangles, how far it reaches (extent, in glTF's
 axes: x across, z along with the front at +z, y up) and its animations' names, and its lowest point. Points are
 placed as their nodes place them in the scene, as the file stands (not as an animation moves them); a skinned mesh is
@@ -22,7 +23,10 @@ class Bad(Exception):
 
 
 def read(path):
-    data = open(path, 'rb').read()
+    return read_bytes(open(path, 'rb').read())
+
+
+def read_bytes(data):
     if len(data) < 20:
         raise Bad('too short for a glTF binary')
     magic, version, length = struct.unpack_from('<III', data, 0)

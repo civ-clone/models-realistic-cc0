@@ -15,14 +15,25 @@ Some of these types are drawn by [models-0ad](https://github.com/civ-clone/model
 ## What's here
 
 - **`models/*.glb`:** one glTF binary for each model, facing `+z`, with one baked colour texture (JPEG, 512 px for
-  people and 1024 px for the rest); the Partisans have a second, for their molotov. Each was cut down to its budget where it was over
+  people and 1024 px for the rest), and a PNG at half that size for its owner's colour; the Partisans have a second
+  JPEG, for their molotov. Each was cut down to its budget where it was over
   (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500 for an aircraft, 3,500 for a ship),
   and its colour baked into the texture. Each carries its credit in `asset.copyright`, and its credit, licence and
   what was done to it in `asset.extras`.
 - **Standing and floating:** a model stands on its origin, centred across and along, at its real size in metres. A
   ship floats with its origin at the waterline, its draught under it (`extent.draught`).
-- **Not yet:** none has a mask for its owner's colour, as models-0ad and models-cimpletoon have. Most people stand in
-  an A-pose, ready to rig, but nothing is rigged.
+- **The owner's colour:** each model takes its owner's colour on one part, as models-0ad and models-cimpletoon do:
+  - **people and riders:** their coat, jacket or other main garment, the Knight's caparison and the Crusader's
+    surcoat and caparison, the Settlers' load;
+  - **sailing ships:** their sails;
+  - **steamships:** a band along the hull;
+  - **aircraft:** their wingtips.
+
+  Those faces are a primitive of their own, drawn with a material that says `extras.playerColour`. Its PNG is grey
+  where the owner's colour goes, as light as the texture there, with its alpha 0, and civ.one draws it as
+  `rgb × mix(owner, white, alpha)`. The rest of each model is drawn as before. Where it goes is each model's `owner`
+  rule in `roster.json`.
+- **Not yet:** most people stand in an A-pose, ready to rig, but nothing is rigged.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;
@@ -33,8 +44,8 @@ Some of these types are drawn by [models-0ad](https://github.com/civ-clone/model
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
     made, the prompt;
   - each model: the unit types it draws, its source, how it's cut (part by part, or wrapped in one new surface), how
-    it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov), its budget, and its scale
-    where it isn't the set's.
+    it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov), where its owner's colour
+    goes, its budget, and its scale where it isn't the set's.
 
   The set's scale draws a 1.8 m person as tall as the other sets' people, 0.168 squares. The 3D map draws units
   bigger than life, so the rest have scales of their own, close to models-cimpletoon's sizes: riders 0.21 to 0.22

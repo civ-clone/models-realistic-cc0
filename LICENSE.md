@@ -21,7 +21,9 @@ I made these changes, and dedicate them to the public domain under CC0 1.0 too:
   says, and its colour baked into one texture.
 - **Placing:** each is turned to face `+z`, sized in metres, and stood on the ground or floated at its waterline.
 - **Assembly:** the molotov is put in the Partisan's hand.
-- **Format:** each is a glTF binary with JPEG textures, carrying its credit in `asset.copyright` and
+- **The owner's colour:** on each, one part is drawn in its owner's colour, as `roster.json` says: a primitive of its
+  own, with a grey PNG whose alpha marks where the colour goes.
+- **Format:** each is a glTF binary with JPEG textures (and that PNG), carrying its credit in `asset.copyright` and
   `asset.extras`.
 
 You may use, change and share them, for any purpose, with no conditions. A credit, though none is needed:

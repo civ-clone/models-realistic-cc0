@@ -19,6 +19,10 @@
     keeps its skeleton): positions finite, normals a unit long, texture coordinates within 0 to 1;
   - images as JPEG, saying so: the first the baked texture, as big as the roster says, and none bigger;
   - each primitive drawn opaque, with a material that has a colour texture;
+  - where the roster gives a model an `owner` rule, and only there, its owner's colour: materials saying
+    `extras.playerColour` (and nothing else in their extras), each with a texture of its own that's a PNG (8-bit,
+    grey and alpha or RGBA), no bigger than the baked texture, whose alpha is 0 somewhere, and where it is, its colour
+    no darker than a grey of 70 in 255, so the owner's colour isn't drawn dark; and no other PNG;
   - its credit, licence and changes in `asset.extras`, and its credit in `asset.copyright`, as build.py writes them,
     saying where it was made with AI.
 - **Each model stands as its roster says:** on the ground (or floating at its draught), centred across and along, and
@@ -58,11 +62,12 @@ NAME = re.compile(r'[a-z0-9][a-z0-9-]*\Z')
 SHA = re.compile(r'[0-9a-f]{64}\Z')
 TOP = {'set', 'date', 'scale', 'generated', 'sources', 'models', 'extras'}
 SOURCE = {'work', 'author', 'url', 'licence', 'note', 'ai', 'generated', 'made', 'prompt', 'file', 'sha256'}
-MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'scale', 'budget', 'made'}
-EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'made'}
+MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'scale', 'budget', 'made'}
+EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'made'}
 CUT = {'mode', 'tris', 'texture', 'depth', 'solidify'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
+OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
 ATTRIBUTES = {'POSITION', 'NORMAL', 'TEXCOORD_0'}
 SKIN_ATTRIBUTES = {'JOINTS_0', 'WEIGHTS_0'}
 
@@ -111,6 +116,39 @@ def check_cut(where, cut):
         problem(f'{where}: solidify should be a number over 0')
 
 
+def span(value, low, high):
+    return (isinstance(value, list) and len(value) == 2 and all(number(v) for v in value)
+            and low <= value[0] <= high and low <= value[1] <= high)
+
+
+def check_owner(where, rule):
+    """An owner rule says only what blender/owner.py reads, with values of the right kind."""
+    if not keys_ok(where, rule, OWNER):
+        return
+    if 'part' in rule and not whole(rule['part'], -1):
+        problem(f'{where}: part should be a whole number from 0')
+    colours = rule.get('colours', [])
+    if not isinstance(colours, list) or not all(isinstance(c, dict) and set(c) <= {'h', 's', 'v'} for c in colours):
+        problem(f'{where}: colours should be a list of ranges of h, s and v')
+    else:
+        for c in colours:
+            if ('h' in c and not span(c['h'], 0, 360)) or any(k in c and not (span(c[k], 0, 1) and c[k][0] <= c[k][1]) for k in 'sv'):
+                problem(f'{where}: colours: h is two angles from 0 to 360, s and v each a range from 0 to 1')
+    for k in ('within', 'without'):
+        boxes = rule.get(k, [])
+        if not isinstance(boxes, list) or not all(isinstance(b, dict) and b and set(b) <= {'x', 'y', 'z'}
+                                                  and all(span(r, -math.inf, math.inf) and r[0] <= r[1] for r in b.values())
+                                                  for b in boxes):
+            problem(f'{where}: {k} should be a list of boxes, each with ranges of x, y or z, low to high')
+    for k in ('sides', 'share', 'light'):
+        if k in rule and not (number(rule[k]) and 0 <= rule[k] <= 1):
+            problem(f'{where}: {k} should be a number from 0 to 1')
+    if 'smooth' in rule and not whole(rule['smooth'], -1):
+        problem(f'{where}: smooth should be a whole number from 0')
+    if 'cut' in rule and not isinstance(rule['cut'], bool):
+        problem(f'{where}: cut should be true or false')
+
+
 def check_build_entry(where, e, allowed, sources):
     if not keys_ok(where, e, allowed):
         return
@@ -133,10 +171,14 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.prop: options should be an object')
         if 'cut' in p:
             check_cut(f'{where}.prop.cut', p['cut'])
+    if 'owner' in e:
+        check_owner(f'{where}.owner', e['owner'])
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
+    elif ('owner' in e) != ("the owner's colour" in e['made']):
+        problem(f'{where}: made should say where "the owner\'s colour" goes where, and only where, there is an owner rule')
 
 
 def credit_of(roster, key):
@@ -195,7 +237,7 @@ def credits_md(roster, credits):
     return '\n'.join(lines) + '\n'
 
 
-def check_file(rel, skinned_ok, texture):
+def check_file(rel, skinned_ok, texture, owner):
     """Checks one GLB; returns its gltf and measurements, or None."""
     path = os.path.join(ROOT, 'models', rel)
     try:
@@ -210,12 +252,40 @@ def check_file(rel, skinned_ok, texture):
             for x in gltf.get(kind, []):
                 if 'extensions' in x:
                     raise glb.Bad(f'one of its {kind} uses an extension')
+        # The owner's colour: which images its materials draw with, and which others do.
+        tinted, plain = set(), set()
+        for mi, m in enumerate(gltf.get('materials', [])):
+            extras = m.get('extras')
+            if extras not in (None, {'playerColour': True}):
+                raise glb.Bad(f'material {mi} has extras other than playerColour')
+            base = m.get('pbrMetallicRoughness', {}).get('baseColorTexture')
+            if base is not None:
+                source = glb.item(gltf, 'textures', base.get('index')).get('source')
+                (tinted if extras else plain).add(source)
+        if tinted & plain:
+            raise glb.Bad('an image is drawn both in the owner\'s colour and not')
+        if bool(tinted) != owner:
+            raise glb.Bad('it has an owner\'s colour where the roster has no owner rule' if tinted else
+                          'it has no owner\'s colour, though the roster has an owner rule')
         for i, img in enumerate(gltf.get('images', [])):
             view = glb.item(gltf, 'bufferViews', img.get('bufferView'))
-            head = binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + 8]
-            if head[:3] != b'\xff\xd8\xff' or img.get('mimeType') != 'image/jpeg':
+            data = binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + view.get('byteLength', 0)]
+            if i in tinted:
+                read = imgsize.png_pixels(data)
+                if read is None or img.get('mimeType') != 'image/png':
+                    raise glb.Bad(f'image {i}, for the owner\'s colour, is not an 8-bit PNG of grey and alpha or RGBA, saying so')
+                w, h, c, rows = read
+                if max(w, h) > texture:
+                    raise glb.Bad(f'image {i}, for the owner\'s colour, is {w} x {h}, bigger than the baked texture')
+                clear = [row[x:x + c - 1] for row in rows for x in range(0, w * c, c) if row[x + c - 1] == 0]
+                if not clear:
+                    raise glb.Bad(f'image {i}, for the owner\'s colour, has no alpha of 0, so shows no owner\'s colour')
+                if min(min(p) for p in clear) < 70:
+                    raise glb.Bad(f'image {i}, for the owner\'s colour, is darker than a grey of 70 under its mask')
+                continue
+            if data[:3] != b'\xff\xd8\xff' or img.get('mimeType') != 'image/jpeg':
                 raise glb.Bad(f'image {i} is not a JPEG, or says it is something else')
-            sides = imgsize.size(binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + view.get('byteLength', 0)])
+            sides = imgsize.size(data)
             if sides is None or max(sides) > texture or (i == 0 and max(sides) != texture):
                 raise glb.Bad(f'image {i} is {sides}: the baked texture should be {texture} px, and no other bigger')
         for t in gltf.get('textures', []):
@@ -359,7 +429,7 @@ def main():
     for rel in sorted(listed & present):
         mid = rel[:-4] if rel in {f'{m}.glb' for m in models} else None
         entry = models[mid] if mid else roster['extras'][rel]
-        got = check_file(rel, skinned_ok=mid is None, texture=entry['cut']['texture'])
+        got = check_file(rel, skinned_ok=mid is None, texture=entry['cut']['texture'], owner='owner' in entry)
         if got is None:
             continue
         gltf, measured = got
