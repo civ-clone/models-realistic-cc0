@@ -9,7 +9,8 @@ types: Settlers, Warriors, Knights, Explorer, Sail, Crusaders, Musketmen, Riflem
 Partisans, Spy, Marines, Engineers, Bomber, Stealth Bomber, Frigate, Ironclad and Transport.
 
 [models-realistic-by](https://github.com/civ-clone/models-realistic-by) draws the later units made from CC BY models.
-civ.one's 3D map draws each type from one set, and these types from this one.
+Some of these types are drawn by [models-cimpletoon](https://github.com/civ-clone/models-cimpletoon) too. civ.one's 3D
+map draws each type from one set.
 
 ## What's here
 
@@ -22,8 +23,8 @@ civ.one's 3D map draws each type from one set, and these types from this one.
 - **Standing and floating:** a model stands on its origin, centred across and along, at its real size in metres. A
   ship floats with its origin at the waterline, its draught under it (`extent.draught`).
 - **The owner's colour:** each model takes its owner's colour on one part, as models-0ad and models-cimpletoon do:
-  - **people and riders:** their coat, jacket or other main garment, the Knight's caparison and the Crusader's
-    surcoat and caparison, the Settlers' load;
+  - **people and riders:** their coat, jacket or other main garment, the Cavalry's saddle cloth, the Knight's caparison,
+    the Crusader's surcoat, caparison and shield, and the Settlers' load;
   - **sailing ships:** their sails;
   - **steamships:** a band along the hull;
   - **aircraft:** their wingtips.

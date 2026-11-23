@@ -370,10 +370,10 @@
             ],
             "s": [
               0.05,
-              0.35
+              0.4
             ],
             "v": [
-              0.5,
+              0.42,
               1
             ]
           }
@@ -549,6 +549,14 @@
               1
             ]
           }
+        ],
+        "within": [
+          {
+            "y": [
+              2.5,
+              16
+            ]
+          }
         ]
       },
       "budget": 3500,
@@ -635,7 +643,7 @@
         "share": 0.35
       },
       "budget": 3000,
-      "made": "generated; rewrapped; the owner's colour on the coat"
+      "made": "generated; rewrapped; the owner's colour on the uniform and saddle cloth"
     },
     "alpine-trooper": {
       "units": [
@@ -788,12 +796,12 @@
           {
             "x": [
               -15,
-              -7.5
+              -8.4
             ]
           },
           {
             "x": [
-              7.5,
+              8.4,
               15
             ]
           }
@@ -880,7 +888,7 @@
         ]
       },
       "budget": 3000,
-      "made": "generated; rewrapped; the owner's colour on the surcoat and caparison"
+      "made": "generated; rewrapped; the owner's colour on the surcoat, caparison and shield"
     },
     "musketman": {
       "units": [
@@ -988,7 +996,7 @@
         "within": [
           {
             "y": [
-              3,
+              4.5,
               32
             ]
           }

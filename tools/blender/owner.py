@@ -88,6 +88,8 @@ def keyed(rgb, colours):
             hm = (h >= hue[0]) | (h <= hue[1])
         else:
             hm = in_range(h, hue)
+        if hue is not None:  # a grey has no hue, so is in no range of hues
+            hm &= s > 0
         out |= hm & in_range(s, c.get('s')) & in_range(v, c.get('v'))
     return out
 
@@ -153,6 +155,7 @@ def main():
 
     # Where each face lies in the texture: the texels whose middles it covers, and where on it each one is; then, for
     #  texels no face covers, the face whose edge is within a twentieth of them, for the margin round each island.
+    #  Where faces share texels (their UVs overlap), the last one drawn has them.
     face_at = np.full((h, w), -1, dtype=np.int64)
     bary_at = np.zeros((h, w, 3))
     edge_at = np.full((h, w), -1, dtype=np.int64)
@@ -244,8 +247,8 @@ def main():
                 break
             picked[flip] = ~picked[flip]
         texel = on & picked[np.maximum(face_at, 0)]
-    if not picked.any():
-        fail('the rule picks no faces')
+    if not picked.any() or not texel.any():
+        fail('the rule picks no faces, or none big enough to cover a texel')
 
     # The owner's texture, over the picked faces: grey and alpha 0 where the owner's colour goes, as light as the
     #  texture there; and, cut texel by texel, the texture as it is, solid, where it doesn't. Round them, a margin

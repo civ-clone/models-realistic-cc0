@@ -70,6 +70,9 @@ PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
 ATTRIBUTES = {'POSITION', 'NORMAL', 'TEXCOORD_0'}
 SKIN_ATTRIBUTES = {'JOINTS_0', 'WEIGHTS_0'}
+# Points over a face, where it's sampled to find its owner's colour (as blender/owner.py samples it).
+SAMPLES = ((1 / 3, 1 / 3, 1 / 3), (2 / 3, 1 / 6, 1 / 6), (1 / 6, 2 / 3, 1 / 6), (1 / 6, 1 / 6, 2 / 3),
+           (0.4, 0.4, 0.2), (0.4, 0.2, 0.4), (0.2, 0.4, 0.4))
 
 
 def problem(text):
@@ -346,9 +349,9 @@ def check_file(rel, skinned_ok, texture, owner):
                 source = glb.item(gltf, 'textures', mat['pbrMetallicRoughness']['baseColorTexture'].get('index')).get('source')
                 if source in masks:  # the owner's colour shows on some of its faces, not only somewhere in its PNG
                     w, h, c, rows = masks[source]
-                    middles = [((uv[a][0] + uv[b][0] + uv[d][0]) / 3, (uv[a][1] + uv[b][1] + uv[d][1]) / 3)
-                               for a, b, d in glb.triangles(gltf, binary, prim)]
-                    if not any(rows[min(int(v * h), h - 1)][min(int(u * w), w - 1) * c + c - 1] < 128 for u, v in middles):
+                    points = [tuple(wa * uv[a][k] + wb * uv[b][k] + wd * uv[d][k] for k in (0, 1))
+                              for a, b, d in glb.triangles(gltf, binary, prim) for wa, wb, wd in SAMPLES]
+                    if not any(rows[min(int(v * h), h - 1)][min(int(u * w), w - 1) * c + c - 1] < 128 for u, v in points):
                         raise glb.Bad(f'mesh {mi}, in the owner\'s colour, has it under none of its faces')
         return gltf, glb.measure(gltf, binary)
     except (glb.Bad, KeyError, TypeError, ValueError, IndexError, AttributeError) as e:

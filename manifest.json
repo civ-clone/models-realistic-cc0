@@ -60,7 +60,7 @@
  "models": {
   "settlers": {
    "file": "models/settlers.glb",
-   "sha256": "976ff932b96f7af6b33cbbd03ee8fff40bf0a08b7335409470df03c3ebffc5a6",
+   "sha256": "e302e2c1bf593d1f15cac3955c2079dea0b715a8aba8512e785407385831f32a",
    "extent": {
     "across": [
      -0.879,
@@ -142,7 +142,7 @@
   "sail": {
    "file": "models/sail.glb",
    "scale": 0.013636,
-   "sha256": "22c8cdfb6ad055799616db8e439256befef27d95c4e49e302a15f0ff859ceef9",
+   "sha256": "aa81c2f273f580d0e60b0278c5a3785d94f88471e67acb2542d9a046a800c750",
    "extent": {
     "across": [
      -5.085,
@@ -184,7 +184,7 @@
   "cavalry": {
    "file": "models/cavalry.glb",
    "scale": 0.090284,
-   "sha256": "d018b6e8b7eb2501630ec6ed5871b52b212c8a1eff183a8f41a2716697fc5335",
+   "sha256": "31b2f65e55230f5c7fe4572cea4f0588c00c98390f481966861f467735bea92a",
    "extent": {
     "across": [
      -0.421,
@@ -200,7 +200,7 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the coat"
+   "made": "generated; rewrapped; the owner's colour on the uniform and saddle cloth"
   },
   "alpine-trooper": {
    "file": "models/alpine-trooper.glb",
@@ -266,7 +266,7 @@
   "bomber": {
    "file": "models/bomber.glb",
    "scale": 0.008095,
-   "sha256": "abace001a23c151eb92a12db272967b7ff45180efcc5b78774a569e127fc3065",
+   "sha256": "829baf90865a1867ccb81fbffbaadd75f9d74ede5fcca6c7030ed06c66fa91d7",
    "extent": {
     "across": [
      -14.969,
@@ -309,7 +309,7 @@
   "crusader": {
    "file": "models/crusader.glb",
    "scale": 0.087866,
-   "sha256": "3b9466ee5b44000adc86e79d48203f8c8bf170c97d0363fbbf0668e280df84f2",
+   "sha256": "2a7ceb12ae4e710812391e713ed7c6bd4c037a066ff0c0eab968e6eb36813717",
    "extent": {
     "across": [
      -0.491,
@@ -325,7 +325,7 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the surcoat and caparison"
+   "made": "generated; rewrapped; the owner's colour on the surcoat, caparison and shield"
   },
   "musketman": {
    "file": "models/musketman.glb",
@@ -371,7 +371,7 @@
   "frigate": {
    "file": "models/frigate.glb",
    "scale": 0.007778,
-   "sha256": "a8ee01992ffe191962510ba9cefea4c84b1f25aeb2d37be29715bfc8002d78ed",
+   "sha256": "cd44a195c2748acdd698e533a51658cd333c40d577ab2097773604e472d94374",
    "extent": {
     "across": [
      -9.16,
