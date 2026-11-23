@@ -52,17 +52,18 @@ map draws each type from one set.
   the joint it leaves from (here the molotov's, `prop`, whose origin is the bottle's middle as he stands).
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
-  of the weights it was posed with. Each clip is made from key poses, in the stance's terms (which way each bone
-  points, and how it's twisted), with the whole figure turned where it falls, the hips moved and the feet planted
-  (the legs bent to keep them where they're put). Between keys the bones turn on smooth curves; a key can be met at
-  rest, at speed, hit at speed (a body reaching the ground) or snapped to (a body a shot strikes), and some bones can
-  meet it after the rest (a head and arms landing after the body), or lag through the whole clip, so a movement
-  passes from the body out to the limbs. Every frame is stood on the ground by its lowest point, and played in place:
-  the map moves units from square to square itself. The file has a root node, `skeleton`, holding a joint for each
-  bone (named as the stance's, which three.js reads without the dot: `hand.R` is `handR`), and the molotov's, `prop`,
-  a child of his right hand's. Each clip keys every joint's turn, the root's place, and the molotov's size (it's 0
-  from just after the throw until it grows back in his hand). A clip that plays once starts as the model stands, and
-  a loop ends where it starts.
+  of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
+  made from key poses, in the stance's terms (which way each bone points, and how it's twisted), with the whole
+  figure turned where it falls, the hips moved and the feet planted (the legs bent to keep them where they're put).
+  Between keys the bones turn on smooth curves; a key can be met at rest, at speed, hit at speed (a body reaching the
+  ground) or snapped to (a body a shot strikes), and some bones can meet it after the rest (a head and arms landing
+  after the body), or lag through the whole clip, so a movement passes from the body out to the limbs. Every frame is
+  stood on the ground by its lowest point, and played in place: the map moves units from square to square itself. The
+  file has a root node, `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads
+  without the dot: `hand.R` is `handR`), and the molotov's, `prop`, a child of his right hand's. Each clip keys every
+  joint's turn, the root's place, and the molotov's size (it's 0 from just after the throw until it grows back in his
+  hand). A clip that plays once starts as the model stands (its feet can be planted there from the start, so they
+  don't slide as it begins), and a loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;

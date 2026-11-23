@@ -6,7 +6,8 @@ WEIGHTS what it wrote of its points' weights then. OUT is POSED with a skin and 
 textures are POSED's, untouched, so it stands as POSED does until a clip moves it.
 
 - **The skeleton** is stance.py's, bound where the stance put it: each bone a joint (named as the bone), under a root
-  node `skeleton`. Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one.
+  node `skeleton`. Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one,
+  but for a leg's above its hip, which fade out (see LEG_REACH).
 - **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, a child of the bone
   that holds it (`bone`), with its origin at the middle of the part as it stands (so a shot from it leaves from
   there). It never leaves the hand: only its size changes (its turn on the hand is keyed too, but stays the same).
@@ -23,7 +24,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     legs bent to reach them (the knees bending forward from where the keys put them), so the hips can drop, lean and
     shift their weight, and a foot can step, without the feet sliding, even as the whole figure turns. Between keys
     a foot is put down and lifted smoothly. The figure is still stood on its lowest point, so nothing else should go
-    lower than a planted foot (the report's `planted` says how far one was lifted off);
+    lower than a planted foot (the report's `planted` says how far a planted ankle ends up from its place: a few
+    millimetres either way as the legs bend, more if something else went below the ground);
   - `ease`: how the key is met: `stop` (easing to it where the movement turns back, on through it where it doesn't),
     `through` (on at speed, as an arm at a throw's release, which may overshoot), `hit` (arriving at twice the speed
     of a straight line from the key before, as a body hitting the ground, and leaving from rest), or `snap` (leaving
@@ -38,9 +40,9 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   Between keys each bone turns smoothly, on a curve through them that doesn't overshoot them (but for a key met
   `through`): it eases to a stop at a key where it turns back, where two keys are the same, and at the ends of a clip
   that plays once, but for a last key hit, a second key snapped to, and `through` there, which is `stop`. A clip that
-  plays once starts at the stance, as the key at 0 must be; a loop's last frame is its first, and its first key has
-  no late bones. The figure is stood on
-  the ground in every frame, by its lowest point (the prop's included, at its size), as stance.py stands it.
+  plays once starts at the stance, as the key at 0 must be (it may plant feet, but only where they stand, so they
+  don't slide as the clip starts); a loop's last frame is its first, and its first key has no late bones. The figure
+  is stood on the ground in every frame, by its lowest point (the prop's included, at its size), as stance.py stands it.
   - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`) and the joint it
     leaves from (`joint`). The map reads the joint's place then, and draws what flies. For now a shot leaves from the
     prop (three.js renames joints whose names have a dot, so the bones' can't be found by name): it throws the prop,
@@ -96,14 +98,14 @@ def read_rig(rig):
         if not isinstance(keys, list) or not keys:
             fail(f'{where}: keys should be a list of poses')
         lag = clip.get('lag', {})
-        if not isinstance(lag, dict) or set(lag) - BONES or not all(number(v, -1e-9) and v < clip['length'] for v in lag.values()):
+        if not isinstance(lag, dict) or set(lag) - BONES or not all(number(v) and 0 <= v < clip['length'] for v in lag.values()):
             fail(f'{where}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
         turns = []
         for k in keys:
-            if not isinstance(k, dict) or set(k) - {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late'} or not number(k.get('at'), -1e-9):
+            if not isinstance(k, dict) or set(k) - {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late'} or not (number(k.get('at')) and k['at'] >= 0):
                 fail(f'{where}: each key has a time (at, from 0), and may have aim, twist, turn, slide, ease, hips, plant and late')
             late = k.get('late', {})
-            if not isinstance(late, dict) or set(late) - BONES or not all(number(v, -1e-9) for v in late.values()):
+            if not isinstance(late, dict) or set(late) - BONES or not all(number(v) and v >= 0 for v in late.values()):
                 fail(f'{where}: late should give bones (by name) a time from 0, in seconds')
             if 'hips' in k and not finite(k['hips'], 3):
                 fail(f'{where}: hips should be [x, y, z], how far the hips move from where they stand')
@@ -143,8 +145,9 @@ def read_rig(rig):
         if role in ONCE:
             if not (times[0] == 0 and times[-1] == clip['length']):
                 fail(f'{where}: a clip that plays once has keys at 0 and at its length')
-            if set(keys[0]) != {'at'}:
-                fail(f'{where}: a clip that plays once starts at the stance, its first key only a time')
+            if set(keys[0]) - {'at', 'plant'} or not all(v is True for v in keys[0].get('plant', {}).values()):
+                fail(f'{where}: a clip that plays once starts at the stance, its first key only a time, and feet planted '
+                     'where they stand (true)')
         shots = clip.get('shots', [])
         if not isinstance(shots, list) or not all(
                 isinstance(x, dict) and prop and x.get('joint') == 'prop' and
@@ -266,6 +269,17 @@ def curve(times, values, t, loop, length, wrap=None, eases=None):
         u = (x - times[k]) / dt
         h00, h10, h01, h11 = 2 * u ** 3 - 3 * u ** 2 + 1, u ** 3 - 2 * u ** 2 + u, -2 * u ** 3 + 3 * u ** 2, u ** 3 - u ** 2
         out[i] = h00 * values[k] + h10 * dt * tangent[k] + h01 * values[k + 1] + h11 * dt * arrive[k + 1]
+    return out
+
+
+def whole_at(axis, place, degrees, slide):
+    """The whole figure's turn (by degrees about the axis, through the place) and slide ([x, z]), as a 4x4 matrix."""
+    out = np.eye(4)
+    if axis is not None and degrees:
+        r = about(axis, math.radians(degrees))
+        out[:3, :3], out[:3, 3] = r, place - r @ place
+    out[0, 3] += slide[0]
+    out[2, 3] += slide[1]
     return out
 
 
@@ -426,7 +440,9 @@ def main():
         kt = [k['at'] for k in keys]
         local_q, turns, slides = [], [], []
         hips_off, weights, targets = [], [], []
-        axis = place = None
+        turned = [k['turn'] for k in keys if 'turn' in k]
+        axis, place = ((np.array(turned[0]['axis'], dtype=float), np.array(turned[0]['about'], dtype=float)) if turned
+                       else (None, None))
         for k in keys:
             rot = key_pose(k)
             local_q.append([quat(rot[n] if parents[n] is None else rot[parents[n]].T @ rot[n]) for n in names])
@@ -436,14 +452,16 @@ def main():
                 p = parents[n]
                 moved[n] = heads[n] + np.array(hips_off[-1]) if p is None else rot[p] @ (heads[n] - heads[p]) + moved[p]
             weights.append([1.0 if s in k.get('plant', {}) else 0.0 for s in SIDES])
+            # Where each ankle is at the key, as the ground sees it: where it's planted, or (a foot the key doesn't
+            #  plant) where the keys put it, the whole figure turned and slid as the key says.
+            whole = whole_at(axis, place, float(k.get('turn', {}).get('degrees', 0)), k.get('slide', [0, 0]))
             row = []
             for s in SIDES:
                 v = k.get('plant', {}).get(s)
                 stand = moved_s[f'foot.{s}']  # the ankle as it stands
-                row += list(moved[f'foot.{s}'] if v is None else stand if v is True else [v[0] + shift[0], stand[1], v[1] + shift[2]])
+                free = whole[:3, :3] @ (moved[f'foot.{s}'] - shift) + whole[:3, 3] + shift
+                row += list(free if v is None else stand if v is True else [v[0] + shift[0], stand[1], v[1] + shift[2]])
             targets.append(row)
-            if 'turn' in k:
-                axis, place = np.array(k['turn']['axis'], dtype=float), np.array(k['turn']['about'], dtype=float)
             turns.append(float(k.get('turn', {}).get('degrees', 0)))
             slides.append(k.get('slide', [0, 0]))
         local_q = np.array(local_q)  # keys x bones x 4
@@ -481,12 +499,7 @@ def main():
                 rot[n] = matrix(q[f, i]) if p is None else rot[p] @ matrix(q[f, i])
                 moved[n] = heads[n] + off[f] if p is None else rot[p] @ (heads[n] - heads[p]) + moved[p]
             # The whole figure's turn and slide, which a planted foot's leg reaches through.
-            whole = np.eye(4)
-            if axis is not None and deg[f]:
-                r = about(axis, math.radians(deg[f]))
-                whole[:3, :3], whole[:3, 3] = r, place - r @ place
-            whole[0, 3] += sl[f, 0]
-            whole[2, 3] += sl[f, 1]
+            whole = whole_at(axis, place, deg[f], sl[f])
             back = np.linalg.inv(whole)
             for j, s in enumerate(SIDES):
                 if held_w[f, j] <= 0:

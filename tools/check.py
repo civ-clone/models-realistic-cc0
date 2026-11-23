@@ -302,8 +302,11 @@ def check_rig(where, rig, stance):
             problem(f'{at}: its keys should come in order of time, none at the same time')
         if role in LOOPS and not (times[0] == 0 and times[-1] < length):
             problem(f'{at}: a loop\'s keys run from 0 to before its length')
-        if role in ONCE and not (times[0] == 0 and times[-1] == length and set(keys[0]) == {'at'}):
-            problem(f'{at}: a clip that plays once starts at the stance (its first key only at 0) and has a key at its length')
+        first = keys[0]
+        if role in ONCE and not (times[0] == 0 and times[-1] == length and not set(first) - {'at', 'plant'} and (
+                not isinstance(first.get('plant', {}), dict) or all(v is True for v in first.get('plant', {}).values()))):
+            problem(f'{at}: a clip that plays once starts at the stance (its first key only at 0, and feet planted where '
+                    'they stand, true) and has a key at its length')
         lates = [k['late'] for k in keys if isinstance(k.get('late'), dict)]
         for b in sorted({b for d in lates for b in d if b in BONES and number(d[b])}):
             bt = [k['at'] + (k['late'][b] if isinstance(k.get('late'), dict) and number(k['late'].get(b)) else 0) for k in keys]
