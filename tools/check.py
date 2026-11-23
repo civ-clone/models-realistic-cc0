@@ -76,7 +76,7 @@ JOINTS = {'pelvis', 'chest', 'neck', 'head', 'top'} | {f'{j}.{s}' for s in 'LR' 
     'shoulder', 'elbow', 'wrist', 'hand', 'hip', 'knee', 'ankle', 'toe')}
 BONES = {'hips', 'spine', 'chest', 'neck', 'head'} | {f'{b}.{s}' for s in 'LR' for b in (
     'shoulder', 'upper_arm', 'forearm', 'hand', 'thigh', 'shin', 'foot')}
-# The joints at each end of a bone (the hips and shoulder bones start where stance.py works out, so aren't here).
+# The joints at each end of a bone (the hips and shoulder bones start where stance.py works out, so are checked apart).
 BONE_ENDS = {'spine': ('pelvis', 'chest'), 'chest': ('chest', 'neck'), 'neck': ('neck', 'head'), 'head': ('head', 'top')}
 BONE_ENDS |= {f'{b}.{s}': (f'{h}.{s}', f'{t}.{s}') for s in 'LR' for b, h, t in (
     ('upper_arm', 'shoulder', 'elbow'), ('forearm', 'elbow', 'wrist'), ('hand', 'wrist', 'hand'), ('thigh', 'hip', 'knee'),
@@ -175,6 +175,12 @@ def check_stance(where, rule):
         problem(f'{where}: joints should give each of {len(JOINTS)} joints a place [x, y, z]')
     else:
         short = [b for b, (h, t) in BONE_ENDS.items() if math.dist(joints[h], joints[t]) < 0.005]
+        for s, sgn in (('L', 1), ('R', -1)):
+            # the shoulder bone runs from a point between the chest and neck, out to the shoulder joint
+            root = [c + 0.7 * (n - c) + (sgn * 0.03 if k == 0 else 0)
+                    for k, (c, n) in enumerate(zip(joints['chest'], joints['neck']))]
+            if math.dist(root, joints[f'shoulder.{s}']) < 0.005:
+                short.append(f'shoulder.{s}')
         if short:
             problem(f'{where}: bones shorter than 5 mm, their joints too close: {sorted(short)}')
     aim = rule.get('aim', {})

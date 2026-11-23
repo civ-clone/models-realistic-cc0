@@ -121,11 +121,11 @@
   },
   "explorer": {
    "file": "models/explorer.glb",
-   "sha256": "efdcbe07a4c3c9f091a299b0a9fad4b4744920b7f6d06d77e053217ac1836a8d",
+   "sha256": "2ef2815268eee07c141f36fd96b366ea0df836b0d8cfa7af2be314acba8dcd61",
    "extent": {
     "across": [
-     -0.315,
-     0.315
+     -0.395,
+     0.395
     ],
     "along": [
      -0.228,
@@ -163,11 +163,11 @@
   },
   "rifleman": {
    "file": "models/rifleman.glb",
-   "sha256": "cbb1d0a6102d1e71049baee7e1057ebe7f0435d42fadc85cc0ab7ce5ac9365ce",
+   "sha256": "9488b216f424bfd7f88d7bca23fccc7c9bffa851170919cee2cb7c182c7fb8e7",
    "extent": {
     "across": [
-     -0.319,
-     0.319
+     -0.394,
+     0.394
     ],
     "along": [
      -0.216,
@@ -224,15 +224,15 @@
   },
   "partisan": {
    "file": "models/partisan.glb",
-   "sha256": "882af9c11d54f3c95aa67168e6e574a0fc920a29a43d043f1b9eea052ef05955",
+   "sha256": "0a9aa0efd230733c67b0b708c44879eb5a6411815ac0be4ddc488a664545b4c6",
    "extent": {
     "across": [
-     -0.347,
-     0.347
+     -0.409,
+     0.409
     ],
     "along": [
-     -0.2,
-     0.2
+     -0.187,
+     0.187
     ],
     "height": 1.8
    },
@@ -245,11 +245,11 @@
   },
   "spy": {
    "file": "models/spy.glb",
-   "sha256": "2a65112738dd8764ccaa836050289b2b30c80c26a39da213b05eea1decaf8d12",
+   "sha256": "57dfe832fe74bb0afc12dbc44b2525198a6851553f2bfa3efd83d9d967d9bec5",
    "extent": {
     "across": [
-     -0.294,
-     0.294
+     -0.376,
+     0.376
     ],
     "along": [
      -0.186,
@@ -392,7 +392,7 @@
   },
   "marine": {
    "file": "models/marine.glb",
-   "sha256": "502356e8cfeb26c456e47471d0e801a958a2126d217fec3b11d449d6a4608c35",
+   "sha256": "d3bfc1cf8cf20ee7ec86ce7a2ae6ee6d7627c23f3d08f96b0beacd8c5fc12498",
    "extent": {
     "across": [
      -0.381,

@@ -37,7 +37,8 @@ import glb  # noqa: E402
 from check import BONES, JOINTS, STANCE  # noqa: E402
 
 SIDES = ('L', 'R')
-EASE = 4  # rings of points round a rigid piece where its weights ease into the bone heat's
+EASE = 4  # rings of points round a rigid piece where its weights ease into the bone heat's,
+EASE_NEAR = 0.12  # as far as this from it
 
 
 def bones(J):
@@ -142,7 +143,7 @@ def weights(welded, faces, skeleton, moving):
     for scale in (1, 100):
         _, w = heat(welded, scale)
         if good(w):
-            return w
+            return w, f'bone heat at {scale}x'
     pp, pw = heat(welded, 1, remesh=0.012)
     keep = pw.sum(axis=1) > 1e-6
     if not keep.any():
@@ -154,11 +155,10 @@ def weights(welded, faces, skeleton, moving):
         near = np.argsort(d2, axis=1)[:, :4]
         inv = 1 / (np.sqrt(np.take_along_axis(d2, near, axis=1)) + 1e-4)
         out[chunk] = np.einsum('pk,pkb->pb', inv, pw[near]) / inv.sum(axis=1, keepdims=True)
-    print('PROXY', json.dumps({'proxy points': int(len(pp))}))
     if not all(out[:, b].max() > 0.5 for b in moving):
         fail(f'no point moves mostly with {[n for i, n in enumerate(skeleton) if i in moving and out[:, i].max() <= 0.5]}, '
              'even on a copy remeshed in voxels')
-    return out
+    return out, 'bone heat on a copy remeshed in voxels'
 
 
 def finite(v, n=None):
@@ -182,7 +182,7 @@ def read_rule(rule):
     if short:
         fail(f'bones shorter than 5 mm, their joints too close: {short}')
     aim, twist, whole = rule.get('aim', {}), rule.get('twist', {}), rule.get('whole', [])
-    if not isinstance(aim, dict) or set(aim) - BONES or not all(finite(d, 3) and np.linalg.norm(d) > 1e-6 for d in aim.values()):
+    if not isinstance(aim, dict) or set(aim) - BONES or not all(finite(d, 3) and 1e-6 < np.linalg.norm(d) < 1e6 for d in aim.values()):
         fail('aim should give bones (by name) a way to point [x, y, z], not [0, 0, 0]')
     if not isinstance(twist, dict) or set(twist) - BONES or not all(finite([v]) for v in twist.values()):
         fail('twist should give bones (by name) a number of degrees')
@@ -245,10 +245,12 @@ def main():
     back = back.ravel()
     wf = back[faces]
     wf = wf[(wf[:, 0] != wf[:, 1]) & (wf[:, 1] != wf[:, 2]) & (wf[:, 0] != wf[:, 2])]
-    wf = np.unique(np.sort(wf, axis=1), axis=0)
+    # each face once, keeping the way it winds (the bone heat reads its normals from it)
+    _, first = np.unique(np.sort(wf, axis=1), axis=0, return_index=True)
+    wf = wf[np.sort(first)]
     names = list(skeleton)
     moving = [names.index(n) for n in sorted(set(rule.get('aim', {})) | set(rule.get('twist', {})))]
-    w = weights(welded, wf, skeleton, moving)
+    w, weighted = weights(welded, wf, skeleton, moving)
     held = np.zeros(len(welded), dtype=bool)
     for b in rule.get('whole', []):
         if 'part' in b:
@@ -266,12 +268,14 @@ def main():
             inside = np.linalg.norm(welded - (a0 + s[:, None] * d), axis=1) <= b['radius']
         else:
             inside = in_box(welded, b)
+        if not inside.any():
+            fail(f'whole: {b!r} holds no points')
         w[inside] = 0
         w[inside, names.index(b['bone'])] = 1
         held |= inside
     if held.any():
-        # Round each rigid piece, the weights eased from its bone to the bone heat's over a few rings of points, so
-        #  the faces between don't stretch.
+        # Round each rigid piece, the weights eased from its bone to the bone heat's over a few rings of points (no
+        #  farther than EASE_NEAR from it), so the faces between don't stretch.
         near = [set() for _ in range(len(welded))]
         for f in wf:
             for i in f:
@@ -281,6 +285,11 @@ def main():
             edge = [j for i in edge for j in near[i] if j not in ring]
             ring.update(edge)
         ease = np.array(sorted(ring - set(np.where(held)[0].tolist())), dtype=np.int64)
+        if len(ease):
+            # only those near the piece: on a coarse figure a few rings can reach far
+            hp = welded[held]
+            gap = np.array([np.sqrt(((hp - welded[i]) ** 2).sum(axis=1).min()) for i in ease])
+            ease = ease[gap <= EASE_NEAR]
         for _ in range(4 * EASE if len(ease) else 0):
             w[ease] = np.array([w[list(near[i])].mean(axis=0) if near[i] else w[i] for i in ease])
     lost = w.sum(axis=1) <= 1e-6
@@ -373,7 +382,7 @@ def main():
     glb.measure(*glb.read_bytes(out))
     open(path, 'wb').write(out)
     moved_by = np.linalg.norm(new_pos - pos, axis=1)
-    print('POSE', path, json.dumps({'points': len(pos), 'moved': int((moved_by > 0.005).sum()), 'flat': int(flat.sum()),
+    print('POSE', path, json.dumps({'weights': weighted, 'points': len(pos), 'moved': int((moved_by > 0.005).sum()), 'flat': int(flat.sum()),
                                     'unreached': int(lost.sum()), 'height': round(float(f32[:, 1].max()), 4)}))
 
 
