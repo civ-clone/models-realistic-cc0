@@ -65,7 +65,8 @@ class Blender:
                 self.by_sha.setdefault(sha256(p), p)
 
     def run(self, script, *args, env=None):
-        cmd = [self.exe, '-b', '--factory-startup', '-Y', '--python', os.path.join(BLENDER_SCRIPTS, script), '--', *map(str, args)]
+        cmd = [self.exe, '-b', '--factory-startup', '-Y', '--python-exit-code', '1', '--python',
+               os.path.join(BLENDER_SCRIPTS, script), '--', *map(str, args)]
         p = subprocess.run(cmd, capture_output=True, text=True, env={**os.environ, **(env or {})})
         bad = [line for line in (p.stdout + p.stderr).splitlines() if 'Traceback' in line or 'Error' in line]
         if p.returncode or bad:

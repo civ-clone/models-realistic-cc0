@@ -1,6 +1,7 @@
 """owner.py : puts the owner's colour on a model, as its roster entry's `owner` says, for civ.one's 3D map.
 
-Args (after --): GLB RULE.json. Rewrites GLB in place; Blender is used only to read its JPEG.
+Args (after --): GLB RULE.json. Rewrites GLB in place; Blender is used only to read its JPEG. Run it as build.py does,
+with `--python-exit-code 1`, so that a failure ends Blender with an error code.
 
 The rule picks where the owner's colour goes on one of the model's parts (`part`, counted through its meshes'
 primitives in the scene's order, default 0):
@@ -134,7 +135,9 @@ def main():
 
     parts = [(mi, pi, world) for mi, world in glb.placed_meshes(gltf) for pi in range(len(gltf['meshes'][mi]['primitives']))]
     part = rule.get('part', 0)
-    if not isinstance(part, int) or not 0 <= part < len(parts):
+    if isinstance(part, bool) or not isinstance(part, int):
+        fail(f'part should be a whole number from 0, not {part!r}')
+    if not 0 <= part < len(parts):
         fail(f'there is no part {part}: the file\'s parts are numbered from 0 to {len(parts) - 1}')
     if [mi for mi, _ in glb.placed_meshes(gltf)].count(parts[part][0]) > 1:
         fail('the part\'s mesh is placed more than once')

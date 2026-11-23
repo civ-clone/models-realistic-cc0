@@ -31,9 +31,10 @@ map draws each type from one set.
 
   Those faces are a primitive of their own, drawn with a material that says `extras.playerColour` and a PNG at half
   the texture's size. Where the owner's colour goes, the PNG is grey, shaded as the texture is there but lifted to a
-  light grey, with its alpha 0, and civ.one draws it as `rgb × mix(owner, white, alpha)`. Where a band or wingtips end
-  partway across a face, the rest of that face is the texture's colour, solid, at that half size. The rest of each
-  model is drawn from its JPEG as before. Where the colour goes is each model's `owner` rule in `roster.json`.
+  light grey, with its alpha 0, and civ.one draws it as `rgb × mix(owner, white, alpha)`. Where a rule goes texel by
+  texel (`cut`), as for bands and wingtips, and the colour ends partway across a face, the rest of that face is the
+  texture's colour, solid, at that half size. The rest of each model is drawn from its JPEG as before. Where the
+  colour goes is each model's `owner` rule in `roster.json`.
 - **Not yet:** most people stand in an A-pose, ready to rig, but nothing is rigged.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;

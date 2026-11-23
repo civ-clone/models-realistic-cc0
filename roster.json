@@ -601,7 +601,34 @@
               1.5
             ]
           }
-        ]
+        ],
+        "without": [
+          {
+            "x": [
+              -0.28,
+              0.28
+            ],
+            "y": [
+              1.055,
+              1.165
+            ]
+          },
+          {
+            "x": [
+              -0.21,
+              -0.13
+            ],
+            "y": [
+              1.165,
+              1.5
+            ],
+            "z": [
+              -0.2,
+              -0.1
+            ]
+          }
+        ],
+        "cut": true
       },
       "budget": 2000,
       "made": "generated; simplified; the owner's colour on the tunic"
