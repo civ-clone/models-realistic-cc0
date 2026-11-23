@@ -29,6 +29,8 @@
   as tall or long as its size. A model with a prop is checked for its draught and grounding only, as its prop reaches
   past it.
 - **The credits** in CREDITS.md are as build.py writes them.
+- **Each stance** names every joint of the skeleton blender/stance.py fits, and only its bones; a model with one says
+  "posed" in its `made`, and only then.
 """
 import hashlib
 import json
@@ -62,12 +64,18 @@ NAME = re.compile(r'[a-z0-9][a-z0-9-]*\Z')
 SHA = re.compile(r'[0-9a-f]{64}\Z')
 TOP = {'set', 'date', 'scale', 'generated', 'sources', 'models', 'extras'}
 SOURCE = {'work', 'author', 'url', 'licence', 'note', 'ai', 'generated', 'made', 'prompt', 'file', 'sha256'}
-MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'scale', 'budget', 'made'}
-EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'made'}
+MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'scale', 'budget', 'made'}
+EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
 CUT = {'mode', 'tris', 'texture', 'depth', 'solidify'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
+STANCE = {'joints', 'aim', 'twist', 'whole'}
+# A figure's joints and bones, as blender/stance.py names them.
+JOINTS = {'pelvis', 'chest', 'neck', 'head', 'top'} | {f'{j}.{s}' for s in 'LR' for j in (
+    'shoulder', 'elbow', 'wrist', 'hand', 'hip', 'knee', 'ankle', 'toe')}
+BONES = {'hips', 'spine', 'chest', 'neck', 'head'} | {f'{b}.{s}' for s in 'LR' for b in (
+    'shoulder', 'upper_arm', 'forearm', 'hand', 'thigh', 'shin', 'foot')}
 ATTRIBUTES = {'POSITION', 'NORMAL', 'TEXCOORD_0'}
 SKIN_ATTRIBUTES = {'JOINTS_0', 'WEIGHTS_0'}
 # Points over a face, where it's sampled to find its owner's colour (as blender/owner.py samples it).
@@ -152,6 +160,31 @@ def check_owner(where, rule):
         problem(f'{where}: cut should be true or false')
 
 
+def check_stance(where, rule):
+    """A stance says only what blender/stance.py reads, with values of the right kind."""
+    if not keys_ok(where, rule, STANCE):
+        return
+    joints = rule.get('joints')
+    if not isinstance(joints, dict) or set(joints) != JOINTS or not all(
+            isinstance(p, list) and len(p) == 3 and all(number(v) for v in p) for p in joints.values()):
+        problem(f'{where}: joints should give each of {len(JOINTS)} joints a place [x, y, z]')
+    aim = rule.get('aim', {})
+    if not isinstance(aim, dict) or set(aim) - BONES or not all(
+            isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and any(d) for d in aim.values()):
+        problem(f'{where}: aim should give bones a way to point [x, y, z]')
+    twist = rule.get('twist', {})
+    if not isinstance(twist, dict) or set(twist) - BONES or not all(number(v) for v in twist.values()):
+        problem(f'{where}: twist should give bones a number of degrees')
+    whole_ = rule.get('whole', [])
+    if not isinstance(whole_, list) or not all(
+            isinstance(b, dict) and b.get('bone') in BONES and (
+                (set(b) == {'bone', 'part'} and whole(b['part'], -1)) or
+                (len(b) > 1 and set(b) <= {'bone', 'x', 'y', 'z'} and all(
+                    span(b[k], -math.inf, math.inf) and b[k][0] <= b[k][1] for k in 'xyz' if k in b)))
+            for b in whole_):
+        problem(f'{where}: whole should be a list, each a bone with a part or a box of x, y or z ranges')
+
+
 def check_build_entry(where, e, allowed, sources):
     if not keys_ok(where, e, allowed):
         return
@@ -176,12 +209,16 @@ def check_build_entry(where, e, allowed, sources):
             check_cut(f'{where}.prop.cut', p['cut'])
     if 'owner' in e:
         check_owner(f'{where}.owner', e['owner'])
+    if 'stance' in e:
+        check_stance(f'{where}.stance', e['stance'])
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
     elif ('owner' in e) != ("the owner's colour" in e['made']):
         problem(f'{where}: made should mention "the owner\'s colour" exactly when there is an owner rule')
+    elif ('stance' in e) != ('posed' in e['made']):
+        problem(f'{where}: made should say "posed" exactly when there is a stance')
 
 
 def credit_of(roster, key):
