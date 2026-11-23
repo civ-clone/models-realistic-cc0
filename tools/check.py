@@ -692,6 +692,9 @@ def check_rigged(rel, entry):
                     steps = int((x['back'] - 0.21 - x['at'] - 0.01) / 0.005)
                     if not sizes or any(abs(v) > 1e-4 for i in range(steps + 1) for v in size_at(x['at'] + 0.01 + 0.005 * i)):
                         raise glb.Bad(f'clip {role} should hide the prop (its size 0) after it is thrown at {x["at"]} s')
+                    if any(abs(v - 1) > 1e-4 for when in (x['at'], x['back']) for v in size_at(when)):
+                        raise glb.Bad(f'clip {role} should have the prop whole in the hand as it\'s thrown at {x["at"]} s, '
+                                      f'and again by {x["back"]} s')
             if keyed is None:
                 keyed = got
             if got != keyed or not {(n, 'rotation') for n in want} | {('hips', 'translation')} <= got:

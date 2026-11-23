@@ -26,8 +26,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`) and the joint it
     leaves from (`joint`). The map reads the joint's place then, and draws what flies. For now a shot leaves from the
     prop (three.js renames joints whose names have a dot, so the bones' can't be found by name): it throws the prop,
-    which is gone 1 ms after `at`, hidden for at least 0.05 s, and grown back in the hand over the 0.2 s before
-    `back`.
+    which is gone from 1 ms after `at` until 0.2 s before `back` (at least 0.25 s after `at`), growing back in the hand
+    over those 0.2 s.
 
 Every clip keys every joint's turn, the root's place, and the prop's size, so none leaves a joint as another left
 it. Clips are sampled at about FPS frames a second (a whole number of frames over each clip), played
@@ -117,7 +117,7 @@ def read_rig(rig):
             fail(f'{where}: its shots should come in order of time')
         thrown = [x for x in shots if x['joint'] == 'prop']
         if not all(number(x['back']) and x['back'] - x['at'] >= 0.25 - 1e-9 and x['back'] <= clip['length'] for x in thrown) or any(
-                b['at'] < a['back'] for a, b in zip(thrown, thrown[1:])):
+                b['at'] <= a['back'] for a, b in zip(thrown, thrown[1:])):
             fail(f'{where}: a thrown prop is back (back) no sooner than at + 0.25, no later than the clip\'s length, and '
                  'before it is thrown again')
     return rig
@@ -154,6 +154,8 @@ def curve(times, values, t, loop, length, wrap=None):
     wraps round (its keys after the end taken times `wrap`, and its last before the start the same, as for a
     quaternion that goes on round rather than back); a clip played once stops at its ends."""
     times, values = np.asarray(times, dtype=float), np.asarray(values, dtype=float)
+    if len(times) == 1:  # one key: it holds
+        return np.repeat(values, len(t), axis=0)
     if loop:
         w = np.ones(values.shape[1]) if wrap is None else np.asarray(wrap, dtype=float)
         times = np.concatenate([[times[-1] - length], times, [times[0] + length, times[1 % len(times)] + length]])
