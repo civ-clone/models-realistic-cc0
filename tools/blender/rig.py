@@ -9,7 +9,7 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   node `skeleton`. Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one.
 - **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, a child of the bone
   that holds it (`bone`), with its origin at the middle of the part as it stands (so a shot from it leaves from
-  there). Only its size is keyed: it never leaves the hand.
+  there). It never leaves the hand: only its size changes (its turn on the hand is keyed too, but stays the same).
 - **`clips`:** by role: `idle`, `move` and `work` loop; `fight`, `die` and `settle` play once. Each has a `length` in
   seconds and its `keys`, each a pose at a time (`at`):
   - `aim` and `twist`, as a stance's, laid over the stance's own: a bone a key names is aimed (or twisted) as the key
@@ -116,7 +116,7 @@ def read_rig(rig):
         if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
             fail(f'{where}: its shots should come in order of time')
         thrown = [x for x in shots if x['joint'] == 'prop']
-        if not all(number(x['back']) and x['at'] + 0.05 <= x['back'] - 0.2 and x['back'] <= clip['length'] for x in thrown) or any(
+        if not all(number(x['back']) and x['back'] - x['at'] >= 0.25 - 1e-9 and x['back'] <= clip['length'] for x in thrown) or any(
                 b['at'] < a['back'] for a, b in zip(thrown, thrown[1:])):
             fail(f'{where}: a thrown prop is back (back) no sooner than at + 0.25, no later than the clip\'s length, and '
                  'before it is thrown again')
@@ -149,13 +149,15 @@ def matrix(q):
                      [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
 
 
-def curve(times, values, t, loop, length):
+def curve(times, values, t, loop, length, wrap=None):
     """values (keys x n) at times, at each time in t, on a cubic curve through them that doesn't overshoot them: a loop
-    wraps round; a clip played once stops at its ends."""
+    wraps round (its keys after the end taken times `wrap`, and its last before the start the same, as for a
+    quaternion that goes on round rather than back); a clip played once stops at its ends."""
     times, values = np.asarray(times, dtype=float), np.asarray(values, dtype=float)
     if loop:
+        w = np.ones(values.shape[1]) if wrap is None else np.asarray(wrap, dtype=float)
         times = np.concatenate([[times[-1] - length], times, [times[0] + length, times[1 % len(times)] + length]])
-        values = np.concatenate([values[-1:], values, values[:1], values[1 % len(values):][:1]])
+        values = np.concatenate([values[-1:] * w, values, values[:1] * w, values[1 % len(values):][:1] * w])
     n = len(times)
     tangent = np.zeros_like(values)
     for k in range(1, n - 1):
@@ -334,7 +336,9 @@ def main():
         for k in range(1, len(keys)):  # each the nearer of q and -q to the key before it
             flip = np.einsum('bq,bq->b', local_q[k], local_q[k - 1]) < 0
             local_q[k, flip] *= -1
-        q = curve(kt, local_q.reshape(len(keys), -1), t, loop, length).reshape(len(t), nb, 4)
+        # A loop goes on from its last key to its first the short way round (a joint turning on and on keeps turning).
+        wrap = np.repeat(np.where(np.einsum('bq,bq->b', local_q[-1], local_q[0]) < 0, -1.0, 1.0), 4)
+        q = curve(kt, local_q.reshape(len(keys), -1), t, loop, length, wrap).reshape(len(t), nb, 4)
         q /= np.linalg.norm(q, axis=2, keepdims=True)
         deg = curve(kt, np.array(turns)[:, None], t, loop, length)[:, 0]
         sl = curve(kt, np.array(slides, dtype=float), t, loop, length)

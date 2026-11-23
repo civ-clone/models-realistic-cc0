@@ -39,13 +39,14 @@
 - **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
   - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
     stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints
-    and weights to a point, the weights adding up to one, no joint twice;
+    and weights to each point, the weights adding up to one, no joint twice;
   - its clips are the rig's, each running from 0 to its length (its times' min and max given), keying the same
     joints (every joint's turn and the root's place) linearly, with values that are numbers and turns that are unit
     quaternions. A clip played once starts where the figure stands, and a loop ends where it starts. Clips play in
-    place: the root stays within 0.25 m of where it starts across the ground in a loop, and 2.5 m in a fall. The
-    prop is in the hand (its size 1) at each clip's start and end, and gone (its size 0) from just after each shot
-    until it grows back;
+    place: only the root's place is keyed (and the prop's size), and the root stays within 0.25 m of where it starts
+    across the ground in a loop, and 2.5 m in a clip played once. Each joint's property is keyed once. The prop's
+    part moves with the prop's joint alone, which is a child of its bone, kept as it is held: its size is 1 but
+    while it's thrown, and 0 from just after each shot until it grows back;
   - the manifest gives its file, SHA-256, clips, and any shots by clip (`rigged`).
 """
 import hashlib
@@ -299,7 +300,7 @@ def check_rig(where, rig, stance):
         if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
             problem(f'{at}: its shots should come in order of time')
         thrown = [x for x in shots if x['joint'] == 'prop']
-        if not all(number(x['back']) and x['at'] + 0.05 <= x['back'] - 0.2 and x['back'] <= length for x in thrown) or any(
+        if not all(number(x['back']) and x['back'] - x['at'] >= 0.25 - 1e-9 and x['back'] <= length for x in thrown) or any(
                 b['at'] <= a['back'] for a, b in zip(thrown, thrown[1:])):
             problem(f'{at}: a thrown prop is back (back) no sooner than at + 0.25, no later than the clip\'s length, and '
                     'before it is thrown again')
@@ -554,6 +555,7 @@ def check_rigged(rel, entry):
         nodes = gltf['nodes']
         joints = skins[0]['joints']
         names = [nodes[j].get('name') for j in joints]
+        parent = {c: i for i, n in enumerate(nodes) for c in n.get('children', [])}
         want = BONES | ({'prop'} if 'prop' in rig else set())
         if len(set(names)) != len(names) or set(names) != want:
             raise glb.Bad(f'its joints should be the stance\'s bones{" and the prop" if "prop" in rig else ""}, each once')
@@ -584,6 +586,8 @@ def check_rigged(rel, entry):
                     for a in ATTRIBUTES):
                 raise glb.Bad(f'its mesh should be models/{static_rel}\'s as it stands, with joints and weights')
             ja, wa = (gltf['accessors'][p['attributes'][a]] for a in ('JOINTS_0', 'WEIGHTS_0'))
+            if ja.get('count') != gltf['accessors'][p['attributes']['POSITION']].get('count') or wa.get('count') != ja.get('count'):
+                raise glb.Bad('its joints and weights should be one to a point')
             if ja.get('type') != 'VEC4' or ja.get('componentType') not in (5121, 5123) or wa.get('type') != 'VEC4' or \
                     wa.get('componentType') != 5126 or ja.get('normalized') or wa.get('normalized'):
                 raise glb.Bad('its joints should be whole numbers and its weights floats, four to a point')
@@ -594,8 +598,21 @@ def check_rigged(rel, entry):
                 used = [j for j, w in zip(js, ws) if w > 0]
                 if len(set(used)) != len(used):
                     raise glb.Bad('a point has two weights on one joint')
+        if 'prop' in rig:
+            # The prop's part on the prop's joint alone, and no other point on it; the joint a child of its bone.
+            prop_j = names.index('prop')
+            held = {(p['attributes']['POSITION'], i) for p in [prims[rig['prop']['part']]]
+                    for f in glb.triangles(gltf, binary, p) for i in f}
+            for p in prims:
+                pa = p['attributes']['POSITION']
+                for i, (js, ws) in enumerate(zip(glb.accessor(gltf, binary, p['attributes']['JOINTS_0']),
+                                                 glb.accessor(gltf, binary, p['attributes']['WEIGHTS_0']))):
+                    on = sum(w for j, w in zip(js, ws) if j == prop_j)
+                    if ((pa, i) in held and abs(on - 1) > 1e-6) or ((pa, i) not in held and on > 0):
+                        raise glb.Bad('the prop\'s part should move with the prop\'s joint alone, and nothing else with it')
+            if parent.get(joints[prop_j]) != joints[names.index(rig['prop']['bone'])]:
+                raise glb.Bad(f'the prop\'s joint should be a child of {rig["prop"]["bone"]}, which holds it')
         # Standing as bound: each joint where its inverse bind matrix undoes.
-        parent = {c: i for i, n in enumerate(nodes) for c in n.get('children', [])}
 
         def world(i, local=None):
             m = (local or {}).get(i) or glb.local_matrix(nodes[i])
@@ -614,6 +631,9 @@ def check_rigged(rel, entry):
         for role, anim in anims.items():
             length = rig['clips'][role]['length']
             got = set()
+            targets = [(c['target'].get('node'), c['target'].get('path')) for c in anim['channels']]
+            if len(set(targets)) != len(targets):
+                raise glb.Bad(f'clip {role} keys one joint\'s one property twice')
             for ch in anim['channels']:
                 sampler = anim['samplers'][ch['sampler']]
                 node, path_ = ch['target'].get('node'), ch['target'].get('path')
@@ -629,11 +649,22 @@ def check_rigged(rel, entry):
                 if any(not math.isfinite(v) for value in values for v in value) or (path_ == 'rotation' and any(
                         abs(math.sqrt(sum(v * v for v in q)) - 1) > 1e-3 for q in values)):
                     raise glb.Bad(f'clip {role} has a value that is not a number, or a turn that is not a unit quaternion')
+                if path_ == 'translation' and nodes[node].get('name') != 'hips' or path_ == 'scale' and nodes[node].get('name') != 'prop':
+                    raise glb.Bad(f'clip {role} moves {nodes[node].get("name")} ({path_}); only the root\'s place, and the '
+                                  'prop\'s size, are keyed beside the turns')
+                if path_ == 'rotation' and nodes[node].get('name') == 'prop' and not all(
+                        same(v, nodes[node].get('rotation', (0, 0, 0, 1)), path_, 1e-5) for v in values):
+                    raise glb.Bad(f'clip {role} turns the prop in the hand, where it should stay as it is held')
+                if path_ == 'scale':
+                    out = [x for x in rig['clips'][role].get('shots', []) if x['joint'] == 'prop']
+                    if any(not same(v, (1, 1, 1), path_, 1e-6) for t, v in zip(times, values)
+                           if not any(x['at'] + 1e-4 < t < x['back'] - 1e-4 for x in out)):
+                        raise glb.Bad(f'clip {role} should keep the prop in the hand, its size 1, but while it is thrown')
                 if path_ == 'translation' and nodes[node].get('name') == 'hips':
                     reach = max(math.hypot(v[0] - values[0][0], v[2] - values[0][2]) for v in values)
                     if reach > (0.25 if role in LOOPS else 2.5):
                         raise glb.Bad(f'clip {role} moves the figure {reach:.2f} m across the ground; clips play in '
-                                      'place (a loop within 0.25 m, a fall within 2.5 m)')
+                                      'place (a loop within 0.25 m, a clip played once within 2.5 m)')
                 if path_ == 'scale' and nodes[node].get('name') == 'prop' and not (
                         same(values[0], (1, 1, 1), path_, 1e-6) and same(values[-1], (1, 1, 1), path_, 1e-6)):
                     raise glb.Bad(f'clip {role} should start and end with the prop in the hand, its size 1')
@@ -658,8 +689,8 @@ def check_rigged(rel, entry):
                             return sizes[k]
                         u = (when - times[k]) / (times[k + 1] - times[k])
                         return [a + u * (b - a) for a, b in zip(sizes[k], sizes[k + 1])]
-                    steps = int((x['back'] - 0.2 - x['at'] - 0.01) / 0.005)
-                    if not sizes or any(abs(v) > 1e-6 for i in range(steps + 1) for v in size_at(x['at'] + 0.01 + 0.005 * i)):
+                    steps = int((x['back'] - 0.21 - x['at'] - 0.01) / 0.005)
+                    if not sizes or any(abs(v) > 1e-4 for i in range(steps + 1) for v in size_at(x['at'] + 0.01 + 0.005 * i)):
                         raise glb.Bad(f'clip {role} should hide the prop (its size 0) after it is thrown at {x["at"]} s')
             if keyed is None:
                 keyed = got
