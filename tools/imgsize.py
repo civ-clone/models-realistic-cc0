@@ -27,6 +27,13 @@ def size(data):
 def png_pixels(data):
     """An 8-bit PNG's width, height, channels (2, grey and alpha; or 4, RGBA) and rows of bytes from the top, or None
     where it isn't such a PNG, or doesn't read."""
+    try:
+        return _png_pixels(data)
+    except (struct.error, ValueError, IndexError, KeyError):
+        return None
+
+
+def _png_pixels(data):
     if data[:8] != b'\x89PNG\r\n\x1a\n':
         return None
     at, idat, head = 8, b'', None
@@ -42,6 +49,8 @@ def png_pixels(data):
         elif kind == b'IEND':
             break
         at += 12 + n
+    else:
+        return None  # no IEND
     if head is None or head[2] != 8 or head[3] not in (4, 6) or head[4:] != (0, 0, 0):
         return None
     w, h, c = head[0], head[1], {4: 2, 6: 4}[head[3]]

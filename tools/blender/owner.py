@@ -25,7 +25,8 @@ its alpha is 0; cut texel by texel, it's the texture as it is, solid, where it d
 rgb × mix(owner, white, alpha), so the owner's colour goes where the rule says, shaded as before. The rest of the
 model, its texture and its JPEG are left as they are.
 
-It fails, writing nothing, where the rule picks nothing, or the file already has an owner's colour.
+It fails, writing nothing, where the rule picks no face or every face of the part (whose JPEG is kept for the
+rest), or the file already has an owner's colour.
 """
 import json
 import math
@@ -150,9 +151,12 @@ def main():
     faces = glb.triangles(gltf, binary, prim)
     tri = np.array(faces, dtype=np.int64)
 
-    # Where each face lies in the texture: the texels it covers, and where on it each one is.
+    # Where each face lies in the texture: the texels whose middles it covers, and where on it each one is; then, for
+    #  texels no face covers, the face whose edge is within a twentieth of them, for the margin round each island.
     face_at = np.full((h, w), -1, dtype=np.int64)
     bary_at = np.zeros((h, w, 3))
+    edge_at = np.full((h, w), -1, dtype=np.int64)
+    edge_bary = np.zeros((h, w, 3))
     for f in range(len(faces)):
         t = uv[tri[f]] * (w, h)
         x0, y0 = np.floor(t.min(axis=0)).astype(int)
@@ -168,9 +172,19 @@ def main():
         l1 = ((by - cy) * (gx - cx) + (cx - bx) * (gy - cy)) / d
         l2 = ((cy - ay) * (gx - cx) + (ax - cx) * (gy - cy)) / d
         l3 = 1 - l1 - l2
-        inside = (l1 >= -0.05) & (l2 >= -0.05) & (l3 >= -0.05)
+        bary = np.stack([l1, l2, l3], axis=-1)
+        inside = (l1 >= 0) & (l2 >= 0) & (l3 >= 0)
+        near = (l1 >= -0.05) & (l2 >= -0.05) & (l3 >= -0.05) & ~inside
         face_at[y0:y1 + 1, x0:x1 + 1][inside] = f
-        bary_at[y0:y1 + 1, x0:x1 + 1][inside] = np.stack([l1, l2, l3], axis=-1)[inside]
+        bary_at[y0:y1 + 1, x0:x1 + 1][inside] = bary[inside]
+        edge_at[y0:y1 + 1, x0:x1 + 1][near] = f
+        edge_bary[y0:y1 + 1, x0:x1 + 1][near] = bary[near]
+    unclaimed = (face_at < 0) & (edge_at >= 0)
+    face_at[unclaimed] = edge_at[unclaimed]
+    bary_at[unclaimed] = edge_bary[unclaimed]
+    strict = np.zeros((h, w), dtype=bool)
+    strict[face_at >= 0] = True
+    strict[unclaimed] = False
     P = np.array(pos)
     normal = np.cross(P[tri[:, 1]] - P[tri[:, 0]], P[tri[:, 2]] - P[tri[:, 0]])
     length = np.linalg.norm(normal, axis=1)
@@ -198,7 +212,12 @@ def main():
         where[on] = np.einsum('nk,nkc->nc', bary_at[on], P[tri[f_on]])
         texel = np.zeros((h, w), dtype=bool)
         texel[on] = key[on] & placed(where[on]) & sideways[f_on]
-        picked = np.bincount(face_at[texel], minlength=len(faces)) > 0
+        picked = np.bincount(face_at[texel & strict], minlength=len(faces)) > 0
+        # A face too small to cover a texel's middle is picked as its middle is.
+        tiny = np.bincount(face_at[strict], minlength=len(faces)) == 0
+        q = uv[tri].mean(axis=1)
+        keyed_middle = key[np.clip((q[:, 1] * h).astype(int), 0, h - 1), np.clip((q[:, 0] * w).astype(int), 0, w - 1)]
+        picked |= tiny & keyed_middle & placed(P[tri].mean(axis=1)) & sideways
     else:
         # Face by face: a face is picked where enough of its texture is in the rule's colours and its middle where
         #  the rule says, and then all of it is in the owner's colour.
@@ -252,60 +271,53 @@ def main():
             take = src & ~filled
             img[take] = np.roll(img, (dy, dx), axis=(0, 1))[take]
             filled |= take
-    flat = np.array([light] * (img.shape[-1] - 1) + [0.0])
+    # Flat beyond the margin: grey for the owner's colour, or, cut texel by texel, the texture's mean colour, solid,
+    #  so small copies' mipmaps don't carry the owner's colour onto faces that don't have it.
+    flat = np.concatenate([rgb[on].mean(axis=0), [1.0]]) if rule.get('cut') else np.array([light, 0.0])
     img = np.where(filled[..., None], img, flat)
     if h % 2 == 0 and w % 2 == 0:  # at half the texture's size: mostly it holds shading, the colour being the owner's
         img = img.reshape(h // 2, 2, w // 2, 2, img.shape[-1]).mean(axis=(1, 3))
     png = png_image(np.round(np.clip(img, 0, 1) * 255).astype(np.uint8))
 
-    # The file: the part's faces reordered, the rest first, then the picked; the picked as a primitive of their own,
-    #  or, where it picks them all, the part itself in the owner's colour.
+    # The file: the part's faces reordered, the rest first, then the picked; the picked as a primitive of their own.
     picked_n = int(picked.sum())
     rest = len(faces) - picked_n
     views = {}
     if rest == 0:
-        users = [p for m in gltf['meshes'] for p in m['primitives'] if p.get('material') == prim['material']]
-        tex_users = [m for m in gltf['materials'] if m['pbrMetallicRoughness'].get('baseColorTexture', {}).get('index')
-                     == material['pbrMetallicRoughness']['baseColorTexture']['index']]
-        if len(users) > 1 or len(tex_users) > 1 or sum(t.get('source') == tex['source'] for t in gltf['textures']) > 1:
-            fail('the rule picks the whole part, whose material or texture something else uses too')
-        material['extras'] = {'playerColour': True}
-        image['mimeType'] = 'image/png'
-        views[image['bufferView']] = png
-    else:
-        acc = gltf['accessors'][prim['indices']]
-        iview = gltf['bufferViews'][acc['bufferView']]
-        size = {5121: 1, 5123: 2, 5125: 4}[acc['componentType']]
-        if iview.get('byteStride') not in (None, size):
-            fail('the part\'s indices are strided')
-        fmt = '<' + {1: 'B', 2: 'H', 4: 'I'}[size] * 3
-        order = [f for f in range(len(faces)) if not picked[f]] + [f for f in range(len(faces)) if picked[f]]
-        data = bytearray(binary[iview.get('byteOffset', 0):iview.get('byteOffset', 0) + iview['byteLength']])
-        for n, f in enumerate(order):
-            struct.pack_into(fmt, data, acc.get('byteOffset', 0) + n * 3 * size, *faces[f])
-        views[acc['bufferView']] = bytes(data)
-        acc['count'] = rest * 3
-        acc.pop('min', None)
-        acc.pop('max', None)
-        owner_acc = {k: v for k, v in acc.items() if k not in ('count', 'byteOffset', 'name')}
-        owner_acc.update({'byteOffset': acc.get('byteOffset', 0) + rest * 3 * size, 'count': picked_n * 3})
-        gltf['accessors'].append(owner_acc)
-        gltf['bufferViews'].append({'buffer': 0, 'byteOffset': 0, 'byteLength': len(png)})
-        views[len(gltf['bufferViews']) - 1] = png
-        gltf['images'].append({'bufferView': len(gltf['bufferViews']) - 1, 'mimeType': 'image/png',
-                               'name': f'{image.get("name", "texture")}-owner'})
-        new_tex = {'source': len(gltf['images']) - 1}
-        if 'sampler' in tex:
-            new_tex['sampler'] = tex['sampler']
-        gltf['textures'].append(new_tex)
-        owner_mat = json.loads(json.dumps(material))
-        owner_mat['name'] = f'{material.get("name", "material")}-owner'
-        owner_mat['pbrMetallicRoughness']['baseColorTexture'] = {'index': len(gltf['textures']) - 1}
-        owner_mat['extras'] = {'playerColour': True}
-        gltf['materials'].append(owner_mat)
-        owner_prim = {k: v for k, v in prim.items() if k not in ('indices', 'material')}
-        owner_prim.update({'indices': len(gltf['accessors']) - 1, 'material': len(gltf['materials']) - 1})
-        gltf['meshes'][mi]['primitives'].insert(pi + 1, owner_prim)
+        fail('the rule picks every face of the part: give the owner\'s colour to part of it, as its JPEG is kept')
+    acc = gltf['accessors'][prim['indices']]
+    iview = gltf['bufferViews'][acc['bufferView']]
+    size = {5121: 1, 5123: 2, 5125: 4}[acc['componentType']]
+    if iview.get('byteStride') not in (None, size):
+        fail('the part\'s indices are strided')
+    fmt = '<' + {1: 'B', 2: 'H', 4: 'I'}[size] * 3
+    order = [f for f in range(len(faces)) if not picked[f]] + [f for f in range(len(faces)) if picked[f]]
+    data = bytearray(binary[iview.get('byteOffset', 0):iview.get('byteOffset', 0) + iview['byteLength']])
+    for n, f in enumerate(order):
+        struct.pack_into(fmt, data, acc.get('byteOffset', 0) + n * 3 * size, *faces[f])
+    views[acc['bufferView']] = bytes(data)
+    acc['count'] = rest * 3
+    acc.pop('min', None)
+    acc.pop('max', None)
+    owner_acc = {k: v for k, v in acc.items() if k not in ('count', 'byteOffset', 'name')}
+    owner_acc.update({'byteOffset': acc.get('byteOffset', 0) + rest * 3 * size, 'count': picked_n * 3})
+    gltf['accessors'].append(owner_acc)
+    gltf['bufferViews'].append({'buffer': 0, 'byteOffset': 0, 'byteLength': len(png)})
+    views[len(gltf['bufferViews']) - 1] = png
+    gltf['images'].append({'bufferView': len(gltf['bufferViews']) - 1, 'mimeType': 'image/png',
+                           'name': f'{image.get("name", "texture")}-owner'})
+    new_tex = {'source': len(gltf['images']) - 1}
+    if 'sampler' in tex:
+        new_tex['sampler'] = tex['sampler']
+    gltf['textures'].append(new_tex)
+    owner_mat = json.loads(json.dumps(material))
+    owner_mat['name'] = f'{material.get("name", "material")}-owner'
+    owner_mat['pbrMetallicRoughness']['baseColorTexture'] = {'index': len(gltf['textures']) - 1}
+    owner_mat['extras'] = {'playerColour': True}
+    gltf['materials'].append(owner_mat)
+    owner_prim = {k: v for k, v in prim.items() if k not in ('indices', 'material')}
+    owner_prim.update({'indices': len(gltf['accessors']) - 1, 'material': len(gltf['materials']) - 1})
+    gltf['meshes'][mi]['primitives'].insert(pi + 1, owner_prim)
 
     # The binary chunk laid out again, each view in its old order, those changed with their new bytes.
     out = bytearray()

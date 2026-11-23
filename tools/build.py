@@ -122,7 +122,8 @@ class Blender:
         if 'owner' in entry:
             rule = os.path.join(self.work, 'owner', slug + '.json')
             os.makedirs(os.path.dirname(rule), exist_ok=True)
-            json.dump(entry['owner'], open(rule, 'w', encoding='utf-8'))
+            with open(rule, 'w', encoding='utf-8') as f:
+                json.dump(entry['owner'], f)
             self.run('owner.py', out, rule)
 
 

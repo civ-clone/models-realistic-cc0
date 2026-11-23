@@ -253,11 +253,14 @@ def check_file(rel, skinned_ok, texture, owner):
                 if 'extensions' in x:
                     raise glb.Bad(f'one of its {kind} uses an extension')
         # The owner's colour: which images its materials draw with, and which others do.
-        tinted, plain = set(), set()
+        used = {p.get('material') for mesh in gltf.get('meshes', []) for p in mesh.get('primitives', [])}
+        tinted, plain, masks = set(), set(), {}
         for mi, m in enumerate(gltf.get('materials', [])):
+            if mi not in used:
+                raise glb.Bad(f'material {mi} is drawn by no primitive')
             extras = m.get('extras')
-            if extras not in (None, {'playerColour': True}):
-                raise glb.Bad(f'material {mi} has extras other than playerColour')
+            if extras is not None and not (len(extras) == 1 and extras.get('playerColour') is True):
+                raise glb.Bad(f'material {mi} has extras other than playerColour: true')
             base = m.get('pbrMetallicRoughness', {}).get('baseColorTexture')
             if base is not None:
                 source = glb.item(gltf, 'textures', base.get('index')).get('source')
@@ -282,6 +285,9 @@ def check_file(rel, skinned_ok, texture, owner):
                     raise glb.Bad(f'image {i}, for the owner\'s colour, has no alpha of 0, so shows no owner\'s colour')
                 if min(min(p) for p in clear) < 70:
                     raise glb.Bad(f'image {i}, for the owner\'s colour, is darker than a grey of 70 under its mask')
+                if i == 0:
+                    raise glb.Bad('image 0, the baked texture, is drawn in the owner\'s colour, not kept as a JPEG')
+                masks[i] = (w, h, c, rows)
                 continue
             if data[:3] != b'\xff\xd8\xff' or img.get('mimeType') != 'image/jpeg':
                 raise glb.Bad(f'image {i} is not a JPEG, or says it is something else')
@@ -337,6 +343,13 @@ def check_file(rel, skinned_ok, texture, owner):
                 uv = glb.accessor(gltf, binary, attrs['TEXCOORD_0'])
                 if len(uv) != len(pos) or any(not -1e-4 <= c <= 1 + 1e-4 for t in uv for c in t):
                     raise glb.Bad(f'mesh {mi} has texture coordinates outside 0 to 1')
+                source = glb.item(gltf, 'textures', mat['pbrMetallicRoughness']['baseColorTexture'].get('index')).get('source')
+                if source in masks:  # the owner's colour shows on some of its faces, not only somewhere in its PNG
+                    w, h, c, rows = masks[source]
+                    middles = [((uv[a][0] + uv[b][0] + uv[d][0]) / 3, (uv[a][1] + uv[b][1] + uv[d][1]) / 3)
+                               for a, b, d in glb.triangles(gltf, binary, prim)]
+                    if not any(rows[min(int(v * h), h - 1)][min(int(u * w), w - 1) * c + c - 1] < 128 for u, v in middles):
+                        raise glb.Bad(f'mesh {mi}, in the owner\'s colour, has it under none of its faces')
         return gltf, glb.measure(gltf, binary)
     except (glb.Bad, KeyError, TypeError, ValueError, IndexError, AttributeError) as e:
         problem(f'models/{rel}: {e}')

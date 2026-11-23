@@ -9,8 +9,7 @@ types: Settlers, Warriors, Knights, Explorer, Sail, Crusaders, Musketmen, Riflem
 Partisans, Spy, Marines, Engineers, Bomber, Stealth Bomber, Frigate, Ironclad and Transport.
 
 [models-realistic-by](https://github.com/civ-clone/models-realistic-by) draws the later units made from CC BY models.
-Some of these types are drawn by [models-0ad](https://github.com/civ-clone/models-0ad) and
-[models-cimpletoon](https://github.com/civ-clone/models-cimpletoon) too. civ.one's 3D map draws each type from one set.
+civ.one's 3D map draws each type from one set, and these types from this one.
 
 ## What's here
 
@@ -29,10 +28,11 @@ Some of these types are drawn by [models-0ad](https://github.com/civ-clone/model
   - **steamships:** a band along the hull;
   - **aircraft:** their wingtips.
 
-  Those faces are a primitive of their own, drawn with a material that says `extras.playerColour`. Its PNG is grey
-  where the owner's colour goes, as light as the texture there, with its alpha 0, and civ.one draws it as
-  `rgb × mix(owner, white, alpha)`. The rest of each model is drawn as before. Where it goes is each model's `owner`
-  rule in `roster.json`.
+  Those faces are a primitive of their own, drawn with a material that says `extras.playerColour` and a PNG at half
+  the texture's size. Where the owner's colour goes, the PNG is grey, shaded as the texture is there but lifted to a
+  light grey, with its alpha 0, and civ.one draws it as `rgb × mix(owner, white, alpha)`. Where a band or wingtips end
+  partway across a face, the rest of that face is the texture's colour, solid, at that half size. The rest of each
+  model is drawn from its JPEG as before. Where the colour goes is each model's `owner` rule in `roster.json`.
 - **Not yet:** most people stand in an A-pose, ready to rig, but nothing is rigged.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
