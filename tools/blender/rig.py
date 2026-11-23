@@ -17,10 +17,23 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     the arm swings);
   - `turn`: the whole figure turned about a place (`about`), about an axis (`axis`), by `degrees`. A clip's turns
     share their axis and place;
-  - `slide`: the whole figure moved across and along, [x, z], in metres.
+  - `slide`: the whole figure moved across and along, [x, z], in metres;
+  - `hips`: the hips moved from where they stand, [x, y, z], in metres, and `plant`: feet (`L`, `R`) kept on the
+    ground, the ankle at a place [x, z] (as the posed figure stands in the file; or `true`: where it stands), the
+    legs bent to reach them, so the hips can drop, lean and shift their weight, and a foot can step, without the feet
+    sliding. Between keys a foot is put down and lifted smoothly;
+  - `ease`: how the key is met: `stop` (easing to it where the movement turns back), `through` (on at speed, as an
+    arm at a throw's release), `hit` (arriving at speed, as a body hitting the ground), or `snap` (thrown to it,
+    leaving the key before at speed, as a body a shot strikes);
+  - `late`: bones that meet the key after the rest of the figure, by a time in seconds, as arms and a head reach the
+    ground after the body they hang from.
+  Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
+  less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
+  and head.
 
   Between keys each bone turns smoothly, on a curve through them that doesn't overshoot them (it eases to a stop at a
-  key where it turns back, or where two keys are the same, and at the ends of a clip that plays once). A clip that
+  key where it turns back, or where two keys are the same, and at the ends of a clip that plays once), unless a key
+  is met `through`. A clip that
   plays once starts at the stance, as the key at 0 must be; a loop's last frame is its first. The figure is stood on
   the ground in every frame, by its lowest point (the prop's included, at its size), as stance.py stands it.
   - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`) and the joint it
@@ -47,12 +60,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import glb  # noqa: E402
 from check import BONES  # noqa: E402
-from skeleton import about, fail, finite, forward, read_aim, read_rule, turn  # noqa: E402
+from skeleton import SIDES, about, fail, finite, forward, read_aim, read_rule, turn  # noqa: E402
 
 FPS = 24
 LOOPS = {'idle', 'move', 'work'}
 ONCE = {'fight', 'die', 'settle'}
 INFLUENCES = 4
+LEG_REACH = (0.08, 0.18)  # a leg's weight fades out from this far above its hip to this far
 
 
 def number(v, lo=-math.inf):
@@ -71,15 +85,28 @@ def read_rig(rig):
         where = f'clip {role}'
         if role not in LOOPS | ONCE:
             fail(f'{where}: a clip is one of {sorted(LOOPS | ONCE)}')
-        if not isinstance(clip, dict) or set(clip) - {'length', 'keys', 'shots'} or not number(clip.get('length'), 0):
+        if not isinstance(clip, dict) or set(clip) - {'length', 'keys', 'shots', 'lag'} or not number(clip.get('length'), 0):
             fail(f'{where}: a clip has a length over 0 and keys, and may have shots')
         keys = clip.get('keys')
         if not isinstance(keys, list) or not keys:
             fail(f'{where}: keys should be a list of poses')
+        lag = clip.get('lag', {})
+        if not isinstance(lag, dict) or set(lag) - BONES or not all(number(v, -1e-9) and v < clip['length'] for v in lag.values()):
+            fail(f'{where}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
         turns = []
         for k in keys:
-            if not isinstance(k, dict) or set(k) - {'at', 'aim', 'twist', 'turn', 'slide'} or not number(k.get('at'), -1e-9):
-                fail(f'{where}: each key has a time (at, from 0), and may have aim, twist, turn and slide')
+            if not isinstance(k, dict) or set(k) - {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late'} or not number(k.get('at'), -1e-9):
+                fail(f'{where}: each key has a time (at, from 0), and may have aim, twist, turn, slide, ease, hips, plant and late')
+            late = k.get('late', {})
+            if not isinstance(late, dict) or set(late) - BONES or not all(number(v, -1e-9) for v in late.values()):
+                fail(f'{where}: late should give bones (by name) a time from 0, in seconds')
+            if 'hips' in k and not finite(k['hips'], 3):
+                fail(f'{where}: hips should be [x, y, z], how far the hips move from where they stand')
+            plant = k.get('plant', {})
+            if not isinstance(plant, dict) or set(plant) - {'L', 'R'} or not all(v is True or finite(v, 2) for v in plant.values()):
+                fail(f'{where}: plant should give feet (L, R) a place on the ground [x, z], or true to keep them where they stand')
+            if k.get('ease', 'stop') not in ('stop', 'through', 'hit', 'snap'):
+                fail(f'{where}: a key\'s ease is stop, through, hit or snap')
             aim = k.get('aim', {})
             if not isinstance(aim, dict):
                 fail(f'{where}: aim should be an object')
@@ -101,6 +128,11 @@ def read_rig(rig):
             fail(f'{where}: its keys should come in order of time, none at the same time')
         if role in LOOPS and not (times[0] == 0 and times[-1] < clip['length']):
             fail(f'{where}: a loop\'s keys run from 0 to before its length (its last frame is its first)')
+        for b in sorted({b for k in keys for b in k.get('late', {})}):
+            bt = [k['at'] + k.get('late', {}).get(b, 0) for k in keys]
+            if any(y <= x for x, y in zip(bt, bt[1:])) or not (bt[-1] < clip['length'] if role in LOOPS else bt[-1] <= clip['length']):
+                fail(f'{where}: late keys of {b} should still come in order of time, '
+                     + ('before the loop\'s length' if role in LOOPS else 'none late at its last key'))
         if role in ONCE:
             if not (times[0] == 0 and times[-1] == clip['length']):
                 fail(f'{where}: a clip that plays once has keys at 0 and at its length')
@@ -149,10 +181,37 @@ def matrix(q):
                      [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
 
 
-def curve(times, values, t, loop, length, wrap=None):
+def blend(a, b, w):
+    """The rotation w of the way from a to b."""
+    qa, qb = quat(a), quat(b)
+    if qa @ qb < 0:
+        qb = -qb
+    c = float(np.clip(qa @ qb, -1, 1))
+    if c > 0.9995:
+        return matrix(qa + w * (qb - qa))
+    th = math.acos(c)
+    return matrix((math.sin((1 - w) * th) * qa + math.sin(w * th) * qb) / math.sin(th))
+
+
+def reach(hip, target, a, b, pole):
+    """Where the knee goes for an ankle at target, the thigh a long and the shin b, the knee bent towards pole."""
+    d = target - hip
+    n = max(float(np.linalg.norm(d)), 1e-9)
+    u = d / n
+    n = min(max(n, abs(a - b) + 1e-4), a + b - 1e-4)
+    cos = (a * a + n * n - b * b) / (2 * a * n)
+    side = pole - (pole @ u) * u
+    side /= max(float(np.linalg.norm(side)), 1e-9)
+    return hip + a * (cos * u + math.sqrt(max(0.0, 1 - cos * cos)) * side), hip + n * u
+
+
+def curve(times, values, t, loop, length, wrap=None, eases=None):
     """values (keys x n) at times, at each time in t, on a cubic curve through them that doesn't overshoot them: a loop
     wraps round (its keys after the end taken times `wrap`, and its last before the start the same, as for a
-    quaternion that goes on round rather than back); a clip played once stops at its ends."""
+    quaternion that goes on round rather than back); a clip played once stops at its ends. Each key's ease (`eases`)
+    is how it's met: `stop` (as above), `through` (on at speed: the slope from the keys either side, unlimited, so it
+    may overshoot), `hit` (arriving at speed, as a fall reaches the ground, and leaving from rest) or `snap` (thrown
+    to it: leaving the key before at speed, as a body a shot strikes, and easing to it)."""
     times, values = np.asarray(times, dtype=float), np.asarray(values, dtype=float)
     if len(times) == 1:  # one key: it holds
         return np.repeat(values, len(t), axis=0)
@@ -160,6 +219,10 @@ def curve(times, values, t, loop, length, wrap=None):
         w = np.ones(values.shape[1]) if wrap is None else np.asarray(wrap, dtype=float)
         times = np.concatenate([[times[-1] - length], times, [times[0] + length, times[1 % len(times)] + length]])
         values = np.concatenate([values[-1:] * w, values, values[:1] * w, values[1 % len(values):][:1] * w])
+        if eases is not None:
+            eases = [eases[-1]] + list(eases) + [eases[0], eases[1 % len(eases)]]
+    elif eases is not None:
+        eases = list(eases)
     n = len(times)
     tangent = np.zeros_like(values)
     for k in range(1, n - 1):
@@ -170,13 +233,30 @@ def curve(times, values, t, loop, length, wrap=None):
         m = (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1])
         m = np.clip(m, -3 * np.minimum(np.abs(before), np.abs(after)), 3 * np.minimum(np.abs(before), np.abs(after)))
         tangent[k] = np.where(before * after > 0, m, 0)
+    arrive = tangent.copy()  # the slope as each key is reached, and (tangent) as it's left
+    ease = list(eases) if eases is not None else ['stop'] * n
+    for k in range(n):
+        if ease[k] == 'through' and 0 < k < n - 1:
+            arrive[k] = tangent[k] = (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1])
+        elif ease[k] in ('hit', 'snap') and k > 0:
+            slope = (values[k] - values[k - 1]) / (times[k] - times[k - 1])
+            # Twice the slope at one end of the way, and at the other no more than root 5 times it, so the two stay
+            #  inside Fritsch and Carlson's circle and the way doesn't overshoot either key.
+            most = math.sqrt(5) * np.abs(slope)
+            if ease[k] == 'hit':  # arriving at speed, leaving from rest
+                arrive[k], tangent[k] = 2 * slope, 0
+                if ease[k - 1] in ('stop', 'snap'):
+                    arrive[k - 1] = tangent[k - 1] = np.clip(tangent[k - 1], -most, most)
+            else:  # leaving the key before at speed, easing to this one
+                tangent[k - 1] = 2 * slope
+                arrive[k] = tangent[k] = np.clip(tangent[k], -most, most)
     out = np.empty((len(t), values.shape[1]))
     for i, x in enumerate(t):
         k = int(np.clip(np.searchsorted(times, x, side='right') - 1, 0, n - 2))
         dt = times[k + 1] - times[k]
         u = (x - times[k]) / dt
         h00, h10, h01, h11 = 2 * u ** 3 - 3 * u ** 2 + 1, u ** 3 - 2 * u ** 2 + u, -2 * u ** 3 + 3 * u ** 2, u ** 3 - u ** 2
-        out[i] = h00 * values[k] + h10 * dt * tangent[k] + h01 * values[k + 1] + h11 * dt * tangent[k + 1]
+        out[i] = h00 * values[k] + h10 * dt * tangent[k] + h01 * values[k + 1] + h11 * dt * arrive[k + 1]
     return out
 
 
@@ -239,6 +319,16 @@ def main():
     for i, row in enumerate(side['weights']):
         for b, v in row:
             w[i, b] = v
+    # The bone heat can reach a leg's weight up into the body (the Partisan's armpit and satchel). A leg moves less and
+    #  less of what's above its hip, and nothing LEG_REACH above it, so a step or a crouch doesn't drag the chest.
+    #  (The bind is the same whatever the weights, so the figure stands as before.)
+    hip_y = max(skeleton[f'thigh.{s}'][0][1] for s in SIDES) - side['shift'][1]
+    fade = np.clip((pos[:, 1] - hip_y - LEG_REACH[0]) / (LEG_REACH[1] - LEG_REACH[0]), 0, 1)
+    legs = [names.index(f'{b}.{s}') for b in ('thigh', 'shin', 'foot') for s in SIDES]
+    kept = w.copy()
+    kept[:, legs] *= (1 - fade)[:, None]
+    ok = kept.sum(axis=1) > 1e-6
+    w[ok] = kept[ok] / kept[ok].sum(axis=1, keepdims=True)
     body = np.ones(len(pos), dtype=bool)
     body[side['loose']] = False
     if rig.get('prop'):
@@ -326,10 +416,23 @@ def main():
         keys = clip['keys']
         kt = [k['at'] for k in keys]
         local_q, turns, slides = [], [], []
+        hips_off, weights, targets = [], [], []
         axis = place = None
         for k in keys:
             rot = key_pose(k)
             local_q.append([quat(rot[n] if parents[n] is None else rot[parents[n]].T @ rot[n]) for n in names])
+            hips_off.append(k.get('hips', [0, 0, 0]))
+            moved = {}
+            for n in names:
+                p = parents[n]
+                moved[n] = heads[n] + np.array(hips_off[-1]) if p is None else rot[p] @ (heads[n] - heads[p]) + moved[p]
+            weights.append([1.0 if s in k.get('plant', {}) else 0.0 for s in SIDES])
+            row = []
+            for s in SIDES:
+                v = k.get('plant', {}).get(s)
+                stand = moved_s[f'foot.{s}']  # the ankle as it stands
+                row += list(moved[f'foot.{s}'] if v is None else stand if v is True else [v[0] + shift[0], stand[1], v[1] + shift[2]])
+            targets.append(row)
             if 'turn' in k:
                 axis, place = np.array(k['turn']['axis'], dtype=float), np.array(k['turn']['about'], dtype=float)
             turns.append(float(k.get('turn', {}).get('degrees', 0)))
@@ -339,11 +442,26 @@ def main():
             flip = np.einsum('bq,bq->b', local_q[k], local_q[k - 1]) < 0
             local_q[k, flip] *= -1
         # A loop goes on from its last key to its first the short way round (a joint turning on and on keeps turning).
-        wrap = np.repeat(np.where(np.einsum('bq,bq->b', local_q[-1], local_q[0]) < 0, -1.0, 1.0), 4)
-        q = curve(kt, local_q.reshape(len(keys), -1), t, loop, length, wrap).reshape(len(t), nb, 4)
+        wrap = np.where(np.einsum('bq,bq->b', local_q[-1], local_q[0]) < 0, -1.0, 1.0)
+        eases = [k.get('ease', 'stop') for k in keys]
+        q = np.zeros((len(t), nb, 4))
+        for i, n in enumerate(names):
+            # A bone that lags turns as it would that much earlier: a loop's all through, a clip played once's less
+            #  and less towards its end, so it starts and ends as without.
+            lag = clip.get('lag', {}).get(n, 0)
+            tb = (t - lag) % length if loop else np.maximum(0, t - lag * (1 - t / length))
+            if loop:
+                tb[-1] = tb[0]
+            kb = [k['at'] + k.get('late', {}).get(n, 0) for k in keys]  # a bone late to a key meets it after the rest
+            q[:, i] = curve(kb, local_q[:, i], tb, loop, length, np.repeat(wrap[i], 4), eases)
         q /= np.linalg.norm(q, axis=2, keepdims=True)
-        deg = curve(kt, np.array(turns)[:, None], t, loop, length)[:, 0]
-        sl = curve(kt, np.array(slides, dtype=float), t, loop, length)
+        deg = curve(kt, np.array(turns)[:, None], t, loop, length, None, eases)[:, 0]
+        off = curve(kt, np.array(hips_off, dtype=float), t, loop, length, None, eases)
+        held_w = np.clip(curve(kt, np.array(weights), t, loop, length, None, eases), 0, 1)
+        held_at = curve(kt, np.array(targets), t, loop, length, None, eases).reshape(len(t), 2, 3)
+        if loop:
+            off[-1], held_w[-1], held_at[-1] = off[0], held_w[0], held_at[0]
+        sl = curve(kt, np.array(slides, dtype=float), t, loop, length, None, eases)
         if loop:  # the last frame is the first
             q[-1], deg[-1], sl[-1] = q[0], deg[0], sl[0]
         frames = np.zeros((len(t), len(joints), 4, 4))
@@ -352,7 +470,22 @@ def main():
             for i, n in enumerate(names):
                 p = parents[n]
                 rot[n] = matrix(q[f, i]) if p is None else rot[p] @ matrix(q[f, i])
-                moved[n] = heads[n] if p is None else rot[p] @ (heads[n] - heads[p]) + moved[p]
+                moved[n] = heads[n] + off[f] if p is None else rot[p] @ (heads[n] - heads[p]) + moved[p]
+            for j, s in enumerate(SIDES):
+                if held_w[f, j] <= 0:
+                    continue
+                # A planted foot: the leg bent to put the ankle where it's planted, the knee forward, the foot as
+                #  it stands; blended with the leg as the keys turn it while the foot is put down or lifted.
+                th, sh, ft = f'thigh.{s}', f'shin.{s}', f'foot.{s}'
+                a, b = (np.linalg.norm(skeleton[x][1] - skeleton[x][0]) for x in (th, sh))
+                knee, ankle = reach(moved[th], held_at[f, j], a, b, rot['hips'] @ np.array([0.0, 0.0, 1.0]))
+                r_th = turn(rot['hips'] @ (skeleton[th][1] - skeleton[th][0]), knee - moved[th]) @ rot['hips']
+                r_sh = turn(r_th @ (skeleton[sh][1] - skeleton[sh][0]), ankle - knee) @ r_th
+                for n, r in ((th, r_th), (sh, r_sh), (ft, rot_s[ft])):
+                    rot[n] = blend(rot[n], r, held_w[f, j])
+                for n in (sh, ft):
+                    p = parents[n]
+                    moved[n] = rot[p] @ (heads[n] - heads[p]) + moved[p]
             m = world(rot, moved)
             whole = np.eye(4)
             if axis is not None and deg[f]:

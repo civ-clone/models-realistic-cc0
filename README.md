@@ -44,16 +44,20 @@ map draws each type from one set.
   Riflemen's and Marines' slung rifles). Blender weights each point to the bones near it, and the file's points and
   normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
 - **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
-  skeleton it was posed with, with four clips: `idle` (3 s, breathing and looking about) and `move` (a 1 s stride in
-  place), which loop, and `fight` (1.5 s: he throws the molotov, which is gone from his hand at 0.5 s and back in it
-  by the end) and `die` (1.6 s: he falls on his back, his feet where he stood, and lies still), which play once. The
-  map draws what flies: the manifest gives each clip's shots (`rigged.shots`), each the time it leaves and the joint
-  it leaves from (here the molotov's, `prop`, whose origin is the bottle's middle as he stands).
+  skeleton it was posed with, with four clips: `idle` (3 s, breathing, looking about and shifting his weight) and
+  `move` (a 1 s stride in place), which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his
+  hand at 0.5 s, back in it by the end) and `die` (1.5 s: the shot throws him back, his right knee gives, his left
+  foot slides out, and he lands on his back, his head and arms after him and his left knee falling last), which play
+  once. The map draws what flies: the manifest gives each clip's shots (`rigged.shots`), each the time it leaves and
+  the joint it leaves from (here the molotov's, `prop`, whose origin is the bottle's middle as he stands).
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with. Each clip is made from key poses, in the stance's terms (which way each bone
-  points, and how it's twisted), with the whole figure turned where it falls. Between keys the bones turn on smooth
-  curves that don't overshoot the keys. Every frame is stood on the ground by its lowest point, and played in place:
+  points, and how it's twisted), with the whole figure turned where it falls, the hips moved and the feet planted
+  (the legs bent to keep them where they're put). Between keys the bones turn on smooth curves; a key can be met at
+  rest, at speed, hit at speed (a body reaching the ground) or snapped to (a body a shot strikes), and some bones can
+  meet it after the rest (a head and arms landing after the body), or lag through the whole clip, so a movement
+  passes from the body out to the limbs. Every frame is stood on the ground by its lowest point, and played in place:
   the map moves units from square to square itself. The file has a root node, `skeleton`, holding a joint for each
   bone (named as the stance's, which three.js reads without the dot: `hand.R` is `handR`), and the molotov's, `prop`,
   a child of his right hand's. Each clip keys every joint's turn, the root's place, and the molotov's size (it's 0
