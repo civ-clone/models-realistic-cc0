@@ -181,7 +181,7 @@ def check_build_entry(where, e, allowed, sources):
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
     elif ('owner' in e) != ("the owner's colour" in e['made']):
-        problem(f'{where}: made should say where "the owner\'s colour" goes where, and only where, there is an owner rule')
+        problem(f'{where}: made should mention "the owner\'s colour" exactly when there is an owner rule')
 
 
 def credit_of(roster, key):
@@ -277,6 +277,8 @@ def check_file(rel, skinned_ok, texture, owner):
             view = glb.item(gltf, 'bufferViews', img.get('bufferView'))
             data = binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + view.get('byteLength', 0)]
             if i in tinted:
+                if i == 0:
+                    raise glb.Bad('image 0, the baked texture, is drawn in the owner\'s colour, not kept as a JPEG')
                 read = imgsize.png_pixels(data)
                 if read is None or img.get('mimeType') != 'image/png':
                     raise glb.Bad(f'image {i}, for the owner\'s colour, is not an 8-bit PNG of grey and alpha or RGBA, saying so')
@@ -288,8 +290,6 @@ def check_file(rel, skinned_ok, texture, owner):
                     raise glb.Bad(f'image {i}, for the owner\'s colour, has no alpha of 0, so shows no owner\'s colour')
                 if min(min(p) for p in clear) < 70:
                     raise glb.Bad(f'image {i}, for the owner\'s colour, is darker than a grey of 70 under its mask')
-                if i == 0:
-                    raise glb.Bad('image 0, the baked texture, is drawn in the owner\'s colour, not kept as a JPEG')
                 masks[i] = (w, h, c, rows)
                 continue
             if data[:3] != b'\xff\xd8\xff' or img.get('mimeType') != 'image/jpeg':

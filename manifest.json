@@ -80,7 +80,7 @@
   },
   "warrior": {
    "file": "models/warrior.glb",
-   "sha256": "303fec601a0ac96c89b8b977f2902b84eadbfdd0f511f3d26ea6ad871064feac",
+   "sha256": "73ebdd04c6e7780f96a79a0abfde2270cca48d35ff7f8e3c1c63514e49b35d27",
    "extent": {
     "across": [
      -0.553,
@@ -266,7 +266,7 @@
   "bomber": {
    "file": "models/bomber.glb",
    "scale": 0.008095,
-   "sha256": "829baf90865a1867ccb81fbffbaadd75f9d74ede5fcca6c7030ed06c66fa91d7",
+   "sha256": "fd6fcf56fb5199981864eca508d0bcb8ed727812bfeff1f8c6b6791c37d80fe4",
    "extent": {
     "across": [
      -14.969,
@@ -350,7 +350,7 @@
   "dragoon": {
    "file": "models/dragoon.glb",
    "scale": 0.088,
-   "sha256": "e6aecada6582388e09ae8de5056d0e00f488a7a0b65f981bbe8fec3ba17788b1",
+   "sha256": "89bca40e4ae2c0b1ef49fe97afea4457755a9cbc60f55164a021f99487a13684",
    "extent": {
     "across": [
      -0.628,
