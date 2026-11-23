@@ -29,6 +29,8 @@
   as tall or long as its size. A model with a prop is checked for its draught and grounding only, as its prop reaches
   past it.
 - **The credits** in CREDITS.md are as build.py writes them.
+- **Each stance** names every joint of the skeleton blender/stance.py fits, none of its bones shorter than 5 mm, and
+  only its bones; a model with one says "posed" in its `made`, and its mesh says `extras.posed`, and only then.
 """
 import hashlib
 import json
@@ -62,12 +64,24 @@ NAME = re.compile(r'[a-z0-9][a-z0-9-]*\Z')
 SHA = re.compile(r'[0-9a-f]{64}\Z')
 TOP = {'set', 'date', 'scale', 'generated', 'sources', 'models', 'extras'}
 SOURCE = {'work', 'author', 'url', 'licence', 'note', 'ai', 'generated', 'made', 'prompt', 'file', 'sha256'}
-MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'scale', 'budget', 'made'}
-EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'made'}
+MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'scale', 'budget', 'made'}
+EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
 CUT = {'mode', 'tris', 'texture', 'depth', 'solidify'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
+STANCE = {'joints', 'aim', 'twist', 'whole'}
+# A figure's joints and bones, as blender/stance.py names them.
+JOINTS = {'pelvis', 'chest', 'neck', 'head', 'top'} | {f'{j}.{s}' for s in 'LR' for j in (
+    'shoulder', 'elbow', 'wrist', 'hand', 'hip', 'knee', 'ankle', 'toe')}
+BONES = {'hips', 'spine', 'chest', 'neck', 'head'} | {f'{b}.{s}' for s in 'LR' for b in (
+    'shoulder', 'upper_arm', 'forearm', 'hand', 'thigh', 'shin', 'foot')}
+# The joints at each end of a bone (the hips and shoulder bones start where stance.py works out, so are checked apart).
+BONE_ENDS = {'spine': ('pelvis', 'chest'), 'chest': ('chest', 'neck'), 'neck': ('neck', 'head'),
+             'head': ('head', 'top')}
+BONE_ENDS |= {f'{b}.{s}': (f'{h}.{s}', f'{t}.{s}') for s in 'LR' for b, h, t in (
+    ('upper_arm', 'shoulder', 'elbow'), ('forearm', 'elbow', 'wrist'), ('hand', 'wrist', 'hand'),
+    ('thigh', 'hip', 'knee'), ('shin', 'knee', 'ankle'), ('foot', 'ankle', 'toe'))}
 ATTRIBUTES = {'POSITION', 'NORMAL', 'TEXCOORD_0'}
 SKIN_ATTRIBUTES = {'JOINTS_0', 'WEIGHTS_0'}
 # Points over a face, where it's sampled to find its owner's colour (as blender/owner.py samples it).
@@ -152,6 +166,45 @@ def check_owner(where, rule):
         problem(f'{where}: cut should be true or false')
 
 
+def check_stance(where, rule):
+    """A stance says only what blender/stance.py reads, with values of the right kind."""
+    if not keys_ok(where, rule, STANCE):
+        return
+    joints = rule.get('joints')
+    if not isinstance(joints, dict) or set(joints) != JOINTS or not all(
+            isinstance(p, list) and len(p) == 3 and all(number(v) for v in p) for p in joints.values()):
+        problem(f'{where}: joints should give each of {len(JOINTS)} joints a place [x, y, z]')
+    else:
+        short = [b for b, (h, t) in BONE_ENDS.items() if math.dist(joints[h], joints[t]) < 0.005]
+        for s, sgn in (('L', 1), ('R', -1)):
+            # the shoulder bone runs from a point between the chest and neck, out to the shoulder joint
+            root = [c + 0.7 * (n - c) + (sgn * 0.03 if k == 0 else 0)
+                    for k, (c, n) in enumerate(zip(joints['chest'], joints['neck']))]
+            if math.dist(root, joints[f'shoulder.{s}']) < 0.005:
+                short.append(f'shoulder.{s}')
+        if short:
+            problem(f'{where}: bones shorter than 5 mm, their joints too close: {sorted(short)}')
+    aim = rule.get('aim', {})
+    if not isinstance(aim, dict) or set(aim) - BONES or not all(
+            isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
+            for d in aim.values()):
+        problem(f'{where}: aim should give bones a way to point [x, y, z]')
+    twist = rule.get('twist', {})
+    if not isinstance(twist, dict) or set(twist) - BONES or not all(number(v) for v in twist.values()):
+        problem(f'{where}: twist should give bones a number of degrees')
+    whole_ = rule.get('whole', [])
+    if not isinstance(whole_, list) or not all(
+            isinstance(b, dict) and b.get('bone') in BONES and (
+                (set(b) == {'bone', 'part'} and whole(b['part'], -1)) or
+                (set(b) == {'bone', 'line', 'radius'} and isinstance(b['line'], list) and len(b['line']) == 2 and all(
+                    isinstance(e, list) and len(e) == 3 and all(number(v) for v in e) for e in b['line'])
+                 and number(b['radius'], 0)) or
+                (len(b) > 1 and set(b) <= {'bone', 'x', 'y', 'z'} and all(
+                    span(b[k], -math.inf, math.inf) and b[k][0] <= b[k][1] for k in 'xyz' if k in b)))
+            for b in whole_):
+        problem(f'{where}: whole should be a list, each a bone with a part, a line and radius, or a box of x, y or z ranges')
+
+
 def check_build_entry(where, e, allowed, sources):
     if not keys_ok(where, e, allowed):
         return
@@ -176,12 +229,16 @@ def check_build_entry(where, e, allowed, sources):
             check_cut(f'{where}.prop.cut', p['cut'])
     if 'owner' in e:
         check_owner(f'{where}.owner', e['owner'])
+    if 'stance' in e:
+        check_stance(f'{where}.stance', e['stance'])
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
     elif ('owner' in e) != ("the owner's colour" in e['made']):
         problem(f'{where}: made should mention "the owner\'s colour" exactly when there is an owner rule')
+    elif ('stance' in e) != bool(re.search(r'\bposed\b', e['made'])):
+        problem(f'{where}: made should say "posed" exactly when there is a stance')
 
 
 def credit_of(roster, key):
@@ -240,7 +297,7 @@ def credits_md(roster, credits):
     return '\n'.join(lines) + '\n'
 
 
-def check_file(rel, skinned_ok, texture, owner):
+def check_file(rel, skinned_ok, texture, owner, posed):
     """Checks one GLB; returns its gltf and measurements, or None."""
     path = os.path.join(ROOT, 'models', rel)
     try:
@@ -255,6 +312,13 @@ def check_file(rel, skinned_ok, texture, owner):
             for x in gltf.get(kind, []):
                 if 'extensions' in x:
                     raise glb.Bad(f'one of its {kind} uses an extension')
+        # Posed (blender/stance.py marks the mesh) exactly where the roster gives a stance.
+        marks = [m.get('extras') for m in gltf.get('meshes', [])]
+        if any(x is not None and x != {'posed': True} for x in marks):
+            raise glb.Bad('a mesh has extras other than posed: true')
+        if any(x == {'posed': True} for x in marks) != posed:
+            raise glb.Bad('it is posed where the roster has no stance' if not posed else
+                          'it is not posed, though the roster gives a stance')
         # The owner's colour: which images its materials draw with, and which others do.
         used = {p.get('material') for mesh in gltf.get('meshes', []) for p in mesh.get('primitives', [])}
         tinted, plain, masks = set(), set(), {}
@@ -445,7 +509,8 @@ def main():
     for rel in sorted(listed & present):
         mid = rel[:-4] if rel in {f'{m}.glb' for m in models} else None
         entry = models[mid] if mid else roster['extras'][rel]
-        got = check_file(rel, skinned_ok=mid is None, texture=entry['cut']['texture'], owner='owner' in entry)
+        got = check_file(rel, skinned_ok=mid is None, texture=entry['cut']['texture'], owner='owner' in entry,
+                         posed='stance' in entry)
         if got is None:
             continue
         gltf, measured = got

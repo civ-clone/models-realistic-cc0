@@ -35,7 +35,15 @@ map draws each type from one set.
   texel (`cut`), as for bands and wingtips, and the colour ends partway across a face, the rest of that face is the
   texture's colour, solid, at that half size. The rest of each model is drawn from its JPEG as before. Where the
   colour goes is each model's `owner` rule in `roster.json`.
-- **Not yet:** most people stand in an A-pose, ready to rig, but nothing is rigged.
+- **Poses:** the Riflemen, Explorer, Spy, Partisans and Marines, generated standing in an A-pose, stand with their
+  arms at their sides. The Warriors, Musketmen, Alpine Troops, Engineers and the Settlers stood naturally already, and
+  the riders sit their horses.
+
+  A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
+  it stands in the file, the way each bone should point, and any pieces that move whole (the Partisan's molotov, the
+  Riflemen's and Marines' slung rifles). Blender weights each point to the bones near it, and the file's points and
+  normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
+- **Not yet:** nothing is rigged or animated.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;
@@ -47,7 +55,7 @@ map draws each type from one set.
     made, the prompt;
   - each model: the unit types it draws, its source, how it's cut (part by part, or wrapped in one new surface), how
     it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov), where its owner's colour
-    goes, its budget, and its scale where it isn't the set's.
+    goes, how a figure is posed, its budget, and its scale where it isn't the set's.
 
   The set's scale draws a 1.8 m person as tall as the other sets' people, 0.168 squares. The 3D map draws units
   bigger than life, so the rest have scales of their own, close to models-cimpletoon's sizes: riders 0.21 to 0.22
@@ -75,9 +83,9 @@ Name models to build only those. Blender runs with its factory settings and with
 reads the originals only as data. Without `--originals`, `build.py` only writes each model's `asset.copyright` and
 `asset.extras`, the manifest and the credits.
 
-The owner's colour goes on last, and `owner.py` won't colour a file that has it already, so a changed `owner`
-rule takes effect only when its model is built again from its original. `check.py` checks each rule's form, not
-that the file follows it.
+The owner's colour goes on next to last, and the pose last. `owner.py` won't colour a file that has it already, and
+`stance.py` poses a figure from where it stands, so a changed `owner` rule or `stance` takes effect only when its
+model is built again from its original. `check.py` checks each rule's form, not that the file follows it.
 
 The originals:
 - **Mine:** generated in my Meshy account, and too big to keep here (up to 140 MB each). I've kept them.
