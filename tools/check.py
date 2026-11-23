@@ -35,7 +35,11 @@
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
   and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before
   its length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds
-  whole, and any shots within its clip, each from the prop, which is back in the hand by the clip's end.
+  whole, and any shots within its clip, each from the prop, which is back in the hand by the clip's end. A clip's
+  `lag` gives bones a time under its length; a key's `ease` is one of EASES, its `hips` [x, y, z], its `plant` feet
+  each at [x, z] or `true`, and its `late` bones a time from 0, each bone's keys still in order once late (a loop's
+  before its length, none late on its first key; a clip played once none late on its last). A clip played once has
+  nothing on its first key but its time and feet planted where they stand (`true`).
 - **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
   - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
     stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints

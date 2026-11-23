@@ -23,9 +23,12 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     ground, the ankle at a place [x, z] (as the posed figure stands in the file; or `true`: where it stands), the
     legs bent to reach them (the knees bending forward from where the keys put them), so the hips can drop, lean and
     shift their weight, and a foot can step, without the feet sliding, even as the whole figure turns. Between keys
-    a foot is put down and lifted smoothly. The figure is still stood on its lowest point, so nothing else should go
-    lower than a planted foot (the report's `planted` says how far a planted ankle ends up from its place: a few
-    millimetres either way as the legs bend, more if something else went below the ground);
+    a foot is put down and lifted smoothly: its ankle goes straight from where the keys put it to where it's planted,
+    and the leg is turned partly as the keys turn it, so a step is clean only if the keys hold the foot clear of the
+    ground before it's put down and after it's lifted, and keep a planted leg about where it's planted. The figure
+    is still stood on its lowest point, so nothing else should go lower than a planted foot (the report's `planted`
+    says how far a planted ankle ends up from its place: a few millimetres either way as the legs bend, more if
+    something else went below the ground);
   - `ease`: how the key is met: `stop` (easing to it where the movement turns back, on through it where it doesn't),
     `through` (on at speed, as an arm at a throw's release, which may overshoot), `hit` (arriving at twice the speed
     of a straight line from the key before, as a body hitting the ground, and leaving from rest), or `snap` (leaving
@@ -51,9 +54,12 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
 
 Every clip keys every joint's turn, the root's place, and the prop's size, so none leaves a joint as another left
 it. Clips are sampled at about FPS frames a second (a whole number of frames over each clip), played
-between frames by turning each joint linearly. It prints a report: for each clip, how far its first frame is from the
-bind, the most any edge of the figure grows and when, how many faces grow over 1.4 times, and the most weight any
-point lost to the four kept.
+between frames by turning each joint linearly. It prints a report: for each clip, its frames, how far its first
+frame is from the bind, the most any edge of the figure grows and when, how many faces grow over 1.4 times, the most
+weight any point lost to the four kept, and the furthest a fully planted ankle ends up from its place (`planted`).
+With RIG_FRAMES set to a folder, it also writes each clip's points frame by frame (`<clip>.npy`) and its feet
+(`<clip>-feet.npz`: their plant weights and places, the joints, and how far each frame was lowered to the ground),
+to check a player or a clip against.
 """
 import json
 import math
