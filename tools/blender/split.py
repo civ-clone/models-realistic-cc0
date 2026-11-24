@@ -26,17 +26,17 @@ Whatever of the body the cut leaves unconnected (points joined by place, as orig
 goes too: scraps of the piece left behind. Each connected piece of the original keeps its largest remaining part; a
 part the cut didn't touch stays as it was.
 
-The holes the cut leaves in the body are closed, each hole's closing faces coloured with the average colour of the faces
-round its edges (a material of their own, `split-fill`; the colours come from the first textured material's image), so
-it has no gap where the piece lay against it. Each is zipped from side to side, so a long hole curving round a leg
-doesn't fold (though one wrapping most of the way round a limb may dip inside it). A ring of open edges that touches
-itself is closed as the holes it is, each on its own. Faces the cut leaves as teeth along a rim, hanging by a corner or
-bridging a hole are dropped first. Only the cut's own edges (between a face kept and one taken or dropped) are closed:
-holes the original had, and the outlines of two-layer sheets, are left as they were, unless the cut ran into one,
-when it's closed with the cut's; faces lying on another's points (a two-layer sheet) are left out of the weld, so
-their layers aren't merged (their points are left out of the weld where only such faces use them). It fails if any edge the cut opened is left open, or Blender's own check finds a face it
-won't keep. The piece's holes are left open: a cut along a piece's length, closed, fills across its hollows (a sheet
-across a rifle's stock).
+The holes the cut leaves in the body are closed, each hole's closing faces coloured with the average colour of the
+faces round its edges (a material of their own, `split-fill`; the colours come from the first textured material's
+image), so it has no gap where the piece lay against it. Each is zipped from side to side, so a long hole curving
+round a leg doesn't fold (though one wrapping most of the way round a limb may dip inside it). A ring of open edges
+that touches itself is closed as the holes it is, each on its own. Faces the cut leaves as teeth along a rim, hanging
+by a corner or bridging a hole are dropped first. Only the cut's own edges (between a face kept and one taken or
+dropped) are closed: holes the original had, and the outlines of two-layer sheets, are left as they were, unless the
+cut ran into one, when it's closed with the cut's; faces lying on another's points (a two-layer sheet) are left out of
+the weld, so their layers aren't merged (their points are left out of the weld where only such faces use them). It
+fails if any edge the cut opened is left open, or Blender's own check finds a face it won't keep. The piece's holes
+are left open: a cut along a piece's length, closed, fills across its hollows (a sheet across a rifle's stock).
 
 With `mirror` true, the piece is given its mirror image as well, across its middle: the plane across its thinnest
 reach, through the middle of each slice along it (a running median, so a stray scrap doesn't bend it). Where the
@@ -381,7 +381,9 @@ def close_holes(ob):
         colour = (0.5, 0.5, 0.5, 1.0)
         if pixels is not None and uv is not None:
             samples = []
-            for f in {f for e in ring for f in e.link_faces}:  # in each face along the edge, not at its corners
+            bm.faces.index_update()
+            for f in sorted({f for e in ring for f in e.link_faces}, key=lambda f: f.index):  # in each face along
+                # the edge, not at its corners, in a fixed order so the sum comes out the same each run
                 x, y = sum((lp[uv].uv for lp in f.loops), mathutils.Vector((0, 0))) / len(f.loops)
                 samples.append(pixels[min(H - 1, max(0, int((y % 1) * H))), min(W - 1, max(0, int((x % 1) * W))), :3])
             mean = np.mean(samples, axis=0)
