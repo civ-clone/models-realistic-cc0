@@ -173,7 +173,7 @@
    "made": "generated; simplified; the rifle split off, made whole from its mirror image and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot",
    "rigged": {
     "file": "models/rigged/rifleman.glb",
-    "sha256": "d723449a8f5fb89819f271bf952704dfc4fb1eddbd914c69ac300adc388ba706",
+    "sha256": "cc93d98a199998bf40ad16efadb62c0ca8e947abb74e472820e357e0d6134326",
     "clips": {
      "idle": "idle",
      "move": "move",
@@ -183,7 +183,7 @@
     "shots": {
      "fight": [
       {
-       "at": 0.55,
+       "at": 0.541667,
        "joint": "muzzle",
        "kind": "bullet"
       }
@@ -377,7 +377,7 @@
    "made": "generated; rewrapped; his musket generated apart and put in his right hand; the owner's colour on the coat; posed, his arms at his sides and his musket grounded by his right foot",
    "rigged": {
     "file": "models/rigged/musketman.glb",
-    "sha256": "59d392c375c0db8e9a1c8557b13f040e753f2ffef00428aded6c7a9edb100c8d",
+    "sha256": "5c299b0b49a5d7dd8d9a247291981eca9b60576e644dc143daa8efc11cf79553",
     "clips": {
      "idle": "idle",
      "move": "move",
@@ -387,7 +387,7 @@
     "shots": {
      "fight": [
       {
-       "at": 0.55,
+       "at": 0.541667,
        "joint": "muzzle",
        "kind": "bullet"
       }
@@ -460,7 +460,7 @@
    "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down",
    "rigged": {
     "file": "models/rigged/marine.glb",
-    "sha256": "f88428c41925600244f165f3bbbdcbabe44d06e5430c82e2174648fae172e301",
+    "sha256": "8eae580f36870c81bce5642a7d1c802f115a950285bdc02fdd47694a8650ec86",
     "clips": {
      "idle": "idle",
      "move": "move",
@@ -475,12 +475,12 @@
        "kind": "bullet"
       },
       {
-       "at": 0.6,
+       "at": 0.625,
        "joint": "muzzle",
        "kind": "bullet"
       },
       {
-       "at": 0.7,
+       "at": 0.75,
        "joint": "muzzle",
        "kind": "bullet"
       }

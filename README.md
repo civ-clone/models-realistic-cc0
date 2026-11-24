@@ -59,8 +59,8 @@ map draws each type from one set.
   as the Partisans do, the weapon held as they stand. In `move` the Riflemen and Musketmen carry theirs across the
   chest at port arms, and the Marines at the low ready (the butt in the shoulder, the muzzle down ahead), both hands
   on it. In `fight` they bring it to the shoulder, the left hand on the fore-end and the head down to the stock. The
-  Riflemen and Musketmen fire once at 0.55 s, and the Marines a three-round burst from 0.5 s, each shot kicking the
-  muzzle up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
+  Riflemen and Musketmen fire once at 0.54 s, and the Marines a three-round burst at 0.5, 0.625 and 0.75 s, each shot
+  leaving as he holds still and then kicking the muzzle up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
   Their shots are bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its
   barrel's end.
 
@@ -77,9 +77,9 @@ map draws each type from one set.
   joint's turn, the root's place, and the prop's size (the molotov's is 0 from just after the throw until it grows
   back in his hand). A key can also hold the prop as it says rather than as the hand does: where it points, which way
   its back faces and where its butt goes, carried by the chest as it turns. The hand that holds it, and the other
-  hand, are then bent to reach it, each lying along it as its forearm carries it, and every clip keys the prop's
-  place on the hand as well. A weapon held like this is left out of standing the figure on the ground, so its butt
-  can leave the ground as he moves. A clip that plays once starts as the model stands (its feet can be planted there
+  hand, are then bent to reach it, each lying along it as its forearm carries it at the keys, and every clip keys
+  the prop's place on the hand as well. A prop whose `grounded` is false (as these weapons' are) is left out of
+  standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once starts as the model stands (its feet can be planted there
   from the start, so they don't slide as it begins), and a loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;

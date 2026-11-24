@@ -98,6 +98,7 @@ RIG = {'prop', 'clips'}
 CLIP = {'length', 'keys', 'shots', 'lag'}
 KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', 'hold', 'grip'}
 KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
+FPS = 24  # as blender/rig.py samples clips
 EASES = ('stop', 'through', 'hit', 'snap')
 LOOPS = {'idle', 'move', 'work'}
 ONCE = {'fight', 'die', 'settle'}
@@ -392,8 +393,8 @@ def check_rig(where, rig, stance):
                     cross = math.hypot(a[1] * u[2] - a[2] * u[1], a[2] * u[0] - a[0] * u[2], a[0] * u[1] - a[1] * u[0])
                     if cross <= 1e-6 * math.hypot(*a) * math.hypot(*u):
                         problem(f'{at}: a hold\'s up should lie across its aim, not along it')
-            grip = k.get('grip', {})
-            if not isinstance(grip, dict) or (grip and not hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
+            grip = k.get('grip', {'L': 0})
+            if not (isinstance(grip, dict) and grip and hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
                     number(v) and 0 <= v <= 1 for v in grip.values()):
                 problem(f'{at}: grip is for a prop a hand holds: it gives the other hand (L or R) a share of the way '
                         'along it, 0 to 1')
@@ -404,6 +405,10 @@ def check_rig(where, rig, stance):
             continue
         if any(b <= a for a, b in zip(times, times[1:])):
             problem(f'{at}: its keys should come in order of time, none at the same time')
+        if number(length, 0):
+            step = length / max(2, int(round(length * FPS)))
+            if any(b - a < step - 1e-6 for a, b in zip(times, times[1:])):
+                problem(f'{at}: its keys should be at least a frame ({step:.4f} s) apart, so each is played')
         if role in LOOPS and not (times[0] == 0 and times[-1] < length):
             problem(f'{at}: a loop\'s keys run from 0 to before its length')
         first = keys[0]
@@ -803,6 +808,16 @@ def check_rigged(rel, entry):
                 raise glb.Bad('the prop\'s muzzle should be one node, a child of the prop\'s joint, with only its place')
             if 'muzzle' not in rig['prop'] and muzzles:
                 raise glb.Bad('it has a muzzle, but its prop has none')
+            if muzzles:  # at the end of the prop: as far as it reaches that way from its joint, and on it
+                ibm_p = glb.accessor(gltf, binary, skins[0]['inverseBindMatrices'])[prop_j]
+                inv_p = [[ibm_p[c * 4 + r] for c in range(4)] for r in range(4)]
+                pts = [[sum(inv_p[r][c] * v for c, v in enumerate([*x, 1])) for r in range(3)]
+                       for x in glb.accessor(gltf, binary, prims[rig['prop']['part']]['attributes']['POSITION'])]
+                m = nodes[muzzles[0]]['translation']
+                length = math.hypot(*m)
+                reach = max(sum(a * b for a, b in zip(x, m)) for x in pts) / max(length, 1e-9)
+                if abs(reach - length) > 0.02 or min(math.dist(x, m) for x in pts) > 0.03:
+                    raise glb.Bad('the prop\'s muzzle should be at its end, as far as the prop reaches that way')
         # Standing as bound: each joint where its inverse bind matrix undoes.
 
         def world(i, local=None):
@@ -845,7 +860,15 @@ def check_rigged(rel, entry):
                         path_ == 'scale' and nodes[node].get('name') != 'prop':
                     raise glb.Bad(f'clip {role} moves {nodes[node].get("name")} ({path_}); only the root\'s place, and the '
                                   'prop\'s size (and its place, where a key holds or grips it), are keyed beside the turns')
-                if path_ == 'rotation' and nodes[node].get('name') == 'prop' and not posed and not all(
+                held = any(k.get('hold') or k.get('grip') for k in rig['clips'][role]['keys'])
+                if path_ == 'translation' and nodes[node].get('name') == 'prop' and not held and not all(
+                        same(v, nodes[node].get('translation', (0, 0, 0)), path_, 1e-5) for v in values):
+                    raise glb.Bad(f'clip {role} moves the prop on the hand, though none of its keys holds or grips it')
+                if path_ == 'rotation' and any(
+                        abs(sum(x * y for x, y in zip(a, b))) < math.cos(math.radians(45)) for a, b in zip(values, values[1:])):
+                    raise glb.Bad(f'clip {role} turns {nodes[node].get("name")} by over 90° from one frame to the next, '
+                                  'which a player may play the long way round')
+                if path_ == 'rotation' and nodes[node].get('name') == 'prop' and not held and not all(
                         same(v, nodes[node].get('rotation', (0, 0, 0, 1)), path_, 1e-5) for v in values):
                     raise glb.Bad(f'clip {role} turns the prop in the hand, where it should stay as it is held')
                 if path_ == 'scale':
