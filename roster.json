@@ -240,19 +240,6 @@
       "file": "the generated GLB, kept by me, not published",
       "sha256": "73f63d0662ac02a38e89c5349db0821d72329f4df8fe9853935abce19fc6828b"
     },
-    "meshy-musketman": {
-      "work": "British Redcoat",
-      "author": "rossclark13693",
-      "url": "https://www.meshy.ai/posts/019d4ea4-f729-77e8-abb9-867439fcd1d8",
-      "licence": {
-        "name": "CC0 1.0",
-        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
-      },
-      "note": "A Meshy community model, CC0 under Meshy's Terms of Service. Made with AI.",
-      "ai": true,
-      "file": "Meshy's GLB download of the post",
-      "sha256": "c7a0c9d03291c3f720edf6289cfbdc5e8fc3010fb63925541fadf540b7431ac2"
-    },
     "meshy-dragoon": {
       "work": "Storm-Swept Redcoat Cavalry",
       "author": "rossclark13693",
@@ -291,9 +278,9 @@
       "ai": true,
       "generated": true,
       "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
-      "prompt": "A realistic modern marine infantryman of an amphibious assault force, full body, standing in A-pose with his arms held out from his sides, seen in a three-quarter front view from slightly to his right, wearing a combat uniform in a large-blotch woodland camouflage of olive green, brown and black patches, not digital, not pixelated, a modern combat helmet with a plain olive cover and goggles on the brim, a coyote-brown plate-carrier vest with ammunition pouches, knee pads, tan combat boots, an assault rifle slung on his back by its sling, natural skin tones, no national insignia, no flags, no emblems, no patches, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "prompt": "A realistic modern marine infantryman of an amphibious assault force, full body, standing in A-pose with his arms held out from his sides, seen in a three-quarter front view from slightly to his right, wearing a combat uniform in a large-blotch woodland camouflage of olive green, brown and black patches, not digital, not pixelated, a modern combat helmet with a plain olive cover and goggles on the brim, a coyote-brown plate-carrier vest with ammunition pouches, knee pads, tan combat boots, hands empty and open, no weapon, no rifle, no sling, nothing on his back, natural skin tones, no national insignia, no flags, no emblems, no patches, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
       "file": "the generated GLB, kept by me, not published",
-      "sha256": "b6f25b6b847428f2d0d8054fe6ac7018798d6f6710b1401057df3526a1fb86e7"
+      "sha256": "a3fc65292d3a9f72d40d4e2422197dd59a98859162e74c363c4eeebfd10f20db"
     },
     "generated-engineer": {
       "work": "Civil engineer for Engineers (generated for civ.one)",
@@ -342,6 +329,54 @@
       "prompt": "A realistic Second World War cargo ship, a Liberty-ship-style steam freighter, seen in a three-quarter view from slightly above and to the side, the whole ship in frame with its whole hull out of the water, a long dark grey steel hull with red anti-fouling paint below the waterline, a raised forecastle, a central bridge superstructure with one tall funnel amidships, five cargo hatches with derrick cranes on short masts fore and aft, a straight stem bow and a rounded cruiser stern with its rudder and propeller, weathered paint, no flags, no names, no numbers, no text, no markings, plain neutral grey background, soft studio lighting, reference image for a 3D model",
       "file": "the generated GLB, kept by me, not published",
       "sha256": "485b9fbea3a82ddc4d4795218cf0142e956f040b312655e21afd4c5f0ac37cfd"
+    },
+    "generated-musketman": {
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "file": "the generated GLB, kept by me, not published",
+      "work": "Line infantry musketman for Musketmen (generated for civ.one)",
+      "sha256": "c9a1c36e1f3e3b0e4eaed01a46c72f8c5db2c647c916cfac2a030fbd85fbef93",
+      "prompt": "A realistic late eighteenth-century line infantry musketman, full body, standing in A-pose with his arms held out from his sides, seen in a three-quarter front view from slightly to his right, wearing a long single-breasted woollen coat in plain mid-grey with grey turnbacks, a buff waistcoat and buff breeches, white leather cross belts with a black cartridge box at his right hip, black gaiters buttoned to the knee, black leather shoes, a black felt tricorne hat, hair tied back, hands empty and open, no weapon, no musket, no bayonet, no sword, no sling, natural skin tones, no national insignia, no flags, no emblems, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model"
+    },
+    "generated-assault-rifle": {
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "file": "the generated GLB, kept by me, not published",
+      "work": "Modern assault rifle for the Marines' hands (generated for civ.one)",
+      "sha256": "e58f429f654ded809df80a8aed46bbe8db1b14098a7e0636ed7c8575d281c57f",
+      "prompt": "A realistic generic modern military assault rifle, full length, seen from its left side and slightly from above, a black polymer buttstock and pistol grip, a curved magazine, a carry handle on top of the receiver, a ribbed round handguard, a triangular front sight post near the muzzle, a sling swivel, no sling, no scope, no attachments, the whole rifle in frame, isolated, centred, plain neutral grey background, soft studio lighting, no text, no markings, no logos, reference image for a 3D model"
+    },
+    "generated-musket": {
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
+      "file": "the generated GLB, kept by me, not published",
+      "work": "Flintlock musket for the Musketmen's hands (generated for civ.one)",
+      "sha256": "2576b92d74196cf7cb70eb6678ee33cbe4a43175169e9977382ceb975fe9af76",
+      "prompt": "A realistic late eighteenth-century flintlock infantry musket, full length, seen from its left side and slightly from above, a long dark walnut stock, a long round steel barrel held by brass bands, a flintlock lock with its hammer, a brass trigger guard and butt plate, a long triangular socket bayonet fixed at the muzzle, a ramrod under the barrel, no sling, the whole musket and bayonet in frame, isolated, centred, plain neutral grey background, soft studio lighting, no text, no markings, reference image for a 3D model"
     }
   },
   "models": {
@@ -3075,11 +3110,12 @@
       "units": [
         "Musketman"
       ],
-      "source": "meshy-musketman",
+      "source": "generated-musketman",
       "cut": {
-        "mode": "parts",
-        "tris": 2000,
-        "texture": 512
+        "mode": "rewrap",
+        "tris": 1700,
+        "texture": 512,
+        "depth": 8
       },
       "stage": {
         "measure": "height",
@@ -3089,23 +3125,197 @@
       "owner": {
         "colours": [
           {
-            "h": [
-              335,
-              8
-            ],
             "s": [
-              0.5,
-              1
+              0,
+              0.25
             ],
             "v": [
               0.2,
-              1
+              0.75
+            ]
+          }
+        ],
+        "within": [
+          {
+            "y": [
+              0.75,
+              1.5
             ]
           }
         ]
       },
       "budget": 2000,
-      "made": "simplified; the owner's colour on the coat"
+      "made": "generated; rewrapped; his musket generated apart and put in his right hand; the owner's colour on the coat; posed, his arms at his sides and his musket grounded by his right foot",
+      "stance": {
+        "joints": {
+          "pelvis": [
+            -0.034,
+            0.954,
+            0.027
+          ],
+          "chest": [
+            -0.001,
+            1.296,
+            0.006
+          ],
+          "neck": [
+            -0.002,
+            1.494,
+            -0.029
+          ],
+          "head": [
+            -0.001,
+            1.566,
+            -0.011
+          ],
+          "top": [
+            -0.001,
+            1.8,
+            -0.011
+          ],
+          "hip.L": [
+            0.065,
+            0.9,
+            0.027
+          ],
+          "knee.L": [
+            0.078,
+            0.513,
+            0.032
+          ],
+          "ankle.L": [
+            0.075,
+            0.09,
+            0.021
+          ],
+          "toe.L": [
+            0.075,
+            0.036,
+            0.187
+          ],
+          "hip.R": [
+            -0.133,
+            0.9,
+            0.027
+          ],
+          "knee.R": [
+            -0.127,
+            0.513,
+            0.032
+          ],
+          "ankle.R": [
+            -0.102,
+            0.09,
+            0.025
+          ],
+          "toe.R": [
+            -0.102,
+            0.036,
+            0.191
+          ],
+          "shoulder.L": [
+            0.178,
+            1.458,
+            0.001
+          ],
+          "elbow.L": [
+            0.389,
+            1.23,
+            0.055
+          ],
+          "wrist.L": [
+            0.555,
+            1.051,
+            0.097
+          ],
+          "hand.L": [
+            0.677,
+            0.919,
+            0.128
+          ],
+          "shoulder.R": [
+            -0.182,
+            1.458,
+            0.001
+          ],
+          "elbow.R": [
+            -0.391,
+            1.228,
+            0.061
+          ],
+          "wrist.R": [
+            -0.555,
+            1.048,
+            0.108
+          ],
+          "hand.R": [
+            -0.677,
+            0.914,
+            0.143
+          ]
+        },
+        "aim": {
+          "upper_arm.L": [
+            0.34,
+            -1,
+            0.04
+          ],
+          "forearm.L": [
+            0.19,
+            -1,
+            0.28
+          ],
+          "hand.L": [
+            0.15,
+            -1,
+            0.2
+          ],
+          "upper_arm.R": [
+            -0.4,
+            -1,
+            0.06
+          ],
+          "forearm.R": [
+            -0.22,
+            -1,
+            0.18
+          ],
+          "hand.R": [
+            -0.18,
+            -1,
+            0.12
+          ]
+        },
+        "whole": [
+          {
+            "part": 2,
+            "bone": "hand.R"
+          }
+        ]
+      },
+      "prop": {
+        "mode": "hand",
+        "source": "generated-musket",
+        "cut": {
+          "mode": "parts",
+          "tris": 250,
+          "texture": 256
+        },
+        "options": {
+          "height": 1.55,
+          "top": [
+            -0.95,
+            0,
+            0
+          ],
+          "posed": [
+            0,
+            1,
+            0.18
+          ],
+          "ground": 1
+        }
+      }
     },
     "dragoon": {
       "units": [
@@ -3201,14 +3411,14 @@
       "source": "generated-marine",
       "cut": {
         "mode": "rewrap",
-        "tris": 2000,
+        "tris": 1700,
         "texture": 512,
         "depth": 8
       },
       "stage": {
         "measure": "height",
         "size": 1.8,
-        "turn": 30
+        "turn": 0
       },
       "owner": {
         "colours": [
@@ -3242,112 +3452,114 @@
           }
         ]
       },
+      "budget": 2000,
+      "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt; posed, his arms at his sides and his rifle held by its grip, muzzle down",
       "stance": {
         "joints": {
           "pelvis": [
-            -0.018,
+            0.001,
             0.954,
-            -0.041
+            -0.037
           ],
           "chest": [
-            0.052,
+            0.002,
             1.296,
-            -0.02
+            -0.042
           ],
           "neck": [
-            0.061,
+            0.002,
             1.494,
-            -0.082
+            -0.037
           ],
           "head": [
-            0.079,
+            0.002,
             1.566,
-            0.001
+            -0.002
           ],
           "top": [
-            0.079,
+            0.002,
             1.8,
-            0.001
+            -0.002
           ],
           "hip.L": [
-            0.081,
+            0.1,
             0.9,
-            -0.041
+            -0.037
           ],
           "knee.L": [
-            0.184,
+            0.135,
             0.513,
-            0.046
+            -0.002
           ],
           "ankle.L": [
-            0.209,
+            0.207,
             0.09,
-            0.053
+            -0.017
           ],
           "toe.L": [
-            0.209,
+            0.207,
             0.036,
-            0.203
+            0.142
           ],
           "hip.R": [
-            -0.117,
+            -0.098,
             0.9,
-            -0.041
+            -0.037
           ],
           "knee.R": [
-            -0.124,
+            -0.151,
             0.513,
-            -0.022
+            0.004
           ],
           "ankle.R": [
-            -0.118,
+            -0.186,
             0.09,
-            -0.058
+            -0.018
           ],
           "toe.R": [
-            -0.118,
+            -0.186,
             0.036,
-            0.074
+            0.145
           ],
           "shoulder.L": [
-            0.241,
+            0.182,
             1.458,
-            -0.028
+            -0.051
           ],
           "elbow.L": [
-            0.351,
-            1.2,
-            0.048
+            0.339,
+            1.234,
+            0.01
           ],
           "wrist.L": [
-            0.437,
-            0.997,
-            0.109
+            0.463,
+            1.058,
+            0.058
           ],
           "hand.L": [
-            0.501,
-            0.847,
-            0.153
+            0.554,
+            0.928,
+            0.093
           ],
           "shoulder.R": [
-            -0.119,
+            -0.179,
             1.458,
-            -0.028
+            -0.051
           ],
           "elbow.R": [
-            -0.28,
-            1.187,
-            -0.007
-          ],
-          "wrist.R": [
-            -0.407,
-            0.975,
+            -0.337,
+            1.239,
             0.009
           ],
+          "wrist.R": [
+            -0.462,
+            1.066,
+            0.057
+          ],
           "hand.R": [
-            -0.501,
-            0.818,
-            0.021
+            -0.554,
+            0.939,
+            0.092
           ]
         },
         "aim": {
@@ -3384,41 +3596,35 @@
         },
         "whole": [
           {
-            "line": [
-              [
-                0.22,
-                1.47,
-                -0.205
-              ],
-              [
-                -0.2,
-                0.95,
-                -0.12
-              ]
-            ],
-            "radius": 0.05,
-            "bone": "spine"
-          },
-          {
-            "line": [
-              [
-                -0.22,
-                0.93,
-                -0.11
-              ],
-              [
-                -0.345,
-                0.6,
-                -0.08
-              ]
-            ],
-            "radius": 0.06,
-            "bone": "spine"
+            "part": 2,
+            "bone": "hand.R"
           }
         ]
       },
-      "budget": 2000,
-      "made": "generated; rewrapped; the owner's colour on the shirt; posed, his arms at his sides"
+      "prop": {
+        "mode": "hand",
+        "source": "generated-assault-rifle",
+        "cut": {
+          "mode": "rewrap",
+          "tris": 250,
+          "texture": 256,
+          "depth": 7
+        },
+        "options": {
+          "height": 0.86,
+          "top": [
+            -0.95,
+            0,
+            0
+          ],
+          "posed": [
+            0,
+            -1,
+            0.3
+          ],
+          "grip": 0.3
+        }
+      }
     },
     "engineer": {
       "units": [

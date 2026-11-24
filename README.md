@@ -35,13 +35,15 @@ map draws each type from one set.
   texel (`cut`), as for bands and wingtips, and the colour ends partway across a face, the rest of that face is the
   texture's colour, solid, at that half size. The rest of each model is drawn from its JPEG as before. Where the
   colour goes is each model's `owner` rule in `roster.json`.
-- **Poses:** the Riflemen, Explorer, Spy, Partisans and Marines, generated standing in an A-pose, stand with their
-  arms at their sides. The Warriors, Musketmen, Alpine Troops, Engineers and the Settlers stood naturally already, and
-  the riders sit their horses.
+- **Poses:** the Riflemen, Musketmen, Explorer, Spy, Partisans and Marines, generated standing in an A-pose, stand
+  with their arms at their sides; the Riflemen, Musketmen and Marines hold their rifles or muskets upright by their
+  right feet (order arms). The Warriors, Alpine Troops, Engineers and the Settlers stood naturally already, and the
+  riders sit their horses.
 
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
   it stands in the file, the way each bone should point, and any pieces that move whole (the Partisan's molotov, the
-  Riflemen's and Marines' slung rifles). Blender weights each point to the bones near it, and the file's points and
+  rifles and muskets in their hands). The Riflemen's rifle was split off the back it was generated slung across
+  (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. Blender weights each point to the bones near it, and the file's points and
   normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
 - **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
   skeleton it was posed with, with four clips: `idle` (3 s, breathing, looking about and shifting his weight) and
