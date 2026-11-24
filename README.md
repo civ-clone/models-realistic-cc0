@@ -46,10 +46,11 @@ map draws each type from one set.
 - **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
   skeleton it was posed with, with four clips: `idle` (3 s, breathing, looking about and shifting his weight) and
   `move` (a 1 s stride in place), which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his
-  hand at 0.5 s, back in it by the end) and `die` (1.5 s: the shot throws him back, his right knee gives, his left
-  foot slides out, and he lands on his back, his head and arms after him and his left knee falling last), which play
-  once. The map draws what flies: the manifest gives each clip's shots (`rigged.shots`), each the time it leaves and
-  the joint it leaves from (here the molotov's, `prop`, whose origin is the bottle's middle as he stands).
+  hand at 0.5 s, back in it by the end) and `die` (1.5 s: the shot throws him back, his knees give, his left foot
+  slides out and kicks up while his right stays where he stood, and he lands on his back, his head and arms after him,
+  his right leg flopping out straight and his left knee falling last), which play once. The map draws what flies: the
+  manifest gives each clip's shots (`rigged.shots`), each the time it leaves and the joint it leaves from (here the
+  molotov's, `prop`, whose origin is the bottle's middle as he stands).
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
