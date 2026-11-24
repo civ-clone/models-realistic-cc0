@@ -4,9 +4,10 @@
     python3 -I tools/build.py
 
 With --originals, it builds each model the roster lists (or only those NAMEd, by model id or extra path) in Blender:
-it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, cuts it to its budget and bakes
-its colour into one texture (blender/cut.py), turns, sizes and grounds it, or floats it at its draught
-(blender/normalise.py), puts in its prop (blender/assemble.py), puts its owner's colour where the roster says
+it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, splits off a piece fused to a
+figure where the roster says (blender/split.py), cuts it to its budget and bakes its colour into one texture
+(blender/cut.py), turns, sizes and grounds it, or floats it at its draught (blender/normalise.py), puts in its prop,
+which may be the piece split off (blender/assemble.py), puts its owner's colour where the roster says
 (blender/owner.py), stands a figure in a natural pose (blender/stance.py), and rigs it with its clips into
 models/rigged/ where the roster gives it a rig (blender/rig.py). Blender runs with factory settings and with scripts in
 files turned off (-b --factory-startup -Y), and reads the originals only as data.
@@ -73,7 +74,7 @@ class Blender:
         if p.returncode or bad:
             sys.exit(f'{script} failed on {args[:2]}:\n' + '\n'.join(bad[:10] or (p.stdout + p.stderr).splitlines()[-10:]))
         for line in p.stdout.splitlines():
-            if line.startswith(('OWNER ', 'POSE ', 'RIG ')):
+            if line.startswith(('SPLIT ', 'CLOSE ', 'OWNER ', 'POSE ', 'RIG ')):
                 print('  ' + line, flush=True)
 
     def original(self, roster, key):
@@ -85,7 +86,7 @@ class Blender:
 
     def cut(self, src, out, cut):
         args = [src, out, cut['tris'], cut['texture'], cut['mode']] + ([cut['depth']] if cut['mode'] == 'rewrap' else [])
-        env = {'REWRAP_SOLIDIFY': str(cut['solidify'])} if 'solidify' in cut else None
+        env = {'REWRAP_' + k.upper(): str(cut[k]) for k in ('solidify', 'close') if k in cut} or None
         self.run('cut.py', *args, env=env)
         return os.path.join(out, 'cut.glb')
 
@@ -99,10 +100,22 @@ class Blender:
             os.makedirs(os.path.dirname(fixed), exist_ok=True)
             self.run('drop_parts.py', src, fixed, *entry['drop'])
             src = fixed
+        piece, staging = None, {}
+        if entry.get('split'):  # a piece fused to the figure, split off to be put back as its prop
+            body = os.path.join(self.work, 'split', slug + '-body.glb')
+            piece = os.path.join(self.work, 'split', slug + '-piece.glb')
+            rule = os.path.join(self.work, 'split', slug + '.json')
+            os.makedirs(os.path.dirname(rule), exist_ok=True)
+            with open(rule, 'w', encoding='utf-8') as f:
+                json.dump({'stage': entry['stage'], **entry['split']}, f)
+            staging_file = os.path.join(self.work, 'split', slug + '-staging.json')
+            self.run('split.py', src, body, piece, rule, staging_file)
+            staging = json.load(open(staging_file, encoding='utf-8'))  # the body staged as the original was
+            src = body
         cut = self.cut(src, os.path.join(self.work, 'cut', slug), entry['cut'])
         prop = entry.get('prop')
         staged = os.path.join(self.work, 'parts' if prop else 'staged', slug + '.glb')
-        stage = {slug: {'src': cut, **entry['stage'], 'out': os.path.basename(staged)}}
+        stage = {slug: {'src': cut, **entry['stage'], **staging, 'out': os.path.basename(staged)}}
         stage_path = os.path.join(self.work, 'stage', slug + '.json')
         os.makedirs(os.path.dirname(stage_path), exist_ok=True)
         json.dump(stage, open(stage_path, 'w', encoding='utf-8'), indent=1)
@@ -118,10 +131,17 @@ class Blender:
                 prop_file = os.path.join(d, 'Molotov.fbx')
                 options['texture'] = os.path.join(d, 'Molotov.png')
             else:
-                prop_file = self.original(roster, prop['source'])
+                prop_file = piece if prop['source'] == 'split' else self.original(roster, prop['source'])
                 if 'cut' in prop:
                     prop_file = self.cut(prop_file, os.path.join(self.work, 'cut', slug + '-prop'), prop['cut'])
-            self.run('assemble.py', prop['mode'], staged, prop_file, out, *[f'{k}={v}' for k, v in options.items()])
+            if 'posed' in options:  # turned to point that way once posed: assemble.py reads the stance
+                rule = os.path.join(self.work, 'stance', slug + '.json')
+                os.makedirs(os.path.dirname(rule), exist_ok=True)
+                with open(rule, 'w', encoding='utf-8') as f:
+                    json.dump(entry['stance'], f)
+                options['stance'] = rule
+            self.run('assemble.py', prop['mode'], staged, prop_file, out,
+                     *[f'{k}={",".join(map(str, v)) if isinstance(v, list) else v}' for k, v in options.items()])
         else:
             os.makedirs(os.path.dirname(out), exist_ok=True)
             shutil.copyfile(staged, out)

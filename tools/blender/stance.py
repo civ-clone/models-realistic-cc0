@@ -47,12 +47,15 @@ def in_box(points, b):
                    if b.get(a) is not None] or [np.ones(len(points), dtype=bool)], axis=0)
 
 
-def weights(welded, faces, skeleton, moving):
+def weights(welded, faces, skeleton, moving, apart=()):
     """Blender's automatic (bone heat) weights for each welded point: an array of points x bones. The bone heat fails
     to solve some figures at their own size and others made a hundred times bigger, so it tries both. Where neither
-    weights the figure (or a bone that moves gets no points), it weights a copy remeshed in voxels instead, and each
-    point takes the weights of the copy's points nearest it."""
+    weights the figure, it tries both again on the figure without the points `apart` (those of parts held whole, which
+    take their bone's weights anyway, such as a long prop the heat can't get round). Where none of those weights it (or
+    a bone that moves gets no points), it weights a copy remeshed in voxels instead, and each point takes the weights
+    of the copy's points nearest it."""
     names = list(skeleton)
+    all_faces = faces
 
     def heat(points, scale, remesh=None):
         """Bone heat on the welded figure (or a copy remeshed in voxels this big), all made `scale` times bigger: the
@@ -103,6 +106,16 @@ def weights(welded, faces, skeleton, moving):
         _, w = heat(welded, scale)
         if good(w):
             return w, f'bone heat at {scale}x'
+    if len(apart):
+        rest = np.ones(len(welded), dtype=bool); rest[list(apart)] = False
+        index = np.cumsum(rest) - 1
+        faces = index[all_faces[rest[all_faces].all(axis=1)]]
+        for scale in (1, 100):
+            _, w_rest = heat(welded[rest], scale)
+            if good(w_rest):
+                w = np.zeros((len(welded), len(names))); w[rest] = w_rest
+                return w, f'bone heat at {scale}x, without the parts held whole'
+        faces = all_faces
     pp, pw = heat(welded, 1, remesh=0.012)
     keep = pw.sum(axis=1) > 1e-6
     if not keep.any():
@@ -167,7 +180,12 @@ def main():
     wf = wf[np.sort(first)]
     names = list(skeleton)
     moving = [names.index(n) for n in sorted(set(rule.get('aim', {})) | set(rule.get('twist', {})))]
-    w, weighted = weights(welded, wf, skeleton, moving)
+    apart = set()  # the points of parts held whole, which the bone heat can do without
+    for b in rule.get('whole', []):
+        if 'part' in b and 0 <= b['part'] < len(prims):
+            apart.update(back[start[prims[b['part']]['attributes']['POSITION']] +
+                              np.unique(np.array(glb.triangles(gltf, binary, prims[b['part']])))].tolist())
+    w, weighted = weights(welded, wf, skeleton, moving, sorted(apart))
     held = np.zeros(len(welded), dtype=bool)
     loose = np.zeros(len(pos), dtype=bool)  # points of parts held whole (props)
     for b in rule.get('whole', []):

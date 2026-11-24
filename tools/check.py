@@ -85,9 +85,10 @@ NAME = re.compile(r'[a-z0-9][a-z0-9-]*\Z')
 SHA = re.compile(r'[0-9a-f]{64}\Z')
 TOP = {'set', 'date', 'scale', 'generated', 'sources', 'models', 'extras'}
 SOURCE = {'work', 'author', 'url', 'licence', 'note', 'ai', 'generated', 'made', 'prompt', 'file', 'sha256'}
-MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'rig', 'scale', 'budget', 'made'}
-EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
-CUT = {'mode', 'tris', 'texture', 'depth', 'solidify'}
+MODEL = {'units', 'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 'stance', 'rig', 'scale', 'budget', 'made'}
+EXTRA = {'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
+SPLIT = {'chains', 'drop', 'depth', 'mirror'}
+CUT = {'mode', 'tris', 'texture', 'depth', 'solidify', 'close'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
@@ -146,6 +147,58 @@ def check_licence(where, lic):
     return lic['name']
 
 
+def finite_vec(value, n):
+    return isinstance(value, list) and len(value) == n and all(number(x) for x in value)
+
+
+def check_split(where, split):
+    """A split rule, as blender/split.py reads it: chains of at least two stations [place, across, deep, gap]."""
+    if not keys_ok(where, split, SPLIT):
+        return
+    chains = split.get('chains')
+    if not (isinstance(chains, list) and chains and all(isinstance(c, list) and len(c) >= 2 for c in chains)):
+        problem(f'{where}: chains should be a list of chains, each of two or more stations')
+        return
+    drop = split.get('drop', [])
+    if not (isinstance(drop, list) and all(isinstance(c, list) and len(c) >= 2 for c in drop)):
+        problem(f'{where}: drop should be a list of chains, each of two or more stations')
+        return
+    depth = split.get('depth', [0, 0, 1])
+    if 'depth' in split and not (finite_vec(depth, 3) and any(depth)):
+        problem(f'{where}.depth: should be a way [x, y, z], not [0, 0, 0]')
+        depth = [0, 0, 1]
+    for name, group in (('chains', chains), ('drop', drop)):
+        for i, chain in enumerate(group):
+            for j, st in enumerate(chain):
+                if not (isinstance(st, list) and len(st) == 4 and finite_vec(st[0], 3) and number(st[1], 0) and
+                        number(st[2], 0) and number(st[3]) and st[3] >= 0):
+                    problem(f'{where}.{name}[{i}][{j}]: should be [place [x, y, z], across, deep (over 0), gap (0 or '
+                            f'more)]')
+            if not all(isinstance(st, list) and st and finite_vec(st[0], 3) for st in chain):
+                continue
+            for a, b in zip(chain, chain[1:]):
+                length = math.dist(a[0], b[0])
+                if length < 1e-3:
+                    problem(f'{where}.{name}[{i}]: stations next to each other should be apart')
+                elif abs(sum((q - p) * d for p, q, d in zip(a[0], b[0], depth))) > (
+                        math.cos(math.radians(10)) * length * math.hypot(*depth)):
+                    problem(f'{where}.{name}[{i}]: a stretch between stations shouldn\'t run within 10° of depth, '
+                            f'whose way its ellipses are measured across')
+            for j in range(1, len(chain) - 1):  # each stretch reaches 1 cm past its ends: a bend's outside must fit
+                u = [q - p for p, q in zip(chain[j - 1][0], chain[j][0])]
+                v = [q - p for p, q in zip(chain[j][0], chain[j + 1][0])]
+                nu, nv = math.hypot(*u), math.hypot(*v)
+                if not (nu and nv and isinstance(chain[j], list) and len(chain[j]) == 4 and number(chain[j][1]) and
+                        number(chain[j][2])):
+                    continue
+                bend = math.acos(max(-1.0, min(1.0, sum(x * y for x, y in zip(u, v)) / (nu * nv))))
+                if max(chain[j][1], chain[j][2]) * math.sin(bend / 2) > 0.01:
+                    problem(f'{where}.{name}[{i}][{j}]: its bend ({math.degrees(bend):.0f}°) leaves the outside of it '
+                            f'uncovered past the 1 cm its stretches reach: add a station, or narrow it')
+    if 'mirror' in split and not isinstance(split['mirror'], bool):
+        problem(f'{where}.mirror: should be true or false')
+
+
 def check_cut(where, cut):
     if not keys_ok(where, cut, CUT):
         return
@@ -159,6 +212,13 @@ def check_cut(where, cut):
         problem(f'{where}: a rewrap needs a whole-number depth from 6 to 10')
     if 'solidify' in cut and not number(cut['solidify'], 0):
         problem(f'{where}: solidify should be a number over 0')
+    if 'close' in cut and not (cut.get('mode') == 'rewrap' and number(cut['close'], 0) and cut['close'] < 0.2):
+        problem(f'{where}: close is for a rewrap, a number over 0 and under 0.2 (a fraction of its size)')
+    elif 'close' in cut and whole(cut.get('depth')) and not (cut['depth'] <= 8 and cut['close'] * 2 ** cut['depth'] >= 1.5):
+        problem(f'{where}: a closing works in a box of voxels, so its depth should be 8 or under, and its reach (close) '
+                f'at least one and a half voxels (1.5 / 2^depth)')
+    if 'close' in cut and 'solidify' in cut:
+        problem(f'{where}: a rewrap closes or solidifies, not both')
 
 
 def span(value, low, high):
@@ -350,14 +410,66 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.stage: needs measure (height or along) and a size over 0')
         if not number(st.get('turn', 0)) or ('draught' in st and not number(st['draught'], 0)):
             problem(f'{where}.stage: turn and draught should be numbers (draught over 0)')
+    if 'split' in e:
+        check_split(f'{where}.split', e['split'])
+        if 'prop' not in e:
+            problem(f'{where}: a piece split off should be put back as its prop')
+        if isinstance(st, dict) and set(st) & {'draught', 'keep', 'pose'}:
+            problem(f'{where}: split.py stages a figure as it stands, so its stage can\'t have draught, keep or pose')
     if 'prop' in e and keys_ok(f'{where}.prop', e['prop'], PROP):
         p = e['prop']
-        if p.get('mode') not in ('hand', 'chute', 'hat', 'bonehat') or p.get('source') not in sources:
-            problem(f'{where}.prop: needs a mode (hand, chute, hat or bonehat) and a source in the roster')
-        if not isinstance(p.get('options'), dict):
+        if p.get('mode') not in ('hand', 'chute', 'hat', 'bonehat') or p.get('source') not in set(sources) | {'split'}:
+            problem(f'{where}.prop: needs a mode (hand, chute, hat or bonehat) and a source in the roster (or split)')
+        if (p.get('source') == 'split') != ('split' in e):
+            problem(f'{where}.prop: its source should be split exactly when the model has a split rule')
+        opts = p.get('options')
+        if not isinstance(opts, dict):
             problem(f'{where}.prop: options should be an object')
+            opts = {}
+        for k in ('top', 'ground', 'roll', 'end'):
+            if k in opts and 'posed' not in opts:
+                problem(f'{where}.prop: {k} is only for a prop that is posed (with posed)')
+        if 'top' in opts and not finite_vec(opts['top'], 3):
+            problem(f'{where}.prop: top should be a place [x, y, z]')
+        if 'roll' in opts and not number(opts['roll']):
+            problem(f'{where}.prop: roll should be a number of degrees')
+        if 'end' in opts and opts['end'] not in ('narrow', 'wide'):
+            problem(f'{where}.prop: end should be narrow or wide')
+        if 'ground' in opts and (type(opts['ground']) is not int or opts['ground'] != 1):
+            problem(f'{where}.prop: ground should be 1')
+        if 'top' in opts and 'end' in opts:
+            problem(f'{where}.prop: top or end names its top, not both')
+        if 'posed' in opts and not number(opts.get('height'), 0):
+            problem(f'{where}.prop: a posed prop needs its height (m)')
+        if 'ground' in opts and 'grip' in opts:
+            problem(f'{where}.prop: ground sets where it\'s held, so grip goes with it')
+        if 'posed' in opts and 'upright' in opts:
+            problem(f'{where}.prop: posed turns the prop along its own length, so upright goes')
+        if 'posed' in opts:
+            stance = e.get('stance') if isinstance(e.get('stance'), dict) else {}
+            posed = opts['posed']
+            if not (finite_vec(posed, 3) and any(posed) and p.get('mode') == 'hand' and stance):
+                problem(f'{where}.prop: posed should be a way [x, y, z], for a prop in the hand of a figure with a '
+                        f'stance')
+            whole = stance.get('whole') if isinstance(stance.get('whole'), list) else []
+            prop_part = 2 if 'owner' in e else 1  # the body, its owner's colour, then the prop
+            if stance and not any(isinstance(b, dict) and b.get('bone') == 'hand.R' and b.get('part') == prop_part
+                                  for b in whole):
+                problem(f'{where}.prop: a posed prop is turned as the right hand is, so the stance should hold it '
+                        f'(part {prop_part}) whole on hand.R')
+            if 'ground' in opts and finite_vec(posed, 3) and posed[1] <= 0:
+                problem(f'{where}.prop: a prop stood on the ground should point up (posed y over 0)')
+            legs = {'hips', 'thigh.L', 'thigh.R', 'shin.L', 'shin.R', 'foot.L', 'foot.R'}
+            turned = set(stance.get('aim', {}) if isinstance(stance.get('aim'), dict) else {}) | set(
+                stance.get('twist', {}) if isinstance(stance.get('twist'), dict) else {})
+            if 'ground' in opts and turned & legs:
+                problem(f'{where}.prop: ground stands the prop where the figure stands as it is, so the stance '
+                        f'shouldn\'t move the legs ({sorted(turned & legs)})')
         if 'cut' in p:
             check_cut(f'{where}.prop.cut', p['cut'])
+        if isinstance(e.get('split'), dict) and e['split'].get('mirror') and not (
+                isinstance(p.get('cut'), dict) and p['cut'].get('mode') == 'rewrap' and 'close' in p['cut']):
+            problem(f'{where}.prop: a mirrored piece wants a cut that rewraps and closes it')
     if 'owner' in e:
         check_owner(f'{where}.owner', e['owner'])
     if 'stance' in e:
@@ -366,6 +478,8 @@ def check_build_entry(where, e, allowed, sources):
         check_rig(f'{where}.rig', e['rig'], e.get('stance'))
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
+    elif ('split' in e) != ('split off' in e['made']):
+        problem(f'{where}: made should say "split off" exactly when there is a split rule')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
     elif ('owner' in e) != ("the owner's colour" in e['made']):
@@ -385,7 +499,7 @@ def credit_line(c):
 
 
 def keys_of(entry):
-    return [entry['source']] + ([entry['prop']['source']] if 'prop' in entry else [])
+    return [entry['source']] + ([entry['prop']['source']] if 'prop' in entry and entry['prop']['source'] != 'split' else [])
 
 
 def expected_extras(roster, entry):
@@ -754,6 +868,8 @@ def main():
     sources = roster.get('sources', {})
     for k, src in sources.items():
         where = f'roster.sources.{k}'
+        if k == 'split':
+            problem(f'{where}: split names the piece a model splits off, so it can\'t name a source')
         if not keys_ok(where, src, SOURCE):
             continue
         lic = check_licence(where, src.get('licence'))
