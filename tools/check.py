@@ -85,8 +85,9 @@ NAME = re.compile(r'[a-z0-9][a-z0-9-]*\Z')
 SHA = re.compile(r'[0-9a-f]{64}\Z')
 TOP = {'set', 'date', 'scale', 'generated', 'sources', 'models', 'extras'}
 SOURCE = {'work', 'author', 'url', 'licence', 'note', 'ai', 'generated', 'made', 'prompt', 'file', 'sha256'}
-MODEL = {'units', 'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'rig', 'scale', 'budget', 'made'}
-EXTRA = {'source', 'drop', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
+MODEL = {'units', 'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 'stance', 'rig', 'scale', 'budget', 'made'}
+EXTRA = {'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
+SPLIT = {'chains', 'drop', 'depth'}
 CUT = {'mode', 'tris', 'texture', 'depth', 'solidify'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
@@ -144,6 +145,34 @@ def check_licence(where, lic):
         problem(f'{where}: licence should be one of {sorted(LICENCES)}, with its url')
         return None
     return lic['name']
+
+
+def finite_vec(value, n):
+    return isinstance(value, list) and len(value) == n and all(number(x) for x in value)
+
+
+def check_split(where, split):
+    """A split rule, as blender/split.py reads it: chains of at least two stations [place, across, deep, gap]."""
+    if not keys_ok(where, split, SPLIT):
+        return
+    chains = split.get('chains')
+    if not (isinstance(chains, list) and chains and all(isinstance(c, list) and len(c) >= 2 for c in chains)):
+        problem(f'{where}: chains should be a list of chains, each of two or more stations')
+        return
+    drop = split.get('drop', [])
+    if not (isinstance(drop, list) and all(isinstance(c, list) and len(c) >= 2 for c in drop)):
+        problem(f'{where}: drop should be a list of chains, each of two or more stations')
+        return
+    for i, chain in enumerate(chains + drop):
+        for j, st in enumerate(chain):
+            if not (isinstance(st, list) and len(st) == 4 and finite_vec(st[0], 3) and number(st[1], 0) and
+                    number(st[2], 0) and number(st[3]) and st[3] >= 0):
+                problem(f'{where}.chains[{i}][{j}]: should be [place [x, y, z], across, deep (over 0), gap (0 or more)]')
+        if all(isinstance(st, list) and st and finite_vec(st[0], 3) for st in chain) and any(
+                math.dist(a[0], b[0]) < 1e-3 for a, b in zip(chain, chain[1:])):
+            problem(f'{where}.chains[{i}]: stations next to each other should be apart')
+    if 'depth' in split and not (finite_vec(split['depth'], 3) and any(split['depth'])):
+        problem(f'{where}.depth: should be a way [x, y, z], not [0, 0, 0]')
 
 
 def check_cut(where, cut):
@@ -350,10 +379,20 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.stage: needs measure (height or along) and a size over 0')
         if not number(st.get('turn', 0)) or ('draught' in st and not number(st['draught'], 0)):
             problem(f'{where}.stage: turn and draught should be numbers (draught over 0)')
+    if 'split' in e:
+        check_split(f'{where}.split', e['split'])
     if 'prop' in e and keys_ok(f'{where}.prop', e['prop'], PROP):
         p = e['prop']
-        if p.get('mode') not in ('hand', 'chute', 'hat', 'bonehat') or p.get('source') not in sources:
-            problem(f'{where}.prop: needs a mode (hand, chute, hat or bonehat) and a source in the roster')
+        if p.get('mode') not in ('hand', 'chute', 'hat', 'bonehat') or p.get('source') not in set(sources) | {'split'}:
+            problem(f'{where}.prop: needs a mode (hand, chute, hat or bonehat) and a source in the roster (or split)')
+        if (p.get('source') == 'split') != ('split' in e):
+            problem(f'{where}.prop: its source should be split exactly when the model has a split rule')
+        if 'top' in p.get('options', {}) and not finite_vec(p['options']['top'], 3):
+            problem(f'{where}.prop: top should be a place [x, y, z]')
+        if 'posed' in p.get('options', {}) and not (
+                isinstance(p['options']['posed'], list) and finite_vec(p['options']['posed'], 3) and
+                any(p['options']['posed']) and p.get('mode') == 'hand' and 'stance' in e):
+            problem(f'{where}.prop: posed should be a way [x, y, z], for a prop in the hand of a figure with a stance')
         if not isinstance(p.get('options'), dict):
             problem(f'{where}.prop: options should be an object')
         if 'cut' in p:
@@ -366,6 +405,8 @@ def check_build_entry(where, e, allowed, sources):
         check_rig(f'{where}.rig', e['rig'], e.get('stance'))
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
+    elif ('split' in e) != ('split off' in e['made']):
+        problem(f'{where}: made should say "split off" exactly when there is a split rule')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
     elif ('owner' in e) != ("the owner's colour" in e['made']):
@@ -385,7 +426,7 @@ def credit_line(c):
 
 
 def keys_of(entry):
-    return [entry['source']] + ([entry['prop']['source']] if 'prop' in entry else [])
+    return [entry['source']] + ([entry['prop']['source']] if 'prop' in entry and entry['prop']['source'] != 'split' else [])
 
 
 def expected_extras(roster, entry):

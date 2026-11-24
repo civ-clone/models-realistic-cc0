@@ -4,9 +4,10 @@
     python3 -I tools/build.py
 
 With --originals, it builds each model the roster lists (or only those NAMEd, by model id or extra path) in Blender:
-it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, cuts it to its budget and bakes
-its colour into one texture (blender/cut.py), turns, sizes and grounds it, or floats it at its draught
-(blender/normalise.py), puts in its prop (blender/assemble.py), puts its owner's colour where the roster says
+it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, splits off a piece fused to a
+figure where the roster says (blender/split.py), cuts it to its budget and bakes its colour into one texture
+(blender/cut.py), turns, sizes and grounds it, or floats it at its draught
+(blender/normalise.py), puts in its prop, which may be the piece split off (blender/assemble.py), puts its owner's colour where the roster says
 (blender/owner.py), stands a figure in a natural pose (blender/stance.py), and rigs it with its clips into
 models/rigged/ where the roster gives it a rig (blender/rig.py). Blender runs with factory settings and with scripts in
 files turned off (-b --factory-startup -Y), and reads the originals only as data.
@@ -99,6 +100,16 @@ class Blender:
             os.makedirs(os.path.dirname(fixed), exist_ok=True)
             self.run('drop_parts.py', src, fixed, *entry['drop'])
             src = fixed
+        piece = None
+        if entry.get('split'):  # a piece fused to the figure, split off to be put back as its prop
+            body = os.path.join(self.work, 'split', slug + '-body.glb')
+            piece = os.path.join(self.work, 'split', slug + '-piece.glb')
+            rule = os.path.join(self.work, 'split', slug + '.json')
+            os.makedirs(os.path.dirname(rule), exist_ok=True)
+            with open(rule, 'w', encoding='utf-8') as f:
+                json.dump({'stage': entry['stage'], **entry['split']}, f)
+            self.run('split.py', src, body, piece, rule)
+            src = body
         cut = self.cut(src, os.path.join(self.work, 'cut', slug), entry['cut'])
         prop = entry.get('prop')
         staged = os.path.join(self.work, 'parts' if prop else 'staged', slug + '.glb')
@@ -118,10 +129,17 @@ class Blender:
                 prop_file = os.path.join(d, 'Molotov.fbx')
                 options['texture'] = os.path.join(d, 'Molotov.png')
             else:
-                prop_file = self.original(roster, prop['source'])
+                prop_file = piece if prop['source'] == 'split' else self.original(roster, prop['source'])
                 if 'cut' in prop:
                     prop_file = self.cut(prop_file, os.path.join(self.work, 'cut', slug + '-prop'), prop['cut'])
-            self.run('assemble.py', prop['mode'], staged, prop_file, out, *[f'{k}={v}' for k, v in options.items()])
+            if 'posed' in options:  # turned to point that way once posed: assemble.py reads the stance
+                rule = os.path.join(self.work, 'stance', slug + '.json')
+                os.makedirs(os.path.dirname(rule), exist_ok=True)
+                with open(rule, 'w', encoding='utf-8') as f:
+                    json.dump(entry['stance'], f)
+                options['stance'] = rule
+            self.run('assemble.py', prop['mode'], staged, prop_file, out,
+                     *[f'{k}={",".join(map(str, v)) if isinstance(v, list) else v}' for k, v in options.items()])
         else:
             os.makedirs(os.path.dirname(out), exist_ok=True)
             shutil.copyfile(staged, out)

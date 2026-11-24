@@ -2,7 +2,12 @@
 
 Args (after --): MODE BASE.glb PROP OUT.glb [options as key=value]
 MODE hand: prop upright in the figure's right hand (its -X side). Options: height (prop height, m), grip (fraction up
-  the prop held at, default 0.4), texture (image for an FBX prop with no texture).
+  the prop held at, default 0.4), texture (image for an FBX prop with no texture). With `posed` (x,y,z in the file's
+  axes: x across, y up, z the figure's front) and `stance` (the stance rule's file, which build.py gives), the prop is
+  laid along its own length (its top the end nearer `top`, x,y,z in the prop file's axes, or else its narrow end, or
+  its wide end with end=wide; turned `roll` degrees about its length from its fuller side facing the front) and turned so that, once stance.py has posed the figure and carried it
+  with the right hand, its top points that way; with ground=1 its grip is where its foot, so posed, rests on the
+  ground.
 MODE chute: prop centred above the figure. Options: width (prop's widest horizontal size, m), bottom (height of the
   prop's lowest point, m).
 MODE hat: prop on the head. Options: width (brim width, m), sink (how far down over the head, m).
@@ -153,7 +158,82 @@ if opt.get("upright") == "pca":  # stand a tilted prop along its long axis, wide
 ppts = [P.matrix_world @ v.co for v in P.data.vertices]; pmn, pmx = bounds(ppts)
 pd = pmx - pmn
 placed = {}
-if mode == "hand":
+if mode == "hand" and opt.get("posed"):
+    hand_band = [p for p in base_pts if p.x < bmn.x + 0.07 * (bmx.z - bmn.z) and p.z > 0.25 * bmx.z]
+    hand = sum(hand_band, mathutils.Vector()) / len(hand_band)
+    hand.x += 0.02 * bmx.z
+    # the prop along its own length, in the file's axes (glTF: x, y up, z front): its length up, its fuller side front
+    G = mathutils.Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1)))  # Blender -> glTF
+    vs = [G @ v.co for v in P.data.vertices]; c = sum(vs, mathutils.Vector()) / len(vs)
+    cov = mathutils.Matrix(((0.0,) * 3,) * 3)
+    for v in vs:
+        d = v - c
+        for i in range(3):
+            for j in range(3):
+                cov[i][j] += d[i] * d[j]
+    e1 = mathutils.Vector((0.3, 1, 0.2)).normalized()
+    for _ in range(100):
+        e1 = (cov @ e1).normalized()
+    t1 = [(v - c).dot(e1) for v in vs]; lo_, hi_ = min(t1), max(t1)
+    def spread(sel):
+        return sum(((v - c) - e1 * (v - c).dot(e1)).length for v in sel) / max(1, len(sel))
+    if opt.get("top"):  # the end nearer this place (x,y,z in the prop file's own axes) is its top
+        top = mathutils.Vector([float(x) for x in opt["top"].split(",")])
+        if (top - c).dot(e1) < 0:
+            e1 = -e1
+    else:
+        narrow_up = spread([v for v, t in zip(vs, t1) if t > hi_ - 0.15 * (hi_ - lo_)]) <= spread([v for v, t in zip(vs, t1) if t < lo_ + 0.15 * (hi_ - lo_)])
+        if narrow_up != (opt.get("end", "narrow") == "narrow"):
+            e1 = -e1
+    rest = [(v - c) - e1 * (v - c).dot(e1) for v in vs]
+    e2 = mathutils.Vector((1, 0, 0)) if abs(e1.x) < 0.9 else mathutils.Vector((0, 0, 1))
+    e2 = (e2 - e1 * e2.dot(e1)).normalized()
+    for _ in range(100):  # the widest way across the length
+        acc = mathutils.Vector()
+        for r in rest:
+            acc += r * r.dot(e2)
+        e2 = (acc - e1 * acc.dot(e1)).normalized()
+    if sum(r.dot(e2) ** 3 for r in rest) < 0:  # towards its fuller side
+        e2 = -e2
+    e3 = e1.cross(e2)  # x
+    B = mathutils.Matrix((e3, e1, e2))  # rows: prop -> canonical (x, length, front)
+    roll = mathutils.Matrix.Rotation(math.radians(float(opt.get("roll", 0))), 3, "Y")
+    canon = [roll @ (B @ (v - c)) for v in vs]
+    lo_y, hi_y = min(v.y for v in canon), max(v.y for v in canon)
+    s = float(opt["height"]) / (hi_y - lo_y)
+    # the hand's turn once posed, from the stance (as stance.py turns a piece held whole on hand.R)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from skeleton import forward, read_rule
+    st = json.load(open(opt["stance"]))
+    J, skel = read_rule(st)
+    rot, moved = forward(skel, st.get("aim", {}), st.get("twist", {}))
+    Rh = mathutils.Matrix(rot["hand.R"].tolist())
+    want = mathutils.Vector([float(x) for x in opt["posed"].split(",")]).normalized()
+    F = mathutils.Vector((0, 1, 0)).rotation_difference(want).to_matrix()
+    A = Rh.transposed() @ F  # canonical -> the A-posed figure, glTF axes
+    hand_g = G @ hand
+    posed_hand = Rh @ (hand_g - mathutils.Vector(J["wrist.R"].tolist())) + mathutils.Vector(moved["hand.R"].tolist())
+    if opt.get("ground") == "1":
+        foot_gap = 0.005  # its lowest point just off the ground, so the figure is still stood on its own feet
+        a0 = mathutils.Vector(((min(v.x for v in canon) + max(v.x for v in canon)) / 2, lo_y,
+                               (min(v.z for v in canon) + max(v.z for v in canon)) / 2))
+        low = min((F @ (cv - a0)).y for cv in canon)  # the lowest point, held by its foot's end and turned
+        grip = (posed_hand.y - foot_gap + s * low) / (s * (hi_y - lo_y) * want.y)
+        if not 0 < grip < 1:
+            raise RuntimeError(f"Error: the hand, posed, is {posed_hand.y:.3f} up, so the prop can't rest on the ground")
+    else:
+        grip = float(opt.get("grip", 0.4))
+    anchor = mathutils.Vector((0, lo_y + grip * (hi_y - lo_y), 0))
+    canon_mid = [(min(v[i] for v in canon) + max(v[i] for v in canon)) / 2 for i in (0, 2)]
+    anchor.x, anchor.z = canon_mid
+    # one matrix, so the transform also turns the prop's normals
+    G3 = G.to_3x3(); Gi3 = G3.inverted()
+    lin = Gi3 @ A @ roll @ B @ G3 * s
+    M = mathutils.Matrix.Translation(hand - Gi3 @ A @ (roll @ (B @ c) + anchor) * s) @ lin.to_4x4()
+    placed = {"hand": [round(x, 3) for x in hand], "scale": round(s, 4), "grip": round(grip, 4),
+              "posed hand": [round(x, 3) for x in posed_hand], "posed": [round(x, 3) for x in want]}
+elif mode == "hand":
     s = float(opt["height"]) / pd.z
     grip = float(opt.get("grip", 0.4))
     hand_band = [p for p in base_pts if p.x < bmn.x + 0.07 * (bmx.z - bmn.z) and p.z > 0.25 * bmx.z]
