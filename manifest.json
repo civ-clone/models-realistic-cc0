@@ -29,15 +29,6 @@
    }
   },
   {
-   "work": "British Redcoat",
-   "author": "rossclark13693",
-   "url": "https://www.meshy.ai/posts/019d4ea4-f729-77e8-abb9-867439fcd1d8",
-   "licence": {
-    "name": "CC0 1.0",
-    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
-   }
-  },
-  {
    "work": "Storm-Swept Redcoat Cavalry",
    "author": "rossclark13693",
    "url": "https://www.meshy.ai/posts/019d634e-94fe-7cae-a944-57370f297fb9",
@@ -347,23 +338,24 @@
   },
   "musketman": {
    "file": "models/musketman.glb",
-   "sha256": "e8b6487c7f78b3caafd72c5c408268e1d498fec99169442b73893235763f8471",
+   "sha256": "695c91c1b691e0a7fdcc1fbd55dfe723ec970140bbc55bff2baa20b323fa3a7b",
    "extent": {
     "across": [
-     -0.526,
-     0.526
+     -0.385,
+     0.385
     ],
     "along": [
-     -0.41,
-     0.41
+     -0.233,
+     0.221
     ],
     "height": 1.8
    },
-   "triangles": 1994,
+   "triangles": 1944,
    "from": [
-    "https://www.meshy.ai/posts/019d4ea4-f729-77e8-abb9-867439fcd1d8"
+    "https://github.com/civ-clone/models-realistic-cc0",
+    "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "simplified; the owner's colour on the coat"
+   "made": "generated; rewrapped; his musket generated apart and put in his right hand; the owner's colour on the coat; posed, his arms at his sides and his musket grounded by his right foot"
   },
   "dragoon": {
    "file": "models/dragoon.glb",
@@ -410,23 +402,24 @@
   },
   "marine": {
    "file": "models/marine.glb",
-   "sha256": "d3bfc1cf8cf20ee7ec86ce7a2ae6ee6d7627c23f3d08f96b0beacd8c5fc12498",
+   "sha256": "daa89400d96283d3546602f721018573d052b05684849efb7d3af09ebfae82c8",
    "extent": {
     "across": [
-     -0.381,
-     0.381
+     -0.313,
+     0.313
     ],
     "along": [
-     -0.237,
-     0.237
+     -0.216,
+     0.328
     ],
     "height": 1.8
    },
-   "triangles": 1995,
+   "triangles": 1949,
    "from": [
+    "https://github.com/civ-clone/models-realistic-cc0",
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the shirt; posed, his arms at his sides"
+   "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down"
   },
   "engineer": {
    "file": "models/engineer.glb",
