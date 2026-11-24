@@ -460,7 +460,7 @@
    "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down",
    "rigged": {
     "file": "models/rigged/marine.glb",
-    "sha256": "05b29bf1a3d8f1b4636293ba107f8b9ca9658568d31d02eaf4168fa94391ab69",
+    "sha256": "10864be30541c9e08f1a690b715830300df2f19d5b8981005cd035dc34029e31",
     "clips": {
      "idle": "idle",
      "move": "move",

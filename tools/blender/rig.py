@@ -84,9 +84,9 @@ between frames by turning each joint linearly. It prints a report: for each clip
 is from the bind, the most any edge of the figure grows and when, how many faces grow over 1.4 times, the most weight
 any point lost to the four kept, the furthest a fully planted ankle ends up from its place (`planted`), and where they
 apply, how far an ungrounded prop went below the ground (`below`) and the furthest each hand ends up from where it
-holds the prop, off its line (`grip`, by hand: the one that holds it whenever a key holds it at all, the other where
-it fully grips it; more than a centimetre or so says the prop was out of the arm's reach, and over GRIP fails the
-build), the most each hand on it bends off the line of its forearm (`wrist`, in degrees), and the least its elbow
+holds the prop (`grip`, by hand: where it fully holds or grips it, from its place there; where the hand that holds it
+eases on or off, from the prop's line; more than a centimetre or so says the prop was out of the arm's reach, and over
+GRIP fails the build), the most each hand on it bends off the line of its forearm (`wrist`, in degrees), and the least its elbow
 bends there (`elbow`: near 0, the arm is at full reach, and whips as it bends).
 With RIG_FRAMES set to a folder, it also writes each clip's points frame by frame (`<clip>.npy`) and its feet
 (`<clip>-feet.npz`: their plant weights and places, the joints, and how far each frame was lowered to the ground),
@@ -824,12 +824,14 @@ def main():
                         there[:3, :3], there[:3, 3] = hand_r, at - hand_r @ near[side]
                         if side == hand_side and weight[f] < 1:
                             there = mix(prop_m @ np.linalg.inv(carry), there, weight[f])
-                        bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
+                        short = bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
                         fa, hd = f'forearm.{side}', f'hand.{side}'
-                        if side == hand_side or weight[f] > 0.999:  # how far off the prop's line the hand ends up
+                        if side == hand_side or weight[f] > 0.999:
+                            # How far the hand ends up from where it holds the prop: fully holding it, from its place
+                            #  (short of it, out of reach); easing on or off, from the prop's line.
                             way = prop_m[:3, :3] @ bind[nb, :3, :3].T @ along
                             miss = moved[hd] - shift + rot[hd] @ near[side] - at
-                            gaps[side].append(float(np.linalg.norm(miss - (miss @ way) * way)))
+                            gaps[side].append(short if weight[f] > 0.999 else float(np.linalg.norm(miss - (miss @ way) * way)))
                             ua = rot[f'upper_arm.{side}'] @ (skeleton[f'upper_arm.{side}'][1] - skeleton[f'upper_arm.{side}'][0])
                             fv = rot[fa] @ (skeleton[fa][1] - skeleton[fa][0])
                             elbows[side].append(math.degrees(math.acos(np.clip(ua @ fv / np.linalg.norm(ua) / np.linalg.norm(fv), -1, 1))))
