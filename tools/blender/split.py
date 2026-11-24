@@ -34,7 +34,7 @@ itself is closed as the holes it is, each on its own. Faces the cut leaves as te
 bridging a hole are dropped first. Only the cut's own edges (between a face kept and one taken or dropped) are closed:
 holes the original had, and the outlines of two-layer sheets, are left as they were, unless the cut ran into one,
 when it's closed with the cut's; faces lying on another's points (a two-layer sheet) are left out of the weld, so
-their layers aren't merged. It fails if any edge the cut opened is left open, or Blender's own check finds a face it
+their layers aren't merged (their points are left out of the weld where only such faces use them). It fails if any edge the cut opened is left open, or Blender's own check finds a face it
 won't keep. The piece's holes are left open: a cut along a piece's length, closed, fills across its hollows (a sheet
 across a rifle's stock).
 
@@ -201,15 +201,6 @@ sides, side_face = np.sort(np.concatenate(sides), axis=1), np.concatenate(side_f
 n_weld = int(weld.max()) + 1
 side_key = sides[:, 0] * n_weld + sides[:, 1]  # an edge, by its welded ends
 key_weld = {tuple(k): int(w) for k, w in zip(key.tolist(), weld.tolist())}
-# Faces lying on another face's points (a sheet made two-sided by a second layer, or a face made twice): welding them
-# would merge the layers, so their points are left out of the weld below.
-corners = np.full((nf, int(loop_total.max())), -1, dtype=np.int64)
-for k in range(corners.shape[1]):
-    has = loop_total > k
-    corners[has, k] = weld[loop_v[loop_start[has] + k]]
-_, first_of, count_of = np.unique(np.sort(corners, axis=1), axis=0, return_inverse=True, return_counts=True)
-twinned = count_of[first_of.ravel()] > 1
-layered = set(np.unique(corners[twinned][corners[twinned] >= 0]).tolist())
 kept = np.where(~pick & ~drop)[0]
 part = components(kept)
 debris = np.zeros(nf, dtype=bool)
@@ -279,13 +270,6 @@ def hole_cycles(bm):
             e, v = nxt, nxt.other_vert(v)
         if not ok:
             continue
-        votes = 0  # which way the faces round it run it, by most of them (one face wound the other way can't turn it)
-        for i in range(len(cycle)):
-            e = bm.edges.get((cycle[i], cycle[(i + 1) % len(cycle)]))
-            if e is not None and e.link_loops:
-                votes += 1 if e.link_loops[0].vert is cycle[(i + 1) % len(cycle)] else -1
-        if votes < 0:
-            cycle.reverse()
         stack, at = [], {}  # a hole pinched at a point passes it twice: its lobes, each a cycle of its own
         for v in cycle:
             if v in at:
@@ -297,7 +281,17 @@ def hole_cycles(bm):
             else:
                 at[v] = len(stack); stack.append(v)
         cycles.append(stack)
-    return [c for c in cycles if len(c) >= 3]
+    out = []
+    for c in cycles:
+        if len(c) < 3:
+            continue
+        votes = 0  # which way the faces round it run it, by most of them (one face wound the other way can't turn it)
+        for i in range(len(c)):
+            e = bm.edges.get((c[i], c[(i + 1) % len(c)]))
+            if e is not None and e.link_loops:
+                votes += 1 if e.link_loops[0].vert is c[(i + 1) % len(c)] else -1
+        out.append(c[::-1] if votes < 0 else c)
+    return out
 
 
 def zip_up(bm, cycle):
@@ -316,9 +310,11 @@ def zip_up(bm, cycle):
     while a < len(A) - 1 or b < len(B) - 1:
         go_a = b == len(B) - 1 or (a < len(A) - 1 and (A[a + 1].co - B[b].co).length <= (A[a].co - B[b + 1].co).length)
         if a < len(A) - 1 and b < len(B) - 1:  # not a flat triangle where the other way gives a real one
-            ta = mathutils.geometry.area_tri(A[a].co, A[a + 1].co, B[b].co)
-            tb = mathutils.geometry.area_tri(B[b + 1].co, B[b].co, A[a].co)
-            if (ta if go_a else tb) < 1e-12 <= (tb if go_a else ta):
+            def flat(p, q, r):  # next to nothing for its size, in whatever units the original has
+                return mathutils.geometry.area_tri(p, q, r) < 1e-9 * max((p - q).length, (q - r).length,
+                                                                          (r - p).length) ** 2
+            fa_, fb_ = flat(A[a].co, A[a + 1].co, B[b].co), flat(B[b + 1].co, B[b].co, A[a].co)
+            if (fa_ if go_a else fb_) and not (fb_ if go_a else fa_):
                 go_a = not go_a
         if go_a:
             tri = (A[a], A[a + 1], B[b]); a += 1  # A runs with the cycle
@@ -339,11 +335,21 @@ def close_holes(ob):
     bm = bmesh.new(); bm.from_mesh(m)
     unit = float(np.linalg.norm(mx - mn)) * 1e-6
     unit_key = lambda v: tuple(np.round(np.array(v.co[:]) / unit).astype(np.int64).tolist())
-    bmesh.ops.remove_doubles(bm, verts=[v for v in bm.verts if key_weld.get(unit_key(v)) not in layered], dist=unit)
-    uv = bm.loops.layers.uv.active
 
     def welded(v):
         return key_weld.get(unit_key(v))
+
+    # Faces lying on another face's points (a sheet made two-sided by a second layer, or a face made twice): welding
+    # would merge the layers, so the points only such faces use are left out of the weld (their neighbours' copies of
+    # the same places, across a texture seam, still join).
+    sig = {f: tuple(sorted(welded(v) for v in f.verts)) for f in bm.faces}
+    count = {}
+    for t in sig.values():
+        count[t] = count.get(t, 0) + 1
+    apart = {v for f in bm.faces if count[sig[f]] > 1 for v in f.verts
+             if all(count[sig[g]] > 1 for g in v.link_faces)}
+    bmesh.ops.remove_doubles(bm, verts=[v for v in bm.verts if v not in apart], dist=unit)
+    uv = bm.loops.layers.uv.active
 
     def key_of(e):
         w0, w1 = welded(e.verts[0]), welded(e.verts[1])
@@ -389,6 +395,8 @@ def close_holes(ob):
             except ValueError:
                 continue  # that face is there already
             new = bmesh.ops.triangulate(bm, faces=[face], quad_method='BEAUTY', ngon_method='BEAUTY')['faces']
+        if not m.materials:  # an original with no material: give its faces one, so the fill doesn't take them all
+            m.materials.append(bpy.data.materials.new('body'))
         fill = bpy.data.materials.new('split-fill'); fill.use_nodes = True
         bsdf = next(n for n in fill.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
         bsdf.inputs['Base Color'].default_value = colour
