@@ -6,8 +6,9 @@ MODE hand: prop upright in the figure's right hand (its -X side). Options: heigh
   axes: x across, y up, z the figure's front) and `stance` (the stance rule's file, which build.py gives), the prop is
   laid along its own length (its top the end nearer `top`, x,y,z in the prop file's axes, or else its narrow end, or
   its wide end with end=wide; turned `roll` degrees about its length from its fuller side facing the front) and turned
-  so that, once stance.py has posed the figure and carried it with the right hand, its top points that way; with
-  ground=1 its grip is where its foot, so posed, rests on the ground.
+  so that, once stance.py has posed the figure and carried it with the right hand (the stance holds it whole on
+  hand.R), its top points that way; with ground=1 its grip is where its foot, so posed, rests on the ground (as the
+  figure stands, so the stance mustn't move the legs, which would stand him higher or lower).
 MODE chute: prop centred above the figure. Options: width (prop's widest horizontal size, m), bottom (height of the
   prop's lowest point, m).
 MODE hat: prop on the head. Options: width (brim width, m), sink (how far down over the head, m).
