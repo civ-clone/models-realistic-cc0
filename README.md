@@ -75,9 +75,12 @@ map draws each type from one set.
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
     made, the prompt;
-  - each model: the unit types it draws, its source, how it's cut (part by part, or wrapped in one new surface), how
-    it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov), where its owner's colour
-    goes, how a figure is posed, how it's rigged and its clips, its budget, and its scale where it isn't the set's.
+  - each model: the unit types it draws, its source, a piece its original fuses to the figure and how it's split off
+    (`split`: the Rifleman's rifle, made whole from its mirror image), how it's cut (part by part, or wrapped in one new
+    surface, which can be closed over a split piece's slits), how it's turned and sized, how deep a ship floats, the
+    prop put in (the Partisan's molotov, or the piece split off, turned to stand as the figure is posed), where its
+    owner's colour goes, how a figure is posed, how it's rigged and its clips, its budget, and its scale where it isn't
+    the set's.
 
   The set's scale draws a 1.8 m person as tall as the other sets' people, 0.168 squares. The 3D map draws units
   bigger than life, so the rest have scales of their own, close to models-cimpletoon's sizes: riders 0.21 to 0.22

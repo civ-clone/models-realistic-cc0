@@ -1,9 +1,11 @@
 """split.py : splits a piece a figure holds or carries (a slung rifle, say) off it, where its original fuses the piece to
 the body as one skin, so the piece can be put back as a prop of its own and move with a hand.
 
-Args (after --): GLB BODY.glb PIECE.glb RULE.json. Writes the body without the piece, in the original's frame, and the
-piece, in the staged frame below, each with the original's material. Blender is started with factory settings and scripts in files turned off, and
-reads the GLB only as data.
+Args (after --): GLB BODY.glb PIECE.glb RULE.json STAGING.json. Writes the body without the piece, in the original's
+frame, and the piece, in the staged frame below, each with the original's material; and the staging (the matrix taking
+the original's frame to the staged one), which build.py hands normalise.py for the body. Staged by its own box, the
+body would move wherever the piece reached past it, away from the stance's joints, fitted to the original. Blender is
+started with factory settings and scripts in files turned off, and reads the GLB only as data.
 
 The rule (a model's `split` in the roster, with its `stage`) gives `chains` of stations along the piece, in the frame
 stance.py's joints use: the original as normalise.py would turn, size and ground it (metres, x across with the figure's
@@ -14,7 +16,8 @@ left at +x, y up, facing +z). Each station is [place, across, deep, gap]:
 - `gap`: inside the ellipse, a face further than this towards the figure's middle (its upright line through x = 0,
   z = 0) that faces away from the middle is the body's skin, under the piece, and stays with the body.
 Between stations the ellipse's middle and sizes go in a straight line, no stretch within 10° of `depth`; each stretch
-reaches 1 cm past its ends, so a chain's ends and the outside of its bends are covered.
+reaches 1 cm past its ends, so a chain's ends and the outside of its bends are covered (check.py holds a bend to
+what that covers).
 
 `drop` gives chains the same way for what goes with neither: where the original has made a piece twice over, say, or a
 sling left hanging once its rifle has gone. The piece's chains come first where they overlap.
@@ -24,13 +27,14 @@ goes too: scraps of the piece left behind. Each connected piece of the original 
 part the cut didn't touch stays as it was.
 
 The holes the cut leaves in the body are closed, each hole's closing faces coloured with the average colour of the faces
-round its edges (a material of their own, `split-fill`), so it has no gap where the piece lay against it: zipped from
-side to side, so a long hole curving round a leg doesn't fold. A ring of open edges that touches itself is closed as
-the holes it is, each on its own. Holes the original had are left as
-they were. The body must stand in the same box as the original did, as normalise.py stages
-it by its own box and the stance's joints were fitted to the original's: it fails if the piece reached past the body.
-The piece's holes are left open: a cut along a piece's length, closed, fills across its hollows (a sheet across a
-rifle's stock).
+round its edges (a material of their own, `split-fill`; the colours come from the first textured material's image), so
+it has no gap where the piece lay against it. Each is zipped from side to side, so a long hole curving round a leg
+doesn't fold (though one wrapping most of the way round a limb may dip inside it). A ring of open edges that touches
+itself is closed as the holes it is, each on its own. Faces the cut leaves as teeth along a rim, hanging by a corner or
+bridging a hole are dropped first. Holes the original had are left as they were, unless the cut ran into one, when
+it's closed with the cut's. It fails if any edge the cut opened is left open, or Blender's own check finds a face it
+won't keep. The piece's holes are left open: a cut along a piece's length, closed, fills across its hollows (a sheet
+across a rifle's stock).
 
 With `mirror` true, the piece is given its mirror image as well, across its middle: the plane across its thinnest
 reach, through the middle of each slice along it (a running median, so a stray scrap doesn't bend it). Where the
@@ -52,7 +56,7 @@ import mathutils
 import numpy as np
 
 a = sys.argv[sys.argv.index('--') + 1:]
-src, body_out, piece_out, rule_path = a[:4]
+src, body_out, piece_out, rule_path, staging_out = a[:5]
 rule = json.load(open(rule_path))
 stage, chains = rule['stage'], rule['chains']
 depth = np.array(rule.get('depth', [0, 0, 1]), dtype=float)
@@ -224,35 +228,39 @@ if img is not None:
 
 
 def hole_cycles(bm):
-    """Each hole's edge as a cycle of points, in the order a face closing it runs (against the faces round it). A ring
-    that touches itself (holes meeting at a point, or one pinched there) comes apart into cycles that don't: found by
-    turning round each point through the faces to the next open edge, then cut where a cycle comes back to a point."""
+    """Each hole's edge as a cycle of points, in the order a face closing it runs (against the face round its first
+    edge). A ring that touches itself (holes meeting at a point, or one pinched there) comes apart into cycles that
+    don't: found by turning round each point through the faces, whichever way they're wound, to the next open edge,
+    then cut where a cycle comes back to a point. A walk that doesn't come back to its start is left out (and the
+    check after the closing fails on its open edges)."""
     cycles, used = [], set()
-    for e in bm.edges:
-        if not e.is_boundary or e.link_loops[0] in used:
+    for e0 in bm.edges:
+        if not e0.is_boundary or e0 in used:
             continue
-        start = lp = e.link_loops[0]
-        cycle = []
+        lp0 = e0.link_loops[0]  # runs a -> b in its face; the hole runs b -> a
+        cycle, e, v, ok = [lp0.link_loop_next.vert], e0, lp0.vert, False
         for _ in range(len(bm.edges)):
-            used.add(lp)
-            cycle.append(lp.link_loop_next.vert)  # lp runs a -> b in its face; the hole runs b -> a
-            a = lp.vert
-            nxt = lp.link_loop_prev  # x -> a
-            for _ in range(len(a.link_loops) + 1):
-                if nxt.edge.is_boundary:
+            used.add(e)
+            f, cur, nxt = e.link_faces[0], e, None
+            for _ in range(len(v.link_edges) + 1):  # round v through the faces, from e to the next open edge
+                other = next((x for x in f.edges if x is not cur and v in x.verts), None)
+                if other is None:
                     break
-                other = nxt.link_loop_radial_next  # a -> x, in the face across that edge
-                if other.vert is not a:  # faces turned against each other: no clear way round
-                    nxt = None
+                if other.is_boundary:
+                    nxt = other
                     break
-                nxt = other.link_loop_prev  # y -> a
-            if nxt is None or not nxt.edge.is_boundary:
-                cycle = None
+                across = [g for g in other.link_faces if g is not f]
+                if len(across) != 1:
+                    break  # an edge of more than two faces: no clear way round
+                f, cur = across[0], other
+            if nxt is None:
                 break
-            lp = nxt
-            if lp is start:
+            if nxt is e0:
+                ok = True
                 break
-        if not cycle:
+            cycle.append(v)
+            e, v = nxt, nxt.other_vert(v)
+        if not ok:
             continue
         stack, at = [], {}  # a hole pinched at a point passes it twice: its lobes, each a cycle of its own
         for v in cycle:
@@ -306,20 +314,30 @@ def close_holes(ob):
     def welded(v):
         return key_weld.get(tuple(np.round(np.array(v.co[:]) / unit).astype(np.int64).tolist()))
 
-    def cut_open(e):  # an open edge the cut made, not one of the original's own holes
-        return e.is_boundary and tuple(sorted((welded(e.verts[0]), welded(e.verts[1])))) not in open_before
+    def was_open(e):  # one of the original's own holes' edges
+        w0, w1 = welded(e.verts[0]), welded(e.verts[1])
+        return None not in (w0, w1) and tuple(sorted((w0, w1))) in open_before
 
-    for _ in range(8):  # faces the cut left as teeth along a hole's rim (two edges open) or hanging by a corner
-        loose = [f for f in bm.faces if sum(cut_open(e) for e in f.edges) >= 2]
+    def cut_open(e):  # an open edge the cut made
+        return e.is_boundary and not was_open(e)
+
+    def on_rim(v):
+        return any(cut_open(e) for e in v.link_edges)
+
+    peeled = 0
+    for _ in range(8):  # faces the cut left as teeth along a hole's rim (two edges open), hanging by a corner, or
+        # bridging it (an edge on the rim and the far corner on it too), which a closing face would lie on twice
+        loose = [f for f in bm.faces if sum(cut_open(e) for e in f.edges) >= 2 or (
+            any(cut_open(e) for e in f.edges) and all(on_rim(v) for v in f.verts))]
         if not loose:
             break
+        peeled += len(loose)
         bmesh.ops.delete(bm, geom=loose, context='FACES')
 
     closed, kept = 0, 0
     for cycle in hole_cycles(bm):
         ring = [bm.edges.get((cycle[i], cycle[(i + 1) % len(cycle)])) for i in range(len(cycle))]
-        ends = [tuple(sorted((welded(e.verts[0]), welded(e.verts[1])))) for e in ring]
-        if all(None not in x and x in open_before for x in ends):
+        if all(was_open(e) for e in ring):
             kept += 1  # a hole the original had
             continue
         colour = (0.5, 0.5, 0.5, 1.0)
@@ -348,14 +366,14 @@ def close_holes(ob):
             f.material_index = len(m.materials) - 1
             f.smooth = False
         closed += 1
+    left = sum(1 for e in bm.edges if cut_open(e))
+    if left:
+        raise RuntimeError(f'Error: closing the holes left {left} edges the cut opened open')
     bm.to_mesh(m); bm.free(); m.update()
     faces = len(m.polygons)
     if m.validate(verbose=True) or len(m.polygons) != faces:
         raise RuntimeError(f'Error: closing the holes left faces Blender won\'t keep ({faces - len(m.polygons)})')
-    bm = bmesh.new(); bm.from_mesh(m)
-    still = sum(1 for e in bm.edges if e.is_boundary)
-    bm.free()
-    return closed, kept, still
+    return closed, kept, peeled
 
 
 def keep_only(ob, mask):
@@ -406,22 +424,18 @@ piece = obj.copy(); piece.data = me.copy(); piece.name = 'piece'; sc.collection.
 obj.name = 'body'
 keep_only(obj, ~pick & ~drop)
 keep_only(piece, pick)
-# The body must stand in the original's box (see above).
-Vb = np.array([v.co[:] for v in obj.data.vertices])
-box_all = [((P @ R.T) * s + fix) for P in (V - c, Vb - c)]
-off = max(float(np.abs(box_all[0].min(0) - box_all[1].min(0)).max()), float(np.abs(box_all[0].max(0) - box_all[1].max(0)).max()))
-if off > 0.001:
-    raise RuntimeError(f'Error: without the piece the body stands in a box {off * 1000:.0f} mm from the original\'s, '
-                       f'so it would stage elsewhere than its stance was fitted: the piece (or what was dropped) reached '
-                       f'past the body')
+Mb = np.eye(4); Mb[:3, :3] = R * s; Mb[:3, 3] = fix - (R @ c) * s  # the original's frame to the staged one
+json.dump({'matrix': Mb.tolist()}, open(staging_out, 'w'))
 report = {'faces': nf, 'picked': int(pick.sum()), 'dropped': int(drop.sum()), 'debris': int(debris.sum())}
 for ob, name, out in ((obj, 'body', body_out), (piece, 'piece', piece_out)):
     if name == 'body':
-        closed, kept, still = close_holes(ob)
-        report[name] = {'holes closed': closed, 'holes the original had': kept, 'open edges left': still,
-                        'box off (mm)': round(off * 1000, 2)}
+        closed, kept, peeled = close_holes(ob)
+        Vb = np.array([v.co[:] for v in ob.data.vertices])  # how far its own box is from the original's (staged)
+        Sa, Sb = (V - c) @ R.T * s + fix, (Vb - c) @ R.T * s + fix
+        off = max(float(np.abs(Sa.min(0) - Sb.min(0)).max()), float(np.abs(Sa.max(0) - Sb.max(0)).max()))
+        report[name] = {'holes closed': closed, 'holes the original had': kept, 'faces peeled': peeled,
+                        'own box off (mm)': round(off * 1000, 1)}
     else:  # in the staged frame, where the rule (and a prop's `top`) gives places
-        Mb = np.eye(4); Mb[:3, :3] = R * s; Mb[:3, 3] = fix - (R @ c) * s
         ob.data.transform(mathutils.Matrix(Mb.tolist())); ob.data.update()
         if rule.get('mirror'):
             report['mirror'] = mirror(ob)

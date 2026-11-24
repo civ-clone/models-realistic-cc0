@@ -100,7 +100,7 @@ class Blender:
             os.makedirs(os.path.dirname(fixed), exist_ok=True)
             self.run('drop_parts.py', src, fixed, *entry['drop'])
             src = fixed
-        piece = None
+        piece, staging = None, {}
         if entry.get('split'):  # a piece fused to the figure, split off to be put back as its prop
             body = os.path.join(self.work, 'split', slug + '-body.glb')
             piece = os.path.join(self.work, 'split', slug + '-piece.glb')
@@ -108,12 +108,14 @@ class Blender:
             os.makedirs(os.path.dirname(rule), exist_ok=True)
             with open(rule, 'w', encoding='utf-8') as f:
                 json.dump({'stage': entry['stage'], **entry['split']}, f)
-            self.run('split.py', src, body, piece, rule)
+            staging_file = os.path.join(self.work, 'split', slug + '-staging.json')
+            self.run('split.py', src, body, piece, rule, staging_file)
+            staging = json.load(open(staging_file, encoding='utf-8'))  # the body staged as the original was
             src = body
         cut = self.cut(src, os.path.join(self.work, 'cut', slug), entry['cut'])
         prop = entry.get('prop')
         staged = os.path.join(self.work, 'parts' if prop else 'staged', slug + '.glb')
-        stage = {slug: {'src': cut, **entry['stage'], 'out': os.path.basename(staged)}}
+        stage = {slug: {'src': cut, **entry['stage'], **staging, 'out': os.path.basename(staged)}}
         stage_path = os.path.join(self.work, 'stage', slug + '.json')
         os.makedirs(os.path.dirname(stage_path), exist_ok=True)
         json.dump(stage, open(stage_path, 'w', encoding='utf-8'), indent=1)

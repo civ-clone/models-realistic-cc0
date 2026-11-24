@@ -163,19 +163,19 @@
   },
   "rifleman": {
    "file": "models/rifleman.glb",
-   "sha256": "519a1e0792411705153becca04df5b4dd41d6e5bcdf3de9d7a32ede7f2438f70",
+   "sha256": "53559789b547fa19670a4a2116e327c27fa20a30651cfb4c3c68a19ee1ddc27c",
    "extent": {
     "across": [
-     -0.396,
-     0.396
+     -0.393,
+     0.393
     ],
     "along": [
-     -0.219,
-     0.219
+     -0.218,
+     0.218
     ],
-    "height": 1.8
+    "height": 1.798
    },
-   "triangles": 1933,
+   "triangles": 1932,
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],

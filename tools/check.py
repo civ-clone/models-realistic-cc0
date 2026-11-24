@@ -184,6 +184,16 @@ def check_split(where, split):
                         math.cos(math.radians(10)) * length * math.hypot(*depth)):
                     problem(f'{where}.{name}[{i}]: a stretch between stations shouldn\'t run within 10° of depth, '
                             f'whose way its ellipses are measured across')
+            for j in range(1, len(chain) - 1):  # each stretch reaches 1 cm past its ends: a bend's outside must fit
+                u = [q - p for p, q in zip(chain[j - 1][0], chain[j][0])]
+                v = [q - p for p, q in zip(chain[j][0], chain[j + 1][0])]
+                nu, nv = math.hypot(*u), math.hypot(*v)
+                if not (nu and nv and number(chain[j][1]) and number(chain[j][2])):
+                    continue
+                bend = math.acos(max(-1.0, min(1.0, sum(x * y for x, y in zip(u, v)) / (nu * nv))))
+                if max(chain[j][1], chain[j][2]) * math.sin(bend / 2) > 0.01:
+                    problem(f'{where}.{name}[{i}][{j}]: its bend ({math.degrees(bend):.0f}°) leaves the outside of it '
+                            f'uncovered past the 1 cm its stretches reach: add a station, or narrow it')
     if 'mirror' in split and not isinstance(split['mirror'], bool):
         problem(f'{where}.mirror: should be true or false')
 
@@ -426,6 +436,14 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.prop: end should be narrow or wide')
         if 'ground' in opts and (type(opts['ground']) is not int or opts['ground'] != 1):
             problem(f'{where}.prop: ground should be 1')
+        if 'top' in opts and 'end' in opts:
+            problem(f'{where}.prop: top or end names its top, not both')
+        if 'posed' in opts and not number(opts.get('height'), 0):
+            problem(f'{where}.prop: a posed prop needs its height (m)')
+        if 'ground' in opts and 'grip' in opts:
+            problem(f'{where}.prop: ground sets where it\'s held, so grip goes with it')
+        if 'posed' in opts and 'upright' in opts:
+            problem(f'{where}.prop: posed turns the prop along its own length, so upright goes')
         if 'posed' in opts:
             stance = e.get('stance') if isinstance(e.get('stance'), dict) else {}
             posed = opts['posed']
@@ -433,9 +451,11 @@ def check_build_entry(where, e, allowed, sources):
                 problem(f'{where}.prop: posed should be a way [x, y, z], for a prop in the hand of a figure with a '
                         f'stance')
             whole = stance.get('whole') if isinstance(stance.get('whole'), list) else []
-            if stance and not any(isinstance(b, dict) and b.get('bone') == 'hand.R' and 'part' in b for b in whole):
+            prop_part = 2 if 'owner' in e else 1  # the body, its owner's colour, then the prop
+            if stance and not any(isinstance(b, dict) and b.get('bone') == 'hand.R' and b.get('part') == prop_part
+                                  for b in whole):
                 problem(f'{where}.prop: a posed prop is turned as the right hand is, so the stance should hold it '
-                        f'whole on hand.R')
+                        f'(part {prop_part}) whole on hand.R')
             if 'ground' in opts and finite_vec(posed, 3) and posed[1] <= 0:
                 problem(f'{where}.prop: a prop stood on the ground should point up (posed y over 0)')
             legs = {'hips', 'thigh.L', 'thigh.R', 'shin.L', 'shin.R', 'foot.L', 'foot.R'}

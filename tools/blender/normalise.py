@@ -4,7 +4,9 @@ their hierarchy, skeleton and animations under a root node; "pose" freezes a rig
 
 Args (after --): STAGE.json OUTDIR [key ...]
 Each stage entry: src, measure ("height" or "along"), size (metres), turn (degrees about up, counter-clockwise from
-above), optional keep (bool), pose ([action name, frame]), out (file name, default <key>.glb).
+above), optional keep (bool), pose ([action name, frame]), out (file name, default <key>.glb), and matrix (4x4, in
+Blender's axes): the staging to use as it is instead of the one its own box gives, as split.py hands on for a body
+whose piece reached past it.
 Writes OUTDIR/<out> and OUTDIR/<key>.json (extent in glTF axes, triangles, sha256)."""
 import bpy, sys, os, json, math, hashlib, mathutils
 
@@ -93,6 +95,8 @@ for key, v in stage.items():
     draught = float(v.get("draught", 0))  # ships: the origin at the waterline, this far above the keel
     fix = mathutils.Matrix.Translation(mathutils.Vector((-(mn2.x + mx2.x) / 2, -(mn2.y + mx2.y) / 2, -mn2.z - draught)))
     M = fix @ m2
+    if v.get("matrix"):  # staged as the original it was split from was (see split.py)
+        M = mathutils.Matrix(v["matrix"]); s = M.to_3x3().median_scale
     if v.get("keep"):
         target.matrix_world = M @ target.matrix_world
     else:

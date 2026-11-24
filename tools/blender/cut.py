@@ -139,11 +139,13 @@ def decimate_to(o, n_target):
 
 def closing(me, voxel, reach):
     """Replaces the mesh with its closing (see above). Returns what it did: the wrap's outward pieces it kept, the
-    hollows inside them it left out (wrapped from within, so turned the other way), the pieces of the result, and its
-    mean thickness (2 x volume / area). Pieces of the result thinner than a voxel are wisps the closing couldn't fill,
-    left out. Fails where a piece wears away (fewer pieces come out than went in, counting a piece inside another's box
-    as part of it, or the wisps are over a tenth of the surface) or the result is thinner than a voxel: a reach too
-    short for the voxels, or a piece open wider than twice the reach, comes out a sheet of no thickness."""
+    hollows inside them it left out (wrapped from within, so turned the other way), the pieces of the result, the
+    wisps it left out (pieces of the result thinner than a voxel, which the closing couldn't fill), how much of the
+    mesh it lost, and the result's mean thickness (2 x volume / area). A closing holds what it closes, so all of the
+    mesh should be inside the result or within a voxel and a half of it: it fails where more than 1% of its surface
+    (by the middles of its faces) is further out (a part worn away: a rod beside a wider piece, say, or a sheet), where
+    nothing is left, or where the result is thinner than a voxel (a reach too short for the voxels, or a piece open
+    wider than twice the reach)."""
     import numpy as np
     import openvdb as vdb
     bm = bmesh.new(); bm.from_mesh(me)
@@ -152,6 +154,24 @@ def closing(me, voxel, reach):
     bm.free()
     xf = vdb.createLinearTransform(voxelSize=voxel)
     band = reach / voxel + 3
+
+    def pieces_of(faces, n):
+        """A label for each point: its piece, joined through these faces' edges."""
+        lab = np.arange(n)
+        E = np.concatenate([faces[:, [i, (i + 1) % 3]] for i in range(3)]) if len(faces) else np.zeros((0, 2), int)
+        while len(E):
+            m = np.minimum(lab[E[:, 0]], lab[E[:, 1]]); new = lab.copy()
+            np.minimum.at(new, E[:, 0], m); np.minimum.at(new, E[:, 1], m); new = new[new]
+            if (new == lab).all():
+                break
+            lab = new
+        return lab
+
+    def triangles(tris, quads):
+        parts = [np.asarray(f, dtype=np.int64) for f in (tris, quads) if len(f)]
+        parts = [f if f.shape[1] == 3 else np.concatenate([f[:, [0, 1, 2]], f[:, [0, 2, 3]]]) for f in parts]
+        return np.concatenate(parts) if parts else np.zeros((0, 3), dtype=np.int64)
+
     # Every point within `reach`: the distance to the surface less `reach`, its sign ignored (an open surface has no
     # inside), meshed where it is 0.
     g = vdb.FloatGrid.createLevelSetFromPolygons(P, triangles=T, transform=xf, halfWidth=band)
@@ -162,81 +182,59 @@ def closing(me, voxel, reach):
     d = vdb.FloatGrid(background=float(g.background - reach)); d.transform = xf
     d.copyFromArray(np.abs(A) - reach, ijk=lo_ijk, tolerance=0)
     pts, tris, quads = d.convertToPolygons(isovalue=0.0, adaptivity=0.0)
-    tri_list = [np.asarray(f, dtype=np.int64) for f in (tris, quads) if len(f)]
-    tri_list = [f if f.shape[1] == 3 else np.concatenate([f[:, [0, 1, 2]], f[:, [0, 2, 3]]]) for f in tri_list]
-    F3 = np.concatenate(tri_list)
+    F3 = triangles(tris, quads)
+    if not len(F3):
+        raise RuntimeError("Error: the closing found nothing to wrap")
     # Its pieces: each turned outward, away from the surface, so the outer wraps enclose a volume and the hollows
     # inside them (wrapped from within) a negative one. The outer wrap with the largest reach sets which sign is out.
-    lab = np.arange(len(pts))
-    E = np.concatenate([F3[:, [0, 1]], F3[:, [1, 2]], F3[:, [2, 0]]])
-    while True:
-        m = np.minimum(lab[E[:, 0]], lab[E[:, 1]]); new = lab.copy()
-        np.minimum.at(new, E[:, 0], m); np.minimum.at(new, E[:, 1], m); new = new[new]
-        if (new == lab).all():
-            break
-        lab = new
     p64 = np.asarray(pts, dtype=np.float64)
+    face_lab = pieces_of(F3, len(pts))[F3[:, 0]]
     vol = np.einsum('ij,ij->i', p64[F3[:, 0]], np.cross(p64[F3[:, 1]], p64[F3[:, 2]])) / 6
-    face_lab = lab[F3[:, 0]]
     ids = np.unique(face_lab)
     volume = {i: float(vol[face_lab == i].sum()) for i in ids}
     reach_of = {i: float(np.linalg.norm(np.ptp(p64[np.unique(F3[face_lab == i])], axis=0))) for i in ids}
-    outer = max(ids, key=reach_of.get)
-    out_sign = np.sign(volume[outer])
+    out_sign = np.sign(volume[max(ids, key=reach_of.get)])
     kept_ids = [i for i in ids if np.sign(volume[i]) == out_sign]
-    keep_face = np.isin(face_lab, kept_ids)
-    box = {i: (p64[np.unique(F3[face_lab == i])].min(0), p64[np.unique(F3[face_lab == i])].max(0)) for i in kept_ids}
-    apart = sum(1 for i in kept_ids if not any(j != i and (box[j][0] <= box[i][0]).all() and (box[i][1] <= box[j][1]).all()
-                                                for j in kept_ids))
     # ...then pulled back in by `reach`: their own distance (now with an inside), meshed at -reach.
     s = vdb.FloatGrid.createLevelSetFromPolygons(np.asarray(pts, dtype=np.float32),
-                                                 triangles=F3[keep_face].astype(np.uint32), transform=xf,
-                                                 halfWidth=band)
+                                                 triangles=F3[np.isin(face_lab, kept_ids)].astype(np.uint32),
+                                                 transform=xf, halfWidth=band)
     pts, tris, quads = s.convertToPolygons(isovalue=-reach, adaptivity=0.0)
-    out_faces = [np.asarray(f, dtype=np.int64) for f in (tris, quads) if len(f)]
-    lab = np.arange(len(pts))
-    E = np.concatenate([f[:, [i, (i + 1) % f.shape[1]]] for f in out_faces for i in range(f.shape[1])]) if out_faces \
-        else np.zeros((0, 2), dtype=np.int64)
-    while len(E):
-        m = np.minimum(lab[E[:, 0]], lab[E[:, 1]]); new = lab.copy()
-        np.minimum.at(new, E[:, 0], m); np.minimum.at(new, E[:, 1], m); new = new[new]
-        if (new == lab).all():
-            break
-        lab = new
-    # Each piece of the result: one thinner than a voxel is a wisp the closing couldn't fill (a sheet worn to nothing,
-    # or a scrap), left out.
     q = np.asarray(pts, dtype=np.float64)
-    T3 = np.concatenate([f if f.shape[1] == 3 else np.concatenate([f[:, [0, 1, 2]], f[:, [0, 2, 3]]])
-                         for f in out_faces]) if out_faces else np.zeros((0, 3), dtype=np.int64)
-    tl = lab[T3[:, 0]]
-    cr = np.cross(q[T3[:, 1]] - q[T3[:, 0]], q[T3[:, 2]] - q[T3[:, 0]])
-    t_area = 0.5 * np.linalg.norm(cr, axis=1)
+    T3 = triangles(tris, quads)
+    lab = pieces_of(T3, len(q))
+    tl = lab[T3[:, 0]] if len(T3) else np.zeros(0, dtype=np.int64)
+    t_area = 0.5 * np.linalg.norm(np.cross(q[T3[:, 1]] - q[T3[:, 0]], q[T3[:, 2]] - q[T3[:, 0]]), axis=1)
     t_vol = np.einsum('ij,ij->i', q[T3[:, 0]], np.cross(q[T3[:, 1]], q[T3[:, 2]])) / 6
-    wisps, wisp_area = [], 0.0
-    for i in np.unique(tl):
-        A_i = float(t_area[tl == i].sum()); V_i = abs(float(t_vol[tl == i].sum()))
-        if not A_i or 2 * V_i / A_i < voxel:
-            wisps.append(i); wisp_area += A_i
-    pieces = len(np.unique(tl)) - len(wisps)
-    keep_out = [f[~np.isin(lab[f[:, 0]], wisps)] for f in out_faces]
+    wisps = [i for i in np.unique(tl) if 2 * abs(float(t_vol[tl == i].sum())) < voxel * float(t_area[tl == i].sum())]
+    T3 = T3[~np.isin(tl, wisps)]
+    if not len(T3):
+        raise RuntimeError("Error: the closing came out as nothing: a longer reach, or finer voxels")
+    used = np.unique(T3); remap = np.full(len(q), -1, dtype=np.int64); remap[used] = np.arange(len(used))
     me.clear_geometry()
-    me.from_pydata(q.tolist(), [], [list(f) for f in keep_out[0].tolist()] +
-                   ([list(f) for f in keep_out[1].tolist()] if len(keep_out) > 1 else []))
-    bm = bmesh.new(); bm.from_mesh(me)
-    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS'); bm.to_mesh(me); bm.free()
+    me.from_pydata(q[used].tolist(), [], remap[T3].tolist())
     me.materials.clear(); me.update()
     bm = bmesh.new(); bm.from_mesh(me)
     for _ in range(2):  # the voxels' steps smoothed away, which the cut would otherwise spend its triangles on
         bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     closed_volume, area = abs(bm.calc_volume(signed=True)), sum(f.calc_area() for f in bm.faces)
+    R = np.array([v.co[:] for v in bm.verts], dtype=np.float32)
+    RT = np.array([[lp.vert.index for lp in tri] for tri in bm.calc_loop_triangles()], dtype=np.uint32)
     bm.to_mesh(me); bm.free(); me.update()
-    done = {"kept": len(kept_ids), "apart": apart, "hollows": len(ids) - len(kept_ids), "pieces": pieces,
-            "wisps": len(wisps), "wisps' share": round(wisp_area / max(float(t_area.sum()), 1e-12), 4),
+    # What of the mesh it lost: the share of its surface whose faces' middles are over a voxel and a half outside.
+    r = vdb.FloatGrid.createLevelSetFromPolygons(R, triangles=RT, transform=xf, halfWidth=3)
+    mids = P[T.astype(np.int64)].mean(1)
+    sizes = 0.5 * np.linalg.norm(np.cross(P[T[:, 1]] - P[T[:, 0]], P[T[:, 2]] - P[T[:, 0]]), axis=1)
+    ijk = np.round(mids / voxel).astype(np.int64); lo = ijk.min(0) - 1
+    D = np.empty(tuple(ijk.max(0) - lo + 2), np.float32); r.copyToArray(D, ijk=tuple(int(x) for x in lo))
+    out = D[tuple((ijk - lo).T)] > 1.5 * voxel
+    done = {"kept": len(kept_ids), "hollows": len(ids) - len(kept_ids), "pieces": len(np.unique(lab[T3[:, 0]])),
+            "wisps": len(wisps), "lost": round(float(sizes[out].sum() / max(float(sizes.sum()), 1e-12)), 4),
             "thickness": round(2 * closed_volume / area, 4) if area else 0.0, "voxel": round(voxel, 4)}
     print("CLOSE", json.dumps(done))
-    if pieces < apart or done["wisps' share"] > 0.1:
-        raise RuntimeError(f"Error: the closing wore a piece away ({done}): a longer reach, or finer voxels")
+    if done["lost"] > 0.01:
+        raise RuntimeError(f"Error: the closing wore a part away ({done}): a longer reach, or finer voxels")
     if not area or done["thickness"] < voxel:
         raise RuntimeError(f"Error: the closing came out a sheet ({done}): a longer reach, or finer voxels")
     return done
@@ -254,6 +252,8 @@ if mode == "rewrap":
         bpy.ops.object.modifier_apply(modifier=so.name)
         stats["solidify"] = float(os.environ["REWRAP_SOLIDIFY"])
     if os.environ.get("REWRAP_CLOSE"):
+        if depth > 8:  # the closing works in a box of voxels: 2^depth across, cubed, in memory
+            raise RuntimeError(f"Error: a closing wants a depth of 8 or under, not {depth}")
         stats["close"] = float(os.environ["REWRAP_CLOSE"])
         stats["closing"] = closing(lo.data, size / 2 ** depth, size * stats["close"])
     else:
