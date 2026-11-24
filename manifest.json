@@ -173,7 +173,7 @@
    "made": "generated; simplified; the rifle split off, made whole from its mirror image and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot",
    "rigged": {
     "file": "models/rigged/rifleman.glb",
-    "sha256": "620bb4b20ac6edd49346c080b7b2afa053ca9a1e15612263813d3935958ca8a1",
+    "sha256": "d723449a8f5fb89819f271bf952704dfc4fb1eddbd914c69ac300adc388ba706",
     "clips": {
      "idle": "idle",
      "move": "move",
@@ -374,7 +374,26 @@
     "https://github.com/civ-clone/models-realistic-cc0",
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; his musket generated apart and put in his right hand; the owner's colour on the coat; posed, his arms at his sides and his musket grounded by his right foot"
+   "made": "generated; rewrapped; his musket generated apart and put in his right hand; the owner's colour on the coat; posed, his arms at his sides and his musket grounded by his right foot",
+   "rigged": {
+    "file": "models/rigged/musketman.glb",
+    "sha256": "59d392c375c0db8e9a1c8557b13f040e753f2ffef00428aded6c7a9edb100c8d",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "fight": "fight",
+     "die": "die"
+    },
+    "shots": {
+     "fight": [
+      {
+       "at": 0.55,
+       "joint": "muzzle",
+       "kind": "bullet"
+      }
+     ]
+    }
+   }
   },
   "dragoon": {
    "file": "models/dragoon.glb",
@@ -438,7 +457,36 @@
     "https://github.com/civ-clone/models-realistic-cc0",
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down"
+   "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down",
+   "rigged": {
+    "file": "models/rigged/marine.glb",
+    "sha256": "f88428c41925600244f165f3bbbdcbabe44d06e5430c82e2174648fae172e301",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "fight": "fight",
+     "die": "die"
+    },
+    "shots": {
+     "fight": [
+      {
+       "at": 0.5,
+       "joint": "muzzle",
+       "kind": "bullet"
+      },
+      {
+       "at": 0.6,
+       "joint": "muzzle",
+       "kind": "bullet"
+      },
+      {
+       "at": 0.7,
+       "joint": "muzzle",
+       "kind": "bullet"
+      }
+     ]
+    }
+   }
   },
   "engineer": {
    "file": "models/engineer.glb",

@@ -393,10 +393,10 @@ def check_rig(where, rig, stance):
                     if cross <= 1e-6 * math.hypot(*a) * math.hypot(*u):
                         problem(f'{at}: a hold\'s up should lie across its aim, not along it')
             grip = k.get('grip', {})
-            if not isinstance(grip, dict) or (grip and not prop) or set(grip) - ({'L', 'R'} - {hand}) or not all(
+            if not isinstance(grip, dict) or (grip and not hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
                     number(v) and 0 <= v <= 1 for v in grip.values()):
-                problem(f'{at}: grip should give the hand that doesn\'t hold the prop (L or R) a share of the way along '
-                        'it, 0 to 1')
+                problem(f'{at}: grip is for a prop a hand holds: it gives the other hand (L or R) a share of the way '
+                        'along it, 0 to 1')
         if any(t['axis'] != turns[0]['axis'] or t['about'] != turns[0]['about'] for t in turns):
             problem(f'{at}: its turns should share their axis and the place they turn about')
         times = [k.get('at') for k in keys]
