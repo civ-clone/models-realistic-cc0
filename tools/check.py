@@ -87,8 +87,8 @@ TOP = {'set', 'date', 'scale', 'generated', 'sources', 'models', 'extras'}
 SOURCE = {'work', 'author', 'url', 'licence', 'note', 'ai', 'generated', 'made', 'prompt', 'file', 'sha256'}
 MODEL = {'units', 'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 'stance', 'rig', 'scale', 'budget', 'made'}
 EXTRA = {'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
-SPLIT = {'chains', 'drop', 'depth'}
-CUT = {'mode', 'tris', 'texture', 'depth', 'solidify'}
+SPLIT = {'chains', 'drop', 'depth', 'mirror'}
+CUT = {'mode', 'tris', 'texture', 'depth', 'solidify', 'close'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
@@ -173,6 +173,8 @@ def check_split(where, split):
             problem(f'{where}.chains[{i}]: stations next to each other should be apart')
     if 'depth' in split and not (finite_vec(split['depth'], 3) and any(split['depth'])):
         problem(f'{where}.depth: should be a way [x, y, z], not [0, 0, 0]')
+    if 'mirror' in split and not isinstance(split['mirror'], bool):
+        problem(f'{where}.mirror: should be true or false')
 
 
 def check_cut(where, cut):
@@ -188,6 +190,10 @@ def check_cut(where, cut):
         problem(f'{where}: a rewrap needs a whole-number depth from 6 to 10')
     if 'solidify' in cut and not number(cut['solidify'], 0):
         problem(f'{where}: solidify should be a number over 0')
+    if 'close' in cut and not (cut.get('mode') == 'rewrap' and number(cut['close'], 0) and cut['close'] < 0.2):
+        problem(f'{where}: close is for a rewrap, a number over 0 and under 0.2 (a fraction of its size)')
+    if 'close' in cut and 'solidify' in cut:
+        problem(f'{where}: a rewrap closes or solidifies, not both')
 
 
 def span(value, low, high):
@@ -397,6 +403,9 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.prop: options should be an object')
         if 'cut' in p:
             check_cut(f'{where}.prop.cut', p['cut'])
+        if isinstance(e.get('split'), dict) and e['split'].get('mirror') and not (
+                isinstance(p.get('cut'), dict) and p['cut'].get('mode') == 'rewrap' and 'close' in p['cut']):
+            problem(f'{where}.prop: a mirrored piece wants a cut that rewraps and closes it')
     if 'owner' in e:
         check_owner(f'{where}.owner', e['owner'])
     if 'stance' in e:

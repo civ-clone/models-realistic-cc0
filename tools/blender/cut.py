@@ -7,6 +7,10 @@ MODE "parts" (default) cuts each part separately and keeps parts, hierarchy and 
 MODE "rewrap" wraps the whole model in one new surface (a voxel remesh, its voxels the model's size / 2^DEPTH, DEPTH
 defaulting to 9; REWRAP_SOLIDIFY first thickens thin sheets by that fraction of its size), cuts that,
 and bakes from all the original parts: for models with too many parts to cut each one far enough.
+REWRAP_CLOSE wraps it instead in what reaches that fraction of its size round it, then pulls that back in by as much
+(a closing, with OpenVDB): it seals slits and hollows up to twice that across, such as those along a piece split.py
+cut off a figure, which an open surface's voxels would leave a sliver of, and keeps the rest of the shape. A long thin
+piece wants a coarse DEPTH (7): cut far down from fine voxels, a rifle's barrel collapses to a spike.
 Writes OUTDIR/cut.glb, OUTDIR/colour.png, pictures before and after (OUTDIR/orig_*.png, cut_*.png) and OUTDIR/stats.json.
 Only reads the GLB as data; no scripts from it run (Blender is started with -Y and factory settings)."""
 import bpy, bmesh, sys, os, math, json, mathutils
@@ -131,6 +135,55 @@ def decimate_to(o, n_target):
         d = o.modifiers.new("dec", "DECIMATE"); d.ratio = n_target / n; d.use_collapse_triangulate = True
         bpy.ops.object.modifier_apply(modifier=d.name)
 
+def closing(me, voxel, reach):
+    """Replaces the mesh with its closing (see above), and returns how many unconnected pieces of the outward wrap it
+    left out: hollows inside the piece, wrapped from within."""
+    import numpy as np
+    import openvdb as vdb
+    bm = bmesh.new(); bm.from_mesh(me)
+    P = np.array([v.co[:] for v in bm.verts], dtype=np.float32)
+    T = np.array([[lp.vert.index for lp in tri] for tri in bm.calc_loop_triangles()], dtype=np.uint32)
+    bm.free()
+    xf = vdb.createLinearTransform(voxelSize=voxel)
+    band = reach / voxel + 3
+    # Every point within `reach`: the distance to the surface less `reach`, its sign ignored (an open surface has no
+    # inside), meshed where it is 0.
+    g = vdb.FloatGrid.createLevelSetFromPolygons(P, triangles=T, transform=xf, halfWidth=band)
+    (i0, j0, k0), (i1, j1, k1) = g.evalActiveVoxelBoundingBox()
+    lo_ijk = (i0 - 2, j0 - 2, k0 - 2)
+    A = np.empty((i1 - i0 + 5, j1 - j0 + 5, k1 - k0 + 5), np.float32)
+    g.copyToArray(A, ijk=lo_ijk)
+    d = vdb.FloatGrid(background=float(g.background - reach)); d.transform = xf
+    d.copyFromArray(np.abs(A) - reach, ijk=lo_ijk, tolerance=0)
+    pts, tris, quads = d.convertToPolygons(isovalue=0.0, adaptivity=0.0)
+    faces = [np.asarray(f, dtype=np.int64) for f in (tris, quads) if len(f)]
+    # The outward wrap is the piece of that with the largest reach; the rest are hollows inside, wrapped from within.
+    lab = np.arange(len(pts))
+    E = np.concatenate([f[:, [i, (i + 1) % f.shape[1]]] for f in faces for i in range(f.shape[1])])
+    while True:
+        m = np.minimum(lab[E[:, 0]], lab[E[:, 1]]); new = lab.copy()
+        np.minimum.at(new, E[:, 0], m); np.minimum.at(new, E[:, 1], m); new = new[new]
+        if (new == lab).all():
+            break
+        lab = new
+    ids = np.unique(lab)
+    outer = max(ids, key=lambda i: float(np.linalg.norm(np.ptp(pts[lab == i], axis=0))))
+    keep = lab == outer
+    remap = np.full(len(pts), -1, dtype=np.int64); remap[keep] = np.arange(int(keep.sum()))
+    kept = [remap[f[keep[f[:, 0]]]].astype(np.uint32) for f in faces]
+    kw = {('triangles' if f.shape[1] == 3 else 'quads'): f for f in kept}
+    # ...then pulled back in by `reach`: its own distance (now with an inside), meshed at -reach.
+    s = vdb.FloatGrid.createLevelSetFromPolygons(np.ascontiguousarray(pts[keep]), transform=xf, halfWidth=band, **kw)
+    pts, tris, quads = s.convertToPolygons(isovalue=-reach, adaptivity=0.0)
+    me.clear_geometry()
+    me.from_pydata(np.asarray(pts).tolist(), [], [list(f) for f in tris] + [list(f) for f in quads])
+    me.materials.clear(); me.update()
+    bm = bmesh.new(); bm.from_mesh(me)
+    for _ in range(2):  # the voxels' steps smoothed away, which the cut would otherwise spend its triangles on
+        bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces); bm.to_mesh(me); bm.free(); me.update()
+    return len(ids) - 1
+
 if mode == "rewrap":
     bm = bmesh.new()
     for h in hi_col.objects:
@@ -143,13 +196,17 @@ if mode == "rewrap":
         so = lo.modifiers.new("solid", "SOLIDIFY"); so.thickness = size * float(os.environ["REWRAP_SOLIDIFY"]); so.offset = 0.0
         bpy.ops.object.modifier_apply(modifier=so.name)
         stats["solidify"] = float(os.environ["REWRAP_SOLIDIFY"])
-    r = lo.modifiers.new("remesh", "REMESH")
-    if os.environ.get("REWRAP_METHOD", "voxel") == "voxel":
-        r.mode = "VOXEL"; r.voxel_size = size / 2 ** depth; r.adaptivity = 0.0
+    if os.environ.get("REWRAP_CLOSE"):
+        stats["close"] = float(os.environ["REWRAP_CLOSE"])
+        stats["close_parts_dropped"] = closing(lo.data, size / 2 ** depth, size * stats["close"])
     else:
-        r.mode = "SHARP"; r.octree_depth = depth; r.scale = 0.99; r.sharpness = 1.0
-        r.use_remove_disconnected = True; r.threshold = 0.02
-    bpy.ops.object.modifier_apply(modifier=r.name)
+        r = lo.modifiers.new("remesh", "REMESH")
+        if os.environ.get("REWRAP_METHOD", "voxel") == "voxel":
+            r.mode = "VOXEL"; r.voxel_size = size / 2 ** depth; r.adaptivity = 0.0
+        else:
+            r.mode = "SHARP"; r.octree_depth = depth; r.scale = 0.99; r.sharpness = 1.0
+            r.use_remove_disconnected = True; r.threshold = 0.02
+        bpy.ops.object.modifier_apply(modifier=r.name)
     stats["tris_remeshed"] = tri_count(lo.data)
     bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.select_all(action="SELECT")
     bpy.ops.mesh.remove_doubles(threshold=size * 1e-4); bpy.ops.object.mode_set(mode="OBJECT")

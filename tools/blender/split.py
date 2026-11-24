@@ -24,9 +24,14 @@ part the cut didn't touch stays as it was.
 
 The holes the cut leaves in the body are closed, the closing faces coloured with the average colour of the faces round
 their edges (a material of their own, `split-fill`), so it has no gap where the piece lay against it. The piece's are
-left open: a cut along a piece's length, closed, fills across its hollows (a sheet across a rifle's stock), and a piece
-in a hand shows little of the side it was joined by. Cut it with `parts`, which keeps its shape as it is, not `rewrap`,
-whose voxels want a closed surface.
+left open: a cut along a piece's length, closed, fills across its hollows (a sheet across a rifle's stock).
+
+With `mirror` true, the piece is given its mirror image as well, across its middle: the plane across its thinnest
+reach, through the middle of each slice along it (a running median, so a stray scrap doesn't bend it). Where the
+original made only the outer half of the piece (a rifle's stock lying flat on a back), the two halves interlock into a
+whole; where it made all of it, the copy lies on the piece. Either way, cut it with `rewrap` and `close` (see cut.py),
+which wraps both in one closed surface and seals the slits left along the edge that lay against the body; without
+`mirror`, cut it with `parts`, which keeps its open shape as it is.
 
 Prints SPLIT with the counts, for the record."""
 import bmesh
@@ -238,6 +243,42 @@ def keep_only(ob, mask):
     bm.to_mesh(ob.data); bm.free(); ob.data.update()
 
 
+def mirror(ob):
+    """Adds the piece's mirror image across its middle (see above) and returns that middle, every 10 cm along it."""
+    bm = bmesh.new(); bm.from_mesh(ob.data)
+    P = np.array([v.co[:] for v in bm.verts])
+    T = np.array([[lp.vert.index for lp in tri] for tri in bm.calc_loop_triangles()], dtype=np.int64)
+    fc = P[T].mean(1)
+    fa = 0.5 * np.linalg.norm(np.cross(P[T[:, 1]] - P[T[:, 0]], P[T[:, 2]] - P[T[:, 0]]), axis=1)
+    mid = (fc * fa[:, None]).sum(0) / fa.sum()
+    _, axes = np.linalg.eigh(np.cov((fc - mid).T, aweights=fa))
+    along, across = axes[:, 2], axes[:, 0]
+    ft, fu = (fc - mid) @ along, (fc - mid) @ across
+
+    def weighted(x, w, q):
+        o = np.argsort(x); cw = np.cumsum(w[o])
+        return x[o][min(len(x) - 1, int(np.searchsorted(cw, q * cw[-1])))]
+
+    step = 0.01  # slices 2 cm thick every 1 cm, smoothed over 9 cm
+    ts = np.arange(ft.min(), ft.max() + step, step)
+    middles = np.full(len(ts), np.nan)
+    for i, t_ in enumerate(ts):
+        m = np.abs(ft - t_) < step
+        if m.sum() > 3:
+            middles[i] = (weighted(fu[m], fa[m], 0.03) + weighted(fu[m], fa[m], 0.97)) / 2
+    ok = ~np.isnan(middles)
+    middles = np.interp(ts, ts[ok], middles[ok])
+    middles = np.array([np.median(middles[max(0, i - 4):i + 5]) for i in range(len(middles))])
+    old = list(bm.verts)
+    dup = bmesh.ops.duplicate(bm, geom=old + list(bm.edges) + list(bm.faces))
+    for v in old:
+        q = np.array(v.co[:]); t_, u_ = (q - mid) @ along, (q - mid) @ across
+        dup['vert_map'][v].co = mathutils.Vector(q + 2 * (np.interp(t_, ts, middles) - u_) * across)
+    bmesh.ops.reverse_faces(bm, faces=[f for f in dup['geom'] if isinstance(f, bmesh.types.BMFace)])
+    bm.to_mesh(ob.data); bm.free(); ob.data.update()
+    return [round(float(x), 4) for x in middles[::10]]
+
+
 piece = obj.copy(); piece.data = me.copy(); piece.name = 'piece'; sc.collection.objects.link(piece)
 obj.name = 'body'
 keep_only(obj, ~pick & ~drop)
@@ -250,6 +291,8 @@ for ob, name, out in ((obj, 'body', body_out), (piece, 'piece', piece_out)):
     else:  # in the staged frame, where the rule (and a prop's `top`) gives places
         Mb = np.eye(4); Mb[:3, :3] = R * s; Mb[:3, 3] = fix - (R @ c) * s
         ob.data.transform(mathutils.Matrix(Mb.tolist())); ob.data.update()
+        if rule.get('mirror'):
+            report['mirror'] = mirror(ob)
     for x in sc.objects: x.select_set(False)
     ob.select_set(True); bpy.context.view_layer.objects.active = ob
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)

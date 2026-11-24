@@ -163,23 +163,23 @@
   },
   "rifleman": {
    "file": "models/rifleman.glb",
-   "sha256": "955a0c2425b16d221e9ef3e1214c4b86a6e344091abc83f00e53ed0391c8d593",
+   "sha256": "d74944cffd9f192a1bf22339150be0c54e9dd1c8fc4be33b77f9839a51c0e24f",
    "extent": {
     "across": [
-     -0.389,
-     0.389
+     -0.394,
+     0.394
     ],
     "along": [
-     -0.218,
-     0.218
+     -0.219,
+     0.219
     ],
     "height": 1.8
    },
-   "triangles": 1975,
+   "triangles": 1935,
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; simplified; the rifle split off and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot"
+   "made": "generated; simplified; the rifle split off, made whole from its mirror image and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot"
   },
   "cavalry": {
    "file": "models/cavalry.glb",

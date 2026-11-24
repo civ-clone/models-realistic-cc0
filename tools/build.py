@@ -6,8 +6,8 @@
 With --originals, it builds each model the roster lists (or only those NAMEd, by model id or extra path) in Blender:
 it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, splits off a piece fused to a
 figure where the roster says (blender/split.py), cuts it to its budget and bakes its colour into one texture
-(blender/cut.py), turns, sizes and grounds it, or floats it at its draught
-(blender/normalise.py), puts in its prop, which may be the piece split off (blender/assemble.py), puts its owner's colour where the roster says
+(blender/cut.py), turns, sizes and grounds it, or floats it at its draught (blender/normalise.py), puts in its prop,
+which may be the piece split off (blender/assemble.py), puts its owner's colour where the roster says
 (blender/owner.py), stands a figure in a natural pose (blender/stance.py), and rigs it with its clips into
 models/rigged/ where the roster gives it a rig (blender/rig.py). Blender runs with factory settings and with scripts in
 files turned off (-b --factory-startup -Y), and reads the originals only as data.
@@ -74,7 +74,7 @@ class Blender:
         if p.returncode or bad:
             sys.exit(f'{script} failed on {args[:2]}:\n' + '\n'.join(bad[:10] or (p.stdout + p.stderr).splitlines()[-10:]))
         for line in p.stdout.splitlines():
-            if line.startswith(('OWNER ', 'POSE ', 'RIG ')):
+            if line.startswith(('SPLIT ', 'OWNER ', 'POSE ', 'RIG ')):
                 print('  ' + line, flush=True)
 
     def original(self, roster, key):
@@ -86,7 +86,7 @@ class Blender:
 
     def cut(self, src, out, cut):
         args = [src, out, cut['tris'], cut['texture'], cut['mode']] + ([cut['depth']] if cut['mode'] == 'rewrap' else [])
-        env = {'REWRAP_SOLIDIFY': str(cut['solidify'])} if 'solidify' in cut else None
+        env = {'REWRAP_' + k.upper(): str(cut[k]) for k in ('solidify', 'close') if k in cut} or None
         self.run('cut.py', *args, env=env)
         return os.path.join(out, 'cut.glb')
 

@@ -772,11 +772,11 @@
             ],
             [
               [
-                -0.195,
+                -0.218,
                 1.07,
                 -0.1
               ],
-              0.07,
+              0.045,
               0.07,
               0.005
             ],
@@ -927,7 +927,8 @@
               0.02
             ]
           ]
-        ]
+        ],
+        "mirror": true
       },
       "cut": {
         "mode": "parts",
@@ -943,9 +944,11 @@
         "mode": "hand",
         "source": "split",
         "cut": {
-          "mode": "parts",
+          "mode": "rewrap",
           "tris": 280,
-          "texture": 256
+          "texture": 256,
+          "depth": 7,
+          "close": 0.013
         },
         "options": {
           "height": 1.13,
@@ -1152,7 +1155,7 @@
         ]
       },
       "budget": 2000,
-      "made": "generated; simplified; the rifle split off and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot"
+      "made": "generated; simplified; the rifle split off, made whole from its mirror image and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot"
     },
     "cavalry": {
       "units": [
