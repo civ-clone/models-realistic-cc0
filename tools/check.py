@@ -819,8 +819,12 @@ def check_rigged(rel, entry):
                 m = nodes[muzzles[0]]['translation']
                 length = math.hypot(*m)
                 reach = max(sum(a * b for a, b in zip(x, m)) for x in pts) / max(length, 1e-9)
-                if abs(reach - length) > 0.02 or min(math.dist(x, m) for x in pts) > 0.03:
-                    raise glb.Bad('the prop\'s muzzle should be at its end, as far as the prop reaches that way')
+                bound = [[inv_p[c][r] for c in range(3)] for r in range(3)]  # the joint's turn as bound: inv_p's, undone
+                way_m = [sum(bound[r][c] * m[c] for c in range(3)) for r in range(3)]
+                if abs(reach - length) > 0.02 or min(math.dist(x, m) for x in pts) > 0.08 or \
+                        sum(a * b for a, b in zip(way_m, rig['prop']['muzzle'])) <= 0:
+                    raise glb.Bad('the prop\'s muzzle should be at its end, as far as the prop reaches that way, the '
+                                  'end its muzzle way points to')
         # Standing as bound: each joint where its inverse bind matrix undoes.
 
         def world(i, local=None):

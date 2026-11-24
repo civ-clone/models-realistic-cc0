@@ -377,7 +377,7 @@
    "made": "generated; rewrapped; his musket generated apart and put in his right hand; the owner's colour on the coat; posed, his arms at his sides and his musket grounded by his right foot",
    "rigged": {
     "file": "models/rigged/musketman.glb",
-    "sha256": "724279cb20e3770d6ed5551e349f0adb29ef7f162cc51246c1ae318183818aba",
+    "sha256": "dc92418b41b4d7424718bda1ff49bc6593b251624199c5990745887b75e40cee",
     "clips": {
      "idle": "idle",
      "move": "move",
