@@ -35,7 +35,11 @@
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
   and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before
   its length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds
-  whole, and any shots within its clip, each from the prop, which is back in the hand by the clip's end.
+  whole, and any shots within its clip, each from the prop, which is back in the hand by the clip's end. A clip's
+  `lag` gives bones a time under its length; a key's `ease` is one of EASES, its `hips` [x, y, z], its `plant` feet
+  each at [x, z] or `true`, and its `late` bones a time from 0, each bone's keys still in order once late (a loop's
+  before its length, none late on its first key; a clip played once none late on its last). A clip played once has
+  nothing on its first key but its time and feet planted where they stand (`true`).
 - **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
   - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
     stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints
@@ -90,8 +94,9 @@ OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smoot
 STANCE = {'joints', 'aim', 'twist', 'whole'}
 # A rig, as blender/rig.py reads it, and its clips by role: those that loop, and those that play once.
 RIG = {'prop', 'clips'}
-CLIP = {'length', 'keys', 'shots'}
-KEY = {'at', 'aim', 'twist', 'turn', 'slide'}
+CLIP = {'length', 'keys', 'shots', 'lag'}
+KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late'}
+EASES = ('stop', 'through', 'hit', 'snap')
 LOOPS = {'idle', 'move', 'work'}
 ONCE = {'fight', 'die', 'settle'}
 # A figure's joints and bones, as blender/stance.py names them.
@@ -257,6 +262,9 @@ def check_rig(where, rig, stance):
         if not number(length, 0) or not isinstance(keys, list) or not keys or not all(isinstance(k, dict) for k in keys):
             problem(f'{at}: needs a length over 0 and a list of keys')
             continue
+        lag = clip.get('lag', {})
+        if not isinstance(lag, dict) or set(lag) - BONES or not all(number(v) and 0 <= v < length for v in lag.values()):
+            problem(f'{at}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
         turns = []
         for k in keys:
             for f in sorted(set(k) - KEY):
@@ -278,6 +286,17 @@ def check_rig(where, rig, stance):
                     turns.append(t)
             if 'slide' in k and not (isinstance(k['slide'], list) and len(k['slide']) == 2 and all(number(v) for v in k['slide'])):
                 problem(f'{at}: slide should be [x, z]')
+            if k.get('ease', 'stop') not in EASES:
+                problem(f'{at}: a key\'s ease is one of {", ".join(EASES)}')
+            if 'hips' in k and not (isinstance(k['hips'], list) and len(k['hips']) == 3 and all(number(v) for v in k['hips'])):
+                problem(f'{at}: hips should be [x, y, z], how far the hips move from where they stand')
+            plant = k.get('plant', {})
+            if not isinstance(plant, dict) or set(plant) - {'L', 'R'} or not all(
+                    v is True or (isinstance(v, list) and len(v) == 2 and all(number(x) for x in v)) for v in plant.values()):
+                problem(f'{at}: plant should give feet (L, R) a place on the ground [x, z], or true to keep them where they stand')
+            late = k.get('late', {})
+            if not isinstance(late, dict) or set(late) - BONES or not all(number(v) and v >= 0 for v in late.values()):
+                problem(f'{at}: late should give bones a time from 0, in seconds')
         if any(t['axis'] != turns[0]['axis'] or t['about'] != turns[0]['about'] for t in turns):
             problem(f'{at}: its turns should share their axis and the place they turn about')
         times = [k.get('at') for k in keys]
@@ -287,8 +306,19 @@ def check_rig(where, rig, stance):
             problem(f'{at}: its keys should come in order of time, none at the same time')
         if role in LOOPS and not (times[0] == 0 and times[-1] < length):
             problem(f'{at}: a loop\'s keys run from 0 to before its length')
-        if role in ONCE and not (times[0] == 0 and times[-1] == length and set(keys[0]) == {'at'}):
-            problem(f'{at}: a clip that plays once starts at the stance (its first key only at 0) and has a key at its length')
+        first = keys[0]
+        if role in ONCE and not (times[0] == 0 and times[-1] == length and not set(first) - {'at', 'plant'} and (
+                not isinstance(first.get('plant', {}), dict) or all(v is True for v in first.get('plant', {}).values()))):
+            problem(f'{at}: a clip that plays once starts at the stance (its first key only at 0, and feet planted where '
+                    'they stand, true) and has a key at its length')
+        lates = [k['late'] for k in keys if isinstance(k.get('late'), dict)]
+        for b in sorted({b for d in lates for b in d if b in BONES and number(d[b])}):
+            bt = [k['at'] + (k['late'][b] if isinstance(k.get('late'), dict) and number(k['late'].get(b)) else 0) for k in keys]
+            if any(y <= x for x, y in zip(bt, bt[1:])) or not (bt[-1] < length if role in LOOPS else bt[-1] <= length):
+                problem(f'{at}: late keys of {b} should still come in order of time, '
+                        + ('before the loop\'s length' if role in LOOPS else 'none late at its last key'))
+        if role in LOOPS and isinstance(keys[0].get('late'), dict) and keys[0]['late']:
+            problem(f'{at}: a loop\'s first key has no late bones (they would jump where the loop starts again)')
         shots = clip.get('shots', [])
         if not isinstance(shots, list) or not all(
                 isinstance(x, dict) and prop is not None and x.get('joint') == 'prop' and
