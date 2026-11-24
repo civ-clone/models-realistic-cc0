@@ -10,7 +10,12 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   but for a leg's above its hip, which fade out (see LEG_REACH).
 - **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, a child of the bone
   that holds it (`bone`), with its origin at the middle of the part as it stands (so a shot from it leaves from
-  there). It never leaves the hand: only its size changes (its turn on the hand is keyed too, but stays the same).
+  there). Unless a key holds it otherwise (`hold`, below) it stays in the hand as the stance holds it: only its size
+  changes, as a shot throws it. Its long way and ends are its own: the line its surface lies along most, its top the
+  end towards `muzzle` (a way [x, y, z]; up, without one), and its back, across that, the side facing `back` (a way,
+  as the stance holds it: a rifle's sights; a prop a key holds needs one, as its shape can't say). With `muzzle`, a
+  node of that name (not a joint) sits at the middle of its top, a child of the prop's joint, for shots to leave from. With `grounded` false, it's left out of standing the figure on
+  the ground (a rifle's butt by a foot would lift him as the hand moves), and the report says how far it went below.
 - **`clips`:** by role: `idle`, `move` and `work` loop; `fight`, `die` and `settle` play once. Each has a `length` in
   seconds and its `keys`, each a pose at a time (`at`):
   - `aim` and `twist`, as a stance's, laid over the stance's own: a bone a key names is aimed (or twisted) as the key
@@ -35,7 +40,16 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     the key before at twice that speed, even one hit, as a body a shot strikes, and met as `stop` meets a key). Feet
     are put down and lifted as `stop` whatever the key's ease;
   - `late`: bones that meet the key after the rest of the figure, by a time in seconds, as arms and a head reach the
-    ground after the body they hang from.
+    ground after the body they hang from;
+  - `hold`: the prop held as the key says rather than as the hand holds it: its top pointing `aim`, its back facing
+    `up` (as near as it can, across its length), and its foot (the end away from its top) at `butt`, [x, y, z], as the
+    posed figure stands in the file; all carried by the chest as it turns and leans (a rifle at the shoulder). The
+    hand that holds it (the prop's `bone`, a hand) keeps hold of it as it does in the stance, but at `hand`, a share of
+    the way from its foot to its top (0 to 1; where it holds it in the stance, without one), its arm bent to reach
+    it. Between keys it's eased from one hold to the next, and from and to the hand, as `plant` eases a foot;
+  - `grip`: the other hand on the prop (`L` or `R`), at a share of the way from its foot to its top: its arm bent to
+    reach it, so the middle of the hand is on the prop, turned as the keys turn it. Eased on and off as `plant` is.
+    An arm bent to a prop bends its elbow the way the keys bend it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -46,17 +60,20 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   plays once starts at the stance, as the key at 0 must be (it may plant feet, but only where they stand, so they
   don't slide as the clip starts); a loop's last frame is its first, and its first key has no late bones. The figure
   is stood on the ground in every frame, by its lowest point (the prop's included, at its size), as stance.py stands it.
-  - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`) and the joint it
-    leaves from (`joint`). The map reads the joint's place then, and draws what flies. For now a shot leaves from the
-    prop (three.js renames joints whose names have a dot, so the bones' can't be found by name): it throws the prop,
-    which is gone from 1 ms after `at` until 0.2 s before `back` (at least 0.25 s after `at`), growing back in the hand
-    over those 0.2 s.
+  - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`), the joint it
+    leaves from (`joint`: the prop, or its `muzzle`; three.js renames joints whose names have a dot, so the bones'
+    can't be found by name) and what flies (`kind`: bottle, the default, arrow, bullet or shell). The map reads the
+    joint's place then, and draws it. A bottle is the prop, thrown: it leaves from the prop, which is gone from 1 ms
+    after `at` until 0.2 s before `back` (at least 0.25 s after `at`), growing back in the hand over those 0.2 s.
+    The rest leave the prop where it is.
 
-Every clip keys every joint's turn, the root's place, and the prop's size, so none leaves a joint as another left
-it. Clips are sampled at about FPS frames a second (a whole number of frames over each clip), played
-between frames by turning each joint linearly. It prints a report: for each clip, its frames, how far its first
+Every clip keys every joint's turn, the root's place, and the prop's size (and, where any key holds or grips it, the
+prop's place on the hand), so none leaves a joint as another left it. Clips are sampled at about FPS frames a second
+(a whole number of frames over each clip), played between frames by turning each joint linearly. It prints a report: for each clip, its frames, how far its first
 frame is from the bind, the most any edge of the figure grows and when, how many faces grow over 1.4 times, the most
-weight any point lost to the four kept, and the furthest a fully planted ankle ends up from its place (`planted`).
+weight any point lost to the four kept, the furthest a fully planted ankle ends up from its place (`planted`), and
+where they apply, how far an ungrounded prop went below the ground (`below`) and the furthest a gripping hand ends up
+from where it holds the prop (`grip`: more than a few millimetres says the prop was out of the arm's reach).
 With RIG_FRAMES set to a folder, it also writes each clip's points frame by frame (`<clip>.npy`) and its feet
 (`<clip>-feet.npz`: their plant weights and places, the joints, and how far each frame was lowered to the ground),
 to check a player or a clip against.
@@ -80,10 +97,28 @@ LOOPS = {'idle', 'move', 'work'}
 ONCE = {'fight', 'die', 'settle'}
 INFLUENCES = 4
 LEG_REACH = (0.08, 0.18)  # a leg's weight fades out from this far above its hip to this far
+KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', 'hold', 'grip'}
+KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
+END = 0.015  # how near its end a prop's points are taken to find the middle of the end
 
 
 def number(v, lo=-math.inf):
     return finite([v]) and v > lo
+
+
+def way(v):
+    return finite(v, 3) and np.linalg.norm(v) > 1e-6
+
+
+def shot_ok(x, prop, length):
+    """Whether a shot is a time in the clip, the joint it leaves from, what flies, and (a bottle) when it's back."""
+    if not (isinstance(x, dict) and prop and number(x.get('at'), 0) and x['at'] < length):
+        return False
+    kind = x.get('kind', 'bottle')
+    if kind == 'bottle':
+        return x.get('joint') == 'prop' and {'at', 'joint', 'back'} <= set(x) <= {'at', 'joint', 'back', 'kind'}
+    return kind in KINDS and x.get('joint') in (('prop', 'muzzle') if 'muzzle' in prop else ('prop',)) and \
+        {'at', 'joint'} <= set(x) <= {'at', 'joint', 'kind'}
 
 
 def read_rig(rig):
@@ -91,9 +126,13 @@ def read_rig(rig):
     if not isinstance(rig, dict) or set(rig) - {'prop', 'clips'} or not isinstance(rig.get('clips'), dict) or not rig['clips']:
         fail('the rig should have clips, and may have a prop')
     prop = rig.get('prop')
-    if prop is not None and not (isinstance(prop, dict) and set(prop) == {'part', 'bone'} and prop['bone'] in BONES and
-                                 isinstance(prop['part'], int) and not isinstance(prop['part'], bool)):
-        fail('prop should be a part and the bone it follows')
+    if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded'}
+                                 and prop['bone'] in BONES and isinstance(prop['part'], int) and not isinstance(prop['part'], bool)
+                                 and all(way(prop[k]) for k in ('muzzle', 'back') if k in prop)
+                                 and isinstance(prop.get('grounded', True), bool)):
+        fail('prop should be a part and the bone it follows, and may have a muzzle and a back (ways [x, y, z]) and '
+             'grounded (true or false)')
+    hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None
     for role, clip in rig['clips'].items():
         where = f'clip {role}'
         if role not in LOOPS | ONCE:
@@ -108,8 +147,21 @@ def read_rig(rig):
             fail(f'{where}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
         turns = []
         for k in keys:
-            if not isinstance(k, dict) or set(k) - {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late'} or not (number(k.get('at')) and k['at'] >= 0):
-                fail(f'{where}: each key has a time (at, from 0), and may have aim, twist, turn, slide, ease, hips, plant and late')
+            if not isinstance(k, dict) or set(k) - KEY or not (number(k.get('at')) and k['at'] >= 0):
+                fail(f'{where}: each key has a time (at, from 0), and may have aim, twist, turn, slide, ease, hips, plant, '
+                     'late, hold and grip')
+            if 'hold' in k:
+                h = k['hold']
+                if not (hand and 'back' in prop and isinstance(h, dict) and {'aim', 'up', 'butt'} <= set(h) <= {'aim', 'up', 'butt', 'hand'} and
+                        way(h['aim']) and way(h['up']) and finite(h['butt'], 3) and
+                        np.linalg.norm(np.cross(h['aim'], h['up'])) > 1e-6 * np.linalg.norm(h['aim']) * np.linalg.norm(h['up']) and
+                        ('hand' not in h or (number(h['hand']) and 0 <= h['hand'] <= 1))):
+                    fail(f'{where}: hold is for a prop a hand holds, with a back: its aim and up (ways, not the same), its '
+                         'butt [x, y, z], and where the hand holds it (hand, 0 to 1)')
+            grip = k.get('grip', {})
+            if not isinstance(grip, dict) or (grip and not prop) or set(grip) - ({'L', 'R'} - {hand}) or not all(
+                    number(v) and 0 <= v <= 1 for v in grip.values()):
+                fail(f'{where}: grip should give the hand that doesn\'t hold the prop (L or R) a share of the way along it, 0 to 1')
             late = k.get('late', {})
             if not isinstance(late, dict) or set(late) - BONES or not all(number(v) and v >= 0 for v in late.values()):
                 fail(f'{where}: late should give bones (by name) a time from 0, in seconds')
@@ -155,15 +207,13 @@ def read_rig(rig):
                 fail(f'{where}: a clip that plays once starts at the stance, its first key only a time, and feet planted '
                      'where they stand (true)')
         shots = clip.get('shots', [])
-        if not isinstance(shots, list) or not all(
-                isinstance(x, dict) and prop and x.get('joint') == 'prop' and
-                set(x) == ({'at', 'joint', 'back'} if x.get('joint') == 'prop' else {'at', 'joint'}) and
-                number(x['at'], 0) and x['at'] < clip['length'] for x in shots):
-            fail(f'{where}: shots should each be a time in the clip (at), the joint they leave from (prop, for now: '
-                 'three.js renames the bones), and when the prop is back (back)')
+        if not isinstance(shots, list) or not all(shot_ok(x, prop, clip['length']) for x in shots):
+            fail(f'{where}: shots should each be a time in the clip (at), the joint they leave from (prop, or its muzzle: '
+                 'three.js renames the bones) and what flies (kind: bottle, the default, arrow, bullet or shell); a bottle '
+                 'is the prop, thrown, so leaves from it, and says when the prop is back (back)')
         if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
             fail(f'{where}: its shots should come in order of time')
-        thrown = [x for x in shots if x['joint'] == 'prop']
+        thrown = [x for x in shots if x.get('kind', 'bottle') == 'bottle']
         if not all(number(x['back']) and x['back'] - x['at'] >= 0.25 - 1e-9 and x['back'] <= clip['length'] for x in thrown) or any(
                 b['at'] <= a['back'] for a, b in zip(thrown, thrown[1:])):
             fail(f'{where}: a thrown prop is back (back) no sooner than at + 0.25, no later than the clip\'s length, and '
@@ -294,13 +344,88 @@ def prop_size(clip, length):
     the shot to 0.2 s before it's back, then grows back."""
     times, sizes = [0.0], [1.0]
     for x in clip.get('shots', []):
-        if x['joint'] == 'prop':
+        if x.get('kind', 'bottle') == 'bottle':
             times += [x['at'], x['at'] + 0.001, x['back'] - 0.2, x['back']]
             sizes += [1.0, 0.0, 0.0, 1.0]
     if times[-1] < length:
         times.append(float(length))
         sizes.append(1.0)
     return times, sizes
+
+
+def prop_frame(pos, tri, top_way, back_way):
+    """A prop's own long way and ends, from its faces (tri, into pos): the line its surface lies along most, its top
+    the end towards top_way; across that, its back, the side facing back_way (or any way across, without one); and the
+    middles of its ends (its foot and top), each at the very end."""
+    a, b, c = pos[tri[:, 0]], pos[tri[:, 1]], pos[tri[:, 2]]
+    area = np.linalg.norm(np.cross(b - a, c - a), axis=1) / 2
+    d = (a + b + c) / 3
+    centre = (area[:, None] * d).sum(axis=0) / area.sum()
+    d -= centre
+    vecs = np.linalg.eigh((d * area[:, None]).T @ d)[1]
+    along = vecs[:, 2] if vecs[:, 2] @ top_way >= 0 else -vecs[:, 2]
+    back = vecs[:, 1] if back_way is None else back_way - (back_way @ along) * along
+    if np.linalg.norm(back) < 1e-6:
+        fail('prop: its back should lie across its length, not along it')
+    back = back / np.linalg.norm(back)
+    points = pos[np.unique(tri)]
+    t = (points - centre) @ along
+    ends = []
+    for end, near in ((t.min(), t < t.min() + END), (t.max(), t > t.max() - END)):
+        ring = points[near].mean(axis=0)
+        ends.append(ring + along * (end - (ring - centre) @ along))
+    return along, back, ends[0], ends[1]
+
+
+def frame_of(along, back):
+    """The turn whose columns are along, back and the way across both."""
+    return np.stack([along, back, np.cross(along, back)], axis=1)
+
+
+def held_frame(h):
+    """The turn a hold puts a prop's own frame (its long way and back) at: along its aim, its back as near up as it
+    can be."""
+    a = np.array(h['aim'], dtype=float)
+    a /= np.linalg.norm(a)
+    u = np.array(h['up'], dtype=float)
+    u -= (u @ a) * a
+    return frame_of(a, u / np.linalg.norm(u))
+
+
+def bend_arm(skeleton, rot, moved, shift, side, wrist, hand, weight):
+    """Bends an arm (side L or R) so its wrist is at wrist (as the file stands, before the whole figure's turn), its
+    elbow the way the keys bend it, its hand turned to hand (world); blended with the arm as it was by weight. Returns
+    how far the wrist ends up from wrist."""
+    ua, fa, hd = (f'{b}.{side}' for b in ('upper_arm', 'forearm', 'hand'))
+    a, b = (np.linalg.norm(skeleton[x][1] - skeleton[x][0]) for x in (ua, fa))
+    shoulder, elbow_k = moved[ua] - shift, moved[fa] - shift
+    pole = elbow_k - shoulder
+    u = wrist - shoulder
+    u = u / max(float(np.linalg.norm(u)), 1e-9)
+    if np.linalg.norm(pole - (pole @ u) * u) < 0.01:  # a straight arm gives no way to bend it: down and out, then
+        pole = rot['chest'] @ np.array([0.5 if side == 'L' else -0.5, -1.0, 0.0])
+    elbow, reached = reach(shoulder, wrist, a, b, pole)
+    r_ua = turn(rot[ua] @ (skeleton[ua][1] - skeleton[ua][0]), elbow - shoulder) @ rot[ua]
+    carried = r_ua @ rot[ua].T @ rot[fa]
+    r_fa = turn(carried @ (skeleton[fa][1] - skeleton[fa][0]), reached - elbow) @ carried
+    for n, r in ((ua, r_ua), (fa, r_fa), (hd, hand)):
+        rot[n] = blend(rot[n], r, weight) if weight < 1 else r
+    for n, p in ((fa, ua), (hd, fa)):
+        moved[n] = rot[p] @ (skeleton[n][0] - skeleton[p][0]) + moved[p]
+    return float(np.linalg.norm(moved[hd] - shift - wrist))
+
+
+def filled(values, loop):
+    """Each key's value, or where it has none, the one before's that has (round from the end, in a loop), else the
+    next's: so a hold or grip eases off as it was, and on as it will be."""
+    have = [i for i, v in enumerate(values) if v is not None]
+    out = []
+    for i, v in enumerate(values):
+        if v is None and have:
+            before = [j for j in have if j < i]
+            v = values[before[-1] if before else have[-1] if loop else have[0]]
+        out.append(v)
+    return out
 
 
 def main():
@@ -406,6 +531,21 @@ def main():
         bind = np.concatenate([bind, mid[None]])
         carry = np.linalg.inv(held) @ mid  # the prop's place on its bone
         parents['prop'] = rig['prop']['bone']
+        tri = start[p['attributes']['POSITION']] + np.array(glb.triangles(gltf, binary, p), dtype=np.int64)
+        along, back, foot, top = prop_frame(pos, tri, np.array(rig['prop'].get('muzzle', [0, 1, 0]), dtype=float),
+                                            np.array(rig['prop']['back'], dtype=float) if 'back' in rig['prop'] else None)
+        span = float((top - foot) @ along)
+        own_frame = frame_of(along, back)
+    # Whether any key holds the prop or grips it: if so, every clip keys its place on the hand.
+    posing = any('hold' in k or 'grip' in k for c in rig['clips'].values() for k in c['keys'])
+    if posing:
+        bone = rig['prop']['bone']
+        hand_side = bone[-1]
+        hi = names.index(bone)
+        tip = rot_s[bone] @ (skeleton[bone][1] - skeleton[bone][0])
+        holds_at = float((bind[hi, :3, 3] + tip / 2 - foot) @ along) / span  # where the hand holds it, its middle
+        on_prop = np.linalg.inv(bind[nb]) @ np.append(along, 0)  # its long way, on its joint
+        chest_bind = np.linalg.inv(bind[names.index('chest')])
     inverse = np.linalg.inv(bind)
     stance_local = {n: rot_s[n] if parents[n] is None else rot_s[parents[n]].T @ rot_s[n] for n in names}
 
@@ -497,6 +637,29 @@ def main():
         sl = curve(kt, np.array(slides, dtype=float), t, loop, length, None, eases)
         if loop:  # the last frame is the first
             q[-1], deg[-1], sl[-1] = q[0], deg[0], sl[0]
+        if posing:
+            # The holds: each key's turn of the prop from as the stance holds it, its butt, and where the hand holds
+            #  it, eased from key to key (a key without a hold as the hold before it, so it eases off as it was); and
+            #  how much each key holds it, eased as feet are put down. The grips likewise.
+            hold = filled([k.get('hold') for k in keys], loop)
+            hq = np.array([quat(held_frame(h) @ own_frame.T) if h else np.array([0.0, 0, 0, 1]) for h in hold])
+            for k in range(1, len(hq)):
+                if hq[k] @ hq[k - 1] < 0:
+                    hq[k] *= -1
+            hq = curve(kt, hq, t, loop, length, np.repeat(-1.0 if hq[-1] @ hq[0] < 0 else 1.0, 4), eases)
+            hq /= np.linalg.norm(hq, axis=1, keepdims=True)
+            hb = curve(kt, np.array([h['butt'] if h else foot for h in hold], dtype=float), t, loop, length, None, eases)
+            hs = curve(kt, np.array([[h.get('hand', holds_at)] if h else [holds_at] for h in hold]), t, loop, length,
+                       None, eases)[:, 0]
+            hw = np.clip(curve(kt, np.array([[1.0 if 'hold' in k else 0.0] for k in keys]), t, loop, length), 0, 1)[:, 0]
+            other = 'L' if hand_side == 'R' else 'R'
+            grip = filled([k.get('grip', {}).get(other) for k in keys], loop)
+            gs = curve(kt, np.array([[v if v is not None else 0.5] for v in grip]), t, loop, length, None, eases)[:, 0]
+            gw = np.clip(curve(kt, np.array([[1.0 if other in k.get('grip', {}) else 0.0] for k in keys]), t, loop,
+                               length), 0, 1)[:, 0]
+            if loop:
+                hq[-1], hb[-1], hs[-1], hw[-1], gs[-1], gw[-1] = hq[0], hb[0], hs[0], hw[0], gs[0], gw[0]
+            gaps = []
         frames = np.zeros((len(t), len(joints), 4, 4))
         for f in range(len(t)):
             rot, moved = {}, {}
@@ -532,6 +695,35 @@ def main():
                     p = parents[n]
                     moved[n] = rot[p] @ (heads[n] - heads[p]) + moved[p]
             m = world(rot, moved)
+            if posing:
+                # The prop: as the hand holds it, eased to as the key holds it (carried by the chest), all before the
+                #  whole figure's turn; then the hand that holds it bent to it, and the other to its grip.
+                own = m[hi] @ carry
+                set_ = np.eye(4)
+                set_[:3, :3] = matrix(hq[f]) @ bind[nb, :3, :3]
+                set_[:3, 3] = hb[f] + matrix(hq[f]) @ (bind[nb, :3, 3] - foot)
+                kept = m[names.index('chest')] @ chest_bind @ set_
+                prop_m = np.eye(4)
+                prop_m[:3, :3] = blend(own[:3, :3], kept[:3, :3], hw[f]) if hw[f] > 0 else own[:3, :3]
+                prop_m[:3, 3] = own[:3, 3] + hw[f] * (kept[:3, 3] - own[:3, 3])
+                if hw[f] > 0:
+                    along_m = np.eye(4)
+                    along_m[:3, 3] = hw[f] * (hs[f] - holds_at) * span * on_prop[:3]
+                    there = prop_m @ along_m @ np.linalg.inv(carry)
+                    gap = bend_arm(skeleton, rot, moved, shift, hand_side, there[:3, 3], there[:3, :3], 1.0)
+                    if hw[f] > 0.999:
+                        gaps.append(gap)
+                if gw[f] > 0:
+                    hd = f'hand.{other}'
+                    at_ = prop_m @ np.linalg.inv(bind[nb]) @ np.append(foot + gs[f] * span * along, 1)
+                    half = rot[hd] @ (skeleton[hd][1] - skeleton[hd][0]) / 2
+                    gap = bend_arm(skeleton, rot, moved, shift, other, at_[:3] - half, rot[hd], gw[f])
+                    if gw[f] > 0.999:
+                        gaps.append(gap)
+                m = world(rot, moved)
+                frames[f, :nb] = np.einsum('ab,jbc->jac', whole, m)
+                frames[f, nb] = whole @ prop_m
+                continue
             frames[f, :nb] = np.einsum('ab,jbc->jac', whole, m)
             if rig.get('prop'):
                 frames[f, nb] = frames[f, names.index(rig['prop']['bone'])] @ carry
@@ -543,22 +735,28 @@ def main():
         shown = frames.copy()
         if rig.get('prop'):
             shown[:, nb, :3, :3] *= scale[:, None, None]
-        low = skinned(shown)[:, :, 1].min(axis=1)
+        standing = np.ones(len(pos), dtype=bool)
+        if rig.get('prop') and rig['prop'].get('grounded', True) is False:
+            standing[used] = False  # the figure stands on its feet, wherever the prop goes
+        low = skinned(shown)[:, standing, 1].min(axis=1)
         frames[:, :, 1, 3] -= low[:, None]
         shown[:, :, 1, 3] -= low[:, None]
         # Joints' local turns (and the root's place) for the file.
         rots = np.zeros((len(t), len(joints), 4))
+        prop_t = np.zeros((len(t), 3))
         for f in range(len(t)):
             for i, n in enumerate(joints):
                 p = parents[n]
                 lm = frames[f, i] if p is None else np.linalg.inv(frames[f, joints.index(p)]) @ frames[f, i]
                 rots[f, i] = quat(lm[:3, :3])
+                if n == 'prop':
+                    prop_t[f] = lm[:3, 3]
         for j in range(len(joints)):  # each the nearer of q and -q to the frame before
             for f in range(1, len(t)):
                 if rots[f, j] @ rots[f - 1, j] < 0:
                     rots[f, j] *= -1
         root_t = frames[:, 0, :3, 3]
-        animations.append((role, t, rots, root_t, (size_t, size_v)))
+        animations.append((role, t, rots, root_t, (size_t, size_v), prop_t if posing else None))
         # What it does to the figure, for the report: how far the first frame is from the bind, and how far the
         #  figure's edges grow (the prop's left out), frame by frame.
         final = skinned(shown)  # as the file plays: the prop at its size
@@ -581,6 +779,10 @@ def main():
         report[role] = {'from bind': round(start_off, 6), 'frames': len(t), 'grown': round(float(grown.max()), 2), 'at': round(float(t[worst]), 3),
                         'over 1.4x': int((grown > 1.4).any(axis=0).sum()), 'dropped': round(float(dropped.max()), 3),
                         'planted': round(float(max(off_plant, default=0)), 3)}
+        if not standing.all():
+            report[role]['below'] = round(max(0.0, -float(final[:, used, 1].min())), 3)
+        if posing:
+            report[role]['grip'] = round(float(max(gaps, default=0)), 3)
         if os.environ.get('RIG_FRAMES'):  # each frame's points, to check a player against
             np.save(os.path.join(os.environ['RIG_FRAMES'], f'{role}.npy'), final.astype(np.float32))
             np.savez(os.path.join(os.environ['RIG_FRAMES'], f'{role}-feet.npz'), weight=held_w, target=held_at - shift,
@@ -619,9 +821,14 @@ def main():
         node = {'name': n, 'rotation': [float(v) for v in quat(lm[:3, :3]).astype(np.float32)],
                 'translation': [float(v) for v in lm[:3, 3].astype(np.float32)]}
         kids = [index[c] for c in joints if parents[c] == n]
+        if n == 'prop' and 'muzzle' in rig['prop']:  # where its shots leave from: the middle of its top
+            kids.append(first + 1 + len(joints))
         if kids:
             node['children'] = kids
         nodes.append(node)
+    if rig.get('prop') and 'muzzle' in rig['prop']:
+        nodes.append({'name': 'muzzle', 'translation': [
+            float(v) for v in (np.linalg.inv(bind[nb]) @ np.append(top, 1))[:3].astype(np.float32)]})
     gltf['scenes'][gltf.get('scene', 0)]['nodes'].append(first)
     ibm = add(np.ascontiguousarray(inverse.transpose(0, 2, 1)).astype(np.float32).reshape(-1, 16), 'MAT4', 5126)
     gltf['skins'] = [{'name': 'skeleton', 'joints': [index[n] for n in joints], 'inverseBindMatrices': ibm,
@@ -637,7 +844,7 @@ def main():
                         add(top32[s:s + n], 'VEC4', 5126, 34962))
         p['attributes']['JOINTS_0'], p['attributes']['WEIGHTS_0'] = done[pa]
     gltf['animations'] = []
-    for role, t, rots, root_t, (size_t, size_v) in animations:
+    for role, t, rots, root_t, (size_t, size_v), prop_t in animations:
         anim = {'name': role, 'samplers': [], 'channels': []}
         frame_times = add(t.astype(np.float32), 'SCALAR', 5126, minmax=True)
 
@@ -652,6 +859,8 @@ def main():
         if 'prop' in index:  # its size, on times of its own, so it's gone just after a shot
             channel(index['prop'], 'scale', np.repeat(np.array(size_v)[:, None], 3, axis=1), 'VEC3',
                     add(np.array(size_t, dtype=np.float32), 'SCALAR', 5126, minmax=True))
+        if prop_t is not None:  # and its place on the hand, where a key holds or grips it
+            channel(index['prop'], 'translation', prop_t, 'VEC3')
         gltf['animations'].append(anim)
     while len(data) % 4:
         data.append(0)

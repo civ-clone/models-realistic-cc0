@@ -170,7 +170,26 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; simplified; the rifle split off, made whole from its mirror image and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot"
+   "made": "generated; simplified; the rifle split off, made whole from its mirror image and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot",
+   "rigged": {
+    "file": "models/rigged/rifleman.glb",
+    "sha256": "620bb4b20ac6edd49346c080b7b2afa053ca9a1e15612263813d3935958ca8a1",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "fight": "fight",
+     "die": "die"
+    },
+    "shots": {
+     "fight": [
+      {
+       "at": 0.55,
+       "joint": "muzzle",
+       "kind": "bullet"
+      }
+     ]
+    }
+   }
   },
   "cavalry": {
    "file": "models/cavalry.glb",
