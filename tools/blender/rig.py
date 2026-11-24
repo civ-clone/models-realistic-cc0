@@ -51,11 +51,12 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   - `grip`: the other hand on the prop (`L` or `R`), at a share of the way from its foot to its top, its arm bent to
     reach it. Eased on and off as `plant` is.
   At a key that holds or grips the prop, a hand on it is turned as its forearm carries it (as the stance turns it on
-  the forearm), then the least that lays it along the prop (towards its top or its foot, whichever is nearer), and the
-  prop passes it as it does the hand that holds it in the stance (the other: through its middle). Between keys, its
-  place on the prop goes from one key's to the next's (the hand that holds the prop easing from as the stance holds
-  it as the hold eases on, and back as it eases off), so a hand never turns over from one frame to the next. An arm
-  bent to a prop bends its elbow the way the keys bend it.
+  the forearm), then the least that lays it along the prop (towards its top or its foot, whichever is nearer; but at
+  a hold next to a key that doesn't hold, the way the stance lays the hand that holds it). Between
+  keys, it turns from one key's turn to the next's as the chest carries it (as an arm brings a hand up, rather than
+  the hand turning over on the prop), and in every frame the prop passes it as it does the hand that holds it in the
+  stance (the other: through its middle). The hand that holds the prop eases from as the stance holds it as the hold
+  eases on, and back as it eases off. An arm bent to a prop bends its elbow the way the keys bend it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -82,7 +83,8 @@ is from the bind, the most any edge of the figure grows and when, how many faces
 any point lost to the four kept, the furthest a fully planted ankle ends up from its place (`planted`), and where they
 apply, how far an ungrounded prop went below the ground (`below`) and the furthest each hand ends up from where it
 holds the prop (`grip`, by hand: the one that holds it whenever a key holds it at all, the other where it fully grips
-it; more than a few millimetres says the prop was out of the arm's reach).
+it; more than a few millimetres says the prop was out of the arm's reach), and the most each hand on it bends off the
+line of its forearm (`wrist`, in degrees).
 With RIG_FRAMES set to a folder, it also writes each clip's points frame by frame (`<clip>.npy`) and its feet
 (`<clip>-feet.npz`: their plant weights and places, the joints, and how far each frame was lowered to the ground),
 to check a player or a clip against.
@@ -116,7 +118,7 @@ def number(v, lo=-math.inf):
 
 
 def way(v):
-    return finite(v, 3) and np.linalg.norm(v) > 1e-6
+    return finite(v, 3) and 1e-6 < np.linalg.norm(v) < 1e6
 
 
 def shot_ok(x, prop, length):
@@ -167,9 +169,9 @@ def read_rig(rig):
                         ('hand' not in h or (number(h['hand']) and 0 <= h['hand'] <= 1))):
                     fail(f'{where}: hold is for a prop a hand holds, with a back: its aim and up (ways, not the same), its '
                          'butt [x, y, z], and where the hand holds it (hand, 0 to 1)')
-            grip = k.get('grip', {'L': 0})
-            if not (isinstance(grip, dict) and grip and hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
-                    number(v) and 0 <= v <= 1 for v in grip.values()):
+            grip = k.get('grip')
+            if 'grip' in k and (not (isinstance(grip, dict) and grip and hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
+                    number(v) and 0 <= v <= 1 for v in grip.values())):
                 fail(f'{where}: grip is for a prop a hand holds: it gives the other hand (L or R) a share of the way along it, '
                      '0 to 1')
             late = k.get('late', {})
@@ -202,8 +204,9 @@ def read_rig(rig):
         if any(b <= a for a, b in zip(times, times[1:])):
             fail(f'{where}: its keys should come in order of time, none at the same time')
         step = clip['length'] / max(2, int(round(clip['length'] * FPS)))
-        if any(b - a < step - 1e-6 for a, b in zip(times, times[1:])):
-            fail(f'{where}: its keys should be at least a frame ({step:.4f} s) apart, so each is played')
+        if any(b - a < step - 1e-6 for a, b in zip(times, times[1:] + ([times[0] + clip['length']] if role in LOOPS else []))):
+            fail(f'{where}: its keys should be at least a frame ({step:.4f} s) apart (in a loop, round from its last to its '
+                 'first), so each is played')
         if role in LOOPS and not (times[0] == 0 and times[-1] < clip['length']):
             fail(f'{where}: a loop\'s keys run from 0 to before its length (its last frame is its first)')
         if role in LOOPS and keys[0].get('late'):
@@ -558,6 +561,7 @@ def main():
         tip = rot_s[bone] @ (skeleton[bone][1] - skeleton[bone][0])
         holds_at = float((bind[hi, :3, 3] + tip / 2 - foot) @ along) / span  # where the hand holds it, its middle
         prop_inv = np.linalg.inv(bind[nb])
+        stance_lay = 1.0 if tip @ along >= 0 else -1.0  # the way the stance lays its hand along the prop
         chest_bind = np.linalg.inv(bind[names.index('chest')])
         # Where the prop's line passes each hand, from its wrist, as the skeleton stands unposed: the hand that holds
         #  it as the stance holds it; the other at its middle.
@@ -567,10 +571,9 @@ def main():
 
     def hold_hand(rot, moved, side, prop_m, share, weight, lay=None):
         """Bends an arm so its hand holds the prop share of the way along it: the hand turned as its forearm carries
-        it (as the stance turns it on the forearm), then the least that lays it along the prop, towards its top (lay 1)
-        or its foot (-1; without a lay, whichever is nearer), and placed so the prop's line passes it as `near` says;
-        the arm blended in by weight. Returns how far the wrist ends up from its place, that place and turn (4x4), and
-        the lay."""
+        it (as the stance turns it on the forearm), then the least that lays it along the prop, towards its top (lay
+        1) or its foot (-1; without a lay, whichever is nearer), and placed so the prop's line passes it as `near`
+        says; the arm blended in by weight. Returns the hand's place and turn (4x4)."""
         fa, hd = f'forearm.{side}', f'hand.{side}'
         on = rot_s[fa].T @ rot_s[hd]
         bone_v = skeleton[hd][1] - skeleton[hd][0]
@@ -580,14 +583,12 @@ def main():
         for r_, m_, w_ in ((trial, dict(moved), 1.0), (rot, moved, weight)):
             nat = trial[fa] @ on
             d = nat @ bone_v
-            if lay is None:
-                lay = 1.0 if d @ way >= 0 else -1.0
-            hand_r = turn(d, lay * way) @ nat
+            hand_r = turn(d, way if (d @ way >= 0 if lay is None else lay > 0) else -way) @ nat
             wrist = at - hand_r @ near[side]
-            gap = bend_arm(skeleton, r_, m_, shift, side, wrist, hand_r, w_)
+            bend_arm(skeleton, r_, m_, shift, side, wrist, hand_r, w_)
         there = np.eye(4)
         there[:3, :3], there[:3, 3] = hand_r, wrist
-        return gap, there, lay
+        return there
 
     def mix(a, b, w):
         """The place and turn (4x4) w of the way from a to b."""
@@ -721,9 +722,11 @@ def main():
                 return {int(round(k['at'] / length * (len(t) - 1))) % span_n for k in keys if has(k)}
 
             def between(rels, full, f):
-                """A hand's place on the prop at frame f, from the keys' either side of it."""
+                """A hand's turn at frame f, as the chest carries it, from the keys' either side of it."""
                 order = sorted(full)
                 f %= span_n
+                if f in rels:  # at a key
+                    return rels[f]
                 before, after = [g for g in order if g < f], [g for g in order if g > f]
                 if loop:
                     p, n = (before or order)[-1], (after or order)[0]
@@ -733,11 +736,18 @@ def main():
                     if p is None or n is None:
                         return rels[n if p is None else p]
                     dp, dn = f - p, n - f
-                return rels[p] if p == n else mix(rels[p], rels[n], dp / (dp + dn))
+                return rels[p] if p == n else blend(rels[p], rels[n], dp / (dp + dn))
 
             full = {hand_side: at_keys(lambda k: 'hold' in k), other: at_keys(lambda k: other in k.get('grip', {}))}
-            rel = {hand_side: {}, other: {}}
-            lays = {hand_side: {}, other: {}}
+            # A hold next to a key that doesn't hold (where it eases on or off) lays the hand as the stance does, so
+            #  it eases from and to the stance's grip without turning over.
+            edge = set()
+            for i, k in enumerate(keys):
+                near_keys = [(i - 1) % len(keys), (i + 1) % len(keys)] if loop else [j for j in (i - 1, i + 1) if 0 <= j < len(keys)]
+                if 'hold' in k and any('hold' not in keys[j] for j in near_keys):
+                    edge |= at_keys(lambda x: x is k)
+            turned = {hand_side: {}, other: {}}  # each hand's turn at the keys, as the chest carries it
+            wrists = {hand_side: [], other: []}  # how far each hand bends off its forearm, in degrees
         for pass_ in ((0, 1) if posing else (1,)):
             if posing:
                 gaps = {hand_side: [], other: []}
@@ -787,24 +797,30 @@ def main():
                     prop_m[:3, :3] = blend(own[:3, :3], kept[:3, :3], hw[f]) if hw[f] > 0 else own[:3, :3]
                     prop_m[:3, 3] = own[:3, 3] + hw[f] * (kept[:3, 3] - own[:3, 3])
                     fm = f % span_n
+                    chest_r = m[names.index('chest')][:3, :3]
                     for side, weight, share in ((hand_side, hw, hs), (other, gw, gs)):
-                        wt = weight[f] if side == other else 1.0  # the hand that holds it is always on it
                         if weight[f] <= 0:
                             continue
-                        if fm in full[side]:  # at a key: lying along it as its forearm carries it
-                            gap, there, lay = hold_hand(rot, moved, side, prop_m, share[f], wt,
-                                                        lays[side][fm] if pass_ == 1 else None)
-                            lays[side][fm], rel[side][fm] = lay, np.linalg.inv(prop_m) @ there
-                            if pass_ == 1:
-                                gaps[side].append(gap)
-                        elif pass_ == 1:  # between keys, from one key's place to the next's
-                            there = between(rel[side], full[side], f)
-                            if side == hand_side and weight[f] < 1:
-                                there = mix(np.linalg.inv(carry), there, weight[f])
-                            there = prop_m @ there
-                            gap = bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
-                            if side == hand_side:
-                                gaps[side].append(gap)
+                        wt = weight[f] if side == other else 1.0  # the hand that holds it is always on it
+                        if pass_ == 0:  # at a key: lying along it as its forearm carries it
+                            if fm in full[side]:
+                                lay = stance_lay if side == hand_side and fm in edge else None
+                                turned[side][fm] = chest_r.T @ hold_hand(rot, moved, side, prop_m, share[f], wt, lay)[:3, :3]
+                            continue
+                        # Turned as the keys either side turn it, as the chest carries it, and placed so the prop
+                        #  passes it as at a key; the hand that holds the prop eased from as the stance holds it.
+                        hand_r = chest_r @ between(turned[side], full[side], f)
+                        at = (prop_m @ prop_inv @ np.append(foot + share[f] * span * along, 1))[:3]
+                        there = np.eye(4)
+                        there[:3, :3], there[:3, 3] = hand_r, at - hand_r @ near[side]
+                        if side == hand_side and weight[f] < 1:
+                            there = mix(prop_m @ np.linalg.inv(carry), there, weight[f])
+                        gap = bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
+                        if side == hand_side or weight[f] > 0.999:
+                            gaps[side].append(gap)
+                        fa, hd = f'forearm.{side}', f'hand.{side}'
+                        a_, b_ = (rot[x] @ (skeleton[x][1] - skeleton[x][0]) for x in (fa, hd))
+                        wrists[side].append(math.degrees(math.acos(np.clip(a_ @ b_ / np.linalg.norm(a_) / np.linalg.norm(b_), -1, 1))))
                     m = world(rot, moved)
                     frames[f, :nb] = np.einsum('ab,jbc->jac', whole, m)
                     frames[f, nb] = whole @ prop_m
@@ -868,6 +884,7 @@ def main():
             report[role]['below'] = round(max(0.0, -float(final[:, used, 1].min())), 3)
         if posing:
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
+            report[role]['wrist'] = {s_: round(max(g, default=0)) for s_, g in sorted(wrists.items())}
         if os.environ.get('RIG_FRAMES'):  # each frame's points, to check a player against
             np.save(os.path.join(os.environ['RIG_FRAMES'], f'{role}.npy'), final.astype(np.float32))
             np.savez(os.path.join(os.environ['RIG_FRAMES'], f'{role}-feet.npz'), weight=held_w, target=held_at - shift,

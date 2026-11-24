@@ -393,9 +393,9 @@ def check_rig(where, rig, stance):
                     cross = math.hypot(a[1] * u[2] - a[2] * u[1], a[2] * u[0] - a[0] * u[2], a[0] * u[1] - a[1] * u[0])
                     if cross <= 1e-6 * math.hypot(*a) * math.hypot(*u):
                         problem(f'{at}: a hold\'s up should lie across its aim, not along it')
-            grip = k.get('grip', {'L': 0})
-            if not (isinstance(grip, dict) and grip and hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
-                    number(v) and 0 <= v <= 1 for v in grip.values()):
+            grip = k.get('grip')
+            if 'grip' in k and (not (isinstance(grip, dict) and grip and hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
+                    number(v) and 0 <= v <= 1 for v in grip.values())):
                 problem(f'{at}: grip is for a prop a hand holds: it gives the other hand (L or R) a share of the way '
                         'along it, 0 to 1')
         if any(t['axis'] != turns[0]['axis'] or t['about'] != turns[0]['about'] for t in turns):
@@ -407,8 +407,9 @@ def check_rig(where, rig, stance):
             problem(f'{at}: its keys should come in order of time, none at the same time')
         if number(length, 0):
             step = length / max(2, int(round(length * FPS)))
-            if any(b - a < step - 1e-6 for a, b in zip(times, times[1:])):
-                problem(f'{at}: its keys should be at least a frame ({step:.4f} s) apart, so each is played')
+            if any(b - a < step - 1e-6 for a, b in zip(times, times[1:] + ([times[0] + length] if role in LOOPS else []))):
+                problem(f'{at}: its keys should be at least a frame ({step:.4f} s) apart (in a loop, round from its last to '
+                        'its first), so each is played')
         if role in LOOPS and not (times[0] == 0 and times[-1] < length):
             problem(f'{at}: a loop\'s keys run from 0 to before its length')
         first = keys[0]
