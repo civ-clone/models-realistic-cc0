@@ -31,8 +31,10 @@ round its edges (a material of their own, `split-fill`; the colours come from th
 it has no gap where the piece lay against it. Each is zipped from side to side, so a long hole curving round a leg
 doesn't fold (though one wrapping most of the way round a limb may dip inside it). A ring of open edges that touches
 itself is closed as the holes it is, each on its own. Faces the cut leaves as teeth along a rim, hanging by a corner or
-bridging a hole are dropped first. Holes the original had are left as they were, unless the cut ran into one, when
-it's closed with the cut's. It fails if any edge the cut opened is left open, or Blender's own check finds a face it
+bridging a hole are dropped first. Only the cut's own edges (between a face kept and one taken or dropped) are closed:
+holes the original had, and the outlines of two-layer sheets, are left as they were, unless the cut ran into one,
+when it's closed with the cut's; faces lying on another's points (a two-layer sheet) are left out of the weld, so
+their layers aren't merged. It fails if any edge the cut opened is left open, or Blender's own check finds a face it
 won't keep. The piece's holes are left open: a cut along a piece's length, closed, fills across its hollows (a sheet
 across a rifle's stock).
 
@@ -189,14 +191,25 @@ def components(faces):
 
 every = np.arange(nf)
 whole = components(every)
-sides = []
+sides, side_face = [], []
 for k in range(int(loop_total.max())):  # each face's k-th side, where it has one
     has = loop_total > k
     f0, n = loop_start[has], loop_total[has]
     sides.append(np.stack([weld[loop_v[f0 + k]], weld[loop_v[f0 + (k + 1) % n]]], 1))
-uniq, count = np.unique(np.sort(np.concatenate(sides), axis=1), axis=0, return_counts=True)
-open_before = {tuple(x) for x in uniq[count == 1].tolist()}  # the original's own holes' edges
+    side_face.append(np.where(has)[0])
+sides, side_face = np.sort(np.concatenate(sides), axis=1), np.concatenate(side_face)
+n_weld = int(weld.max()) + 1
+side_key = sides[:, 0] * n_weld + sides[:, 1]  # an edge, by its welded ends
 key_weld = {tuple(k): int(w) for k, w in zip(key.tolist(), weld.tolist())}
+# Faces lying on another face's points (a sheet made two-sided by a second layer, or a face made twice): welding them
+# would merge the layers, so their points are left out of the weld below.
+corners = np.full((nf, int(loop_total.max())), -1, dtype=np.int64)
+for k in range(corners.shape[1]):
+    has = loop_total > k
+    corners[has, k] = weld[loop_v[loop_start[has] + k]]
+_, first_of, count_of = np.unique(np.sort(corners, axis=1), axis=0, return_inverse=True, return_counts=True)
+twinned = count_of[first_of.ravel()] > 1
+layered = set(np.unique(corners[twinned][corners[twinned] >= 0]).tolist())
 kept = np.where(~pick & ~drop)[0]
 part = components(kept)
 debris = np.zeros(nf, dtype=bool)
@@ -208,6 +221,10 @@ for w in np.unique(whole[pick | drop]):  # the original's pieces the cut touched
     largest = ids[np.argmax(counts)]
     debris[kept[mine & (part != largest)]] = True
 drop |= debris
+# The cut's own edges: those between a face kept and a face taken or dropped. Only these, and those of faces peeled
+# off along them, are closed; any other open edge (an original's hole, a two-layer sheet's outline) is left.
+removed_face = pick | drop
+cut_keys = set(np.intersect1d(side_key[~removed_face[side_face]], side_key[removed_face[side_face]]).tolist())
 
 # The colour texture, to colour the closing faces.
 img = None
@@ -228,8 +245,8 @@ if img is not None:
 
 
 def hole_cycles(bm):
-    """Each hole's edge as a cycle of points, in the order a face closing it runs (against the face round its first
-    edge). A ring that touches itself (holes meeting at a point, or one pinched there) comes apart into cycles that
+    """Each hole's edge as a cycle of points, in the order a face closing it runs (against most of the faces round
+    it). A ring that touches itself (holes meeting at a point, or one pinched there) comes apart into cycles that
     don't: found by turning round each point through the faces, whichever way they're wound, to the next open edge,
     then cut where a cycle comes back to a point. A walk that doesn't come back to its start is left out (and the
     check after the closing fails on its open edges)."""
@@ -262,6 +279,13 @@ def hole_cycles(bm):
             e, v = nxt, nxt.other_vert(v)
         if not ok:
             continue
+        votes = 0  # which way the faces round it run it, by most of them (one face wound the other way can't turn it)
+        for i in range(len(cycle)):
+            e = bm.edges.get((cycle[i], cycle[(i + 1) % len(cycle)]))
+            if e is not None and e.link_loops:
+                votes += 1 if e.link_loops[0].vert is cycle[(i + 1) % len(cycle)] else -1
+        if votes < 0:
+            cycle.reverse()
         stack, at = [], {}  # a hole pinched at a point passes it twice: its lobes, each a cycle of its own
         for v in cycle:
             if v in at:
@@ -290,7 +314,13 @@ def zip_up(bm, cycle):
     B = [cycle[(i0 - k) % n] for k in range((i0 - i1) % n + 1)]  # i0 to i1 the other way
     tris, a, b = [], 0, 0
     while a < len(A) - 1 or b < len(B) - 1:
-        if b == len(B) - 1 or (a < len(A) - 1 and (A[a + 1].co - B[b].co).length <= (A[a].co - B[b + 1].co).length):
+        go_a = b == len(B) - 1 or (a < len(A) - 1 and (A[a + 1].co - B[b].co).length <= (A[a].co - B[b + 1].co).length)
+        if a < len(A) - 1 and b < len(B) - 1:  # not a flat triangle where the other way gives a real one
+            ta = mathutils.geometry.area_tri(A[a].co, A[a + 1].co, B[b].co)
+            tb = mathutils.geometry.area_tri(B[b + 1].co, B[b].co, A[a].co)
+            if (ta if go_a else tb) < 1e-12 <= (tb if go_a else ta):
+                go_a = not go_a
+        if go_a:
             tri = (A[a], A[a + 1], B[b]); a += 1  # A runs with the cycle
         else:
             tri = (B[b + 1], B[b], A[a]); b += 1  # B runs against it
@@ -308,18 +338,19 @@ def close_holes(ob):
     m = ob.data
     bm = bmesh.new(); bm.from_mesh(m)
     unit = float(np.linalg.norm(mx - mn)) * 1e-6
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=unit)
+    unit_key = lambda v: tuple(np.round(np.array(v.co[:]) / unit).astype(np.int64).tolist())
+    bmesh.ops.remove_doubles(bm, verts=[v for v in bm.verts if key_weld.get(unit_key(v)) not in layered], dist=unit)
     uv = bm.loops.layers.uv.active
 
     def welded(v):
-        return key_weld.get(tuple(np.round(np.array(v.co[:]) / unit).astype(np.int64).tolist()))
+        return key_weld.get(unit_key(v))
 
-    def was_open(e):  # one of the original's own holes' edges
+    def key_of(e):
         w0, w1 = welded(e.verts[0]), welded(e.verts[1])
-        return None not in (w0, w1) and tuple(sorted((w0, w1))) in open_before
+        return None if None in (w0, w1) else min(w0, w1) * n_weld + max(w0, w1)
 
     def cut_open(e):  # an open edge the cut made
-        return e.is_boundary and not was_open(e)
+        return e.is_boundary and key_of(e) in cut_keys
 
     def on_rim(v):
         return any(cut_open(e) for e in v.link_edges)
@@ -332,13 +363,14 @@ def close_holes(ob):
         if not loose:
             break
         peeled += len(loose)
+        cut_keys.update(key_of(e) for f in loose for e in f.edges)  # their edges are the cut's now
         bmesh.ops.delete(bm, geom=loose, context='FACES')
 
     closed, kept = 0, 0
     for cycle in hole_cycles(bm):
         ring = [bm.edges.get((cycle[i], cycle[(i + 1) % len(cycle)])) for i in range(len(cycle))]
-        if all(was_open(e) for e in ring):
-            kept += 1  # a hole the original had
+        if not any(key_of(e) in cut_keys for e in ring):
+            kept += 1  # a hole the original had, or a two-layer sheet's outline
             continue
         colour = (0.5, 0.5, 0.5, 1.0)
         if pixels is not None and uv is not None:

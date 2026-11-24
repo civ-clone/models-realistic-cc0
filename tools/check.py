@@ -188,7 +188,8 @@ def check_split(where, split):
                 u = [q - p for p, q in zip(chain[j - 1][0], chain[j][0])]
                 v = [q - p for p, q in zip(chain[j][0], chain[j + 1][0])]
                 nu, nv = math.hypot(*u), math.hypot(*v)
-                if not (nu and nv and number(chain[j][1]) and number(chain[j][2])):
+                if not (nu and nv and isinstance(chain[j], list) and len(chain[j]) == 4 and number(chain[j][1]) and
+                        number(chain[j][2])):
                     continue
                 bend = math.acos(max(-1.0, min(1.0, sum(x * y for x, y in zip(u, v)) / (nu * nv))))
                 if max(chain[j][1], chain[j][2]) * math.sin(bend / 2) > 0.01:

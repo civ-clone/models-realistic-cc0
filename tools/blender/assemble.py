@@ -7,8 +7,8 @@ MODE hand: prop upright in the figure's right hand (its -X side). Options: heigh
   laid along its own length (its top the end nearer `top`, x,y,z in the prop file's axes, or else its narrow end, or
   its wide end with end=wide; turned `roll` degrees about its length from its fuller side facing the front) and turned
   so that, once stance.py has posed the figure and carried it with the right hand (the stance holds it whole on
-  hand.R), its top points that way; with ground=1 its grip is where its foot, so posed, rests on the ground (as the
-  figure stands, so the stance mustn't move the legs, which would stand him higher or lower).
+  hand.R), its top points that way; with ground=1 its grip is where its foot, so posed, rests 5 mm above the body's
+  lowest point (as the figure stands, so the stance mustn't move the legs, which would stand him higher or lower).
 MODE chute: prop centred above the figure. Options: width (prop's widest horizontal size, m), bottom (height of the
   prop's lowest point, m).
 MODE hat: prop on the head. Options: width (brim width, m), sink (how far down over the head, m).
@@ -220,7 +220,8 @@ if mode == "hand" and opt.get("posed"):
         a0 = mathutils.Vector(((min(v.x for v in canon) + max(v.x for v in canon)) / 2, lo_y,
                                (min(v.z for v in canon) + max(v.z for v in canon)) / 2))
         low = min((F @ (cv - a0)).y for cv in canon)  # the lowest point, held by its foot's end and turned
-        grip = (posed_hand.y - foot_gap + s * low) / (s * (hi_y - lo_y) * want.y)
+        ground = bmn.z  # the body's own lowest point: the original it was split from may have reached lower
+        grip = (posed_hand.y - ground - foot_gap + s * low) / (s * (hi_y - lo_y) * want.y)
         if not 0 < grip < 1:
             raise RuntimeError(f"Error: the hand, posed, is {posed_hand.y:.3f} up, so the prop can't rest on the ground")
     else:
