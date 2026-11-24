@@ -331,6 +331,7 @@
       "sha256": "485b9fbea3a82ddc4d4795218cf0142e956f040b312655e21afd4c5f0ac37cfd"
     },
     "generated-musketman": {
+      "work": "Line infantry musketman for Musketmen (generated for civ.one)",
       "author": "dom111",
       "url": "https://github.com/civ-clone/models-realistic-cc0",
       "licence": {
@@ -342,11 +343,11 @@
       "generated": true,
       "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
       "file": "the generated GLB, kept by me, not published",
-      "work": "Line infantry musketman for Musketmen (generated for civ.one)",
       "sha256": "c9a1c36e1f3e3b0e4eaed01a46c72f8c5db2c647c916cfac2a030fbd85fbef93",
       "prompt": "A realistic late eighteenth-century line infantry musketman, full body, standing in A-pose with his arms held out from his sides, seen in a three-quarter front view from slightly to his right, wearing a long single-breasted woollen coat in plain mid-grey with grey turnbacks, a buff waistcoat and buff breeches, white leather cross belts with a black cartridge box at his right hip, black gaiters buttoned to the knee, black leather shoes, a black felt tricorne hat, hair tied back, hands empty and open, no weapon, no musket, no bayonet, no sword, no sling, natural skin tones, no national insignia, no flags, no emblems, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model"
     },
     "generated-assault-rifle": {
+      "work": "Modern assault rifle for the Marines' hands (generated for civ.one)",
       "author": "dom111",
       "url": "https://github.com/civ-clone/models-realistic-cc0",
       "licence": {
@@ -358,11 +359,11 @@
       "generated": true,
       "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
       "file": "the generated GLB, kept by me, not published",
-      "work": "Modern assault rifle for the Marines' hands (generated for civ.one)",
       "sha256": "e58f429f654ded809df80a8aed46bbe8db1b14098a7e0636ed7c8575d281c57f",
       "prompt": "A realistic generic modern military assault rifle, full length, seen from its left side and slightly from above, a black polymer buttstock and pistol grip, a curved magazine, a carry handle on top of the receiver, a ribbed round handguard, a triangular front sight post near the muzzle, a sling swivel, no sling, no scope, no attachments, the whole rifle in frame, isolated, centred, plain neutral grey background, soft studio lighting, no text, no markings, no logos, reference image for a 3D model"
     },
     "generated-musket": {
+      "work": "Flintlock musket for the Musketmen's hands (generated for civ.one)",
       "author": "dom111",
       "url": "https://github.com/civ-clone/models-realistic-cc0",
       "licence": {
@@ -374,7 +375,6 @@
       "generated": true,
       "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
       "file": "the generated GLB, kept by me, not published",
-      "work": "Flintlock musket for the Musketmen's hands (generated for civ.one)",
       "sha256": "2576b92d74196cf7cb70eb6678ee33cbe4a43175169e9977382ceb975fe9af76",
       "prompt": "A realistic late eighteenth-century flintlock infantry musket, full length, seen from its left side and slightly from above, a long dark walnut stock, a long round steel barrel held by brass bands, a flintlock lock with its hammer, a brass trigger guard and butt plate, a long triangular socket bayonet fixed at the muzzle, a ramrod under the barrel, no sling, the whole musket and bayonet in frame, isolated, centred, plain neutral grey background, soft studio lighting, no text, no markings, reference image for a 3D model"
     }
@@ -3138,7 +3138,7 @@
         "within": [
           {
             "y": [
-              0.75,
+              0.5,
               1.5
             ]
           }
@@ -3453,7 +3453,7 @@
         ]
       },
       "budget": 2000,
-      "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt; posed, his arms at his sides and his rifle held by its grip, muzzle down",
+      "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down",
       "stance": {
         "joints": {
           "pelvis": [

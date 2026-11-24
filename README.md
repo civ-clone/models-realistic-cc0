@@ -15,8 +15,8 @@ map draws each type from one set.
 ## What's here
 
 - **`models/*.glb`:** one glTF binary for each model, facing `+z`, with one baked colour texture (JPEG, 512 px for
-  people and 1024 px for the rest), and a PNG at half that size for its owner's colour; the Partisans have a second
-  JPEG, for their molotov. Each was cut down to its budget where it was over
+  people and 1024 px for the rest), and a PNG at half that size for its owner's colour; the Partisans, Riflemen,
+  Marines and Musketmen have a second JPEG (256 px), for their molotov, rifle or musket. Each was cut down to its budget where it was over
   (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500 for an aircraft, 3,500 for a ship),
   and its colour baked into the texture. Each carries its credit in `asset.copyright`, and its credit, licence and
   what was done to it in `asset.extras`.
@@ -35,16 +35,17 @@ map draws each type from one set.
   texel (`cut`), as for bands and wingtips, and the colour ends partway across a face, the rest of that face is the
   texture's colour, solid, at that half size. The rest of each model is drawn from its JPEG as before. Where the
   colour goes is each model's `owner` rule in `roster.json`.
-- **Poses:** the Riflemen, Musketmen, Explorer, Spy, Partisans and Marines, generated standing in an A-pose, stand
-  with their arms at their sides; the Riflemen, Musketmen and Marines hold their rifles or muskets upright by their
-  right feet (order arms). The Warriors, Alpine Troops, Engineers and the Settlers stood naturally already, and the
-  riders sit their horses.
+- **Poses:** the Riflemen, Musketmen, Explorer, Spy, Partisans and Marines, generated standing in an A-pose, stand with
+  their arms at their sides. The Riflemen and Musketmen hold their rifles or muskets upright by their right feet
+  (order arms), and the Marines hold theirs by its grip, muzzle down, a carbine too short to ground at the hand. The
+  Warriors, Alpine Troops, Engineers and the Settlers stood naturally already, and the riders sit their horses.
 
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
   it stands in the file, the way each bone should point, and any pieces that move whole (the Partisan's molotov, the
   rifles and muskets in their hands). The Riflemen's rifle was split off the back it was generated slung across
-  (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. Blender weights each point to the bones near it, and the file's points and
-  normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
+  (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. Blender weights each point
+  to the bones near it, and the file's points and normals are moved; nothing else in it changes but a mark on the mesh
+  (`extras.posed`).
 - **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
   skeleton it was posed with, with four clips: `idle` (3 s, breathing, looking about and shifting his weight) and
   `move` (a 1 s stride in place), which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his

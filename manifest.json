@@ -338,7 +338,7 @@
   },
   "musketman": {
    "file": "models/musketman.glb",
-   "sha256": "7565f47bde1a0569962b470c51a333ee96a6226c8c9f681d072be323064a9d54",
+   "sha256": "695c91c1b691e0a7fdcc1fbd55dfe723ec970140bbc55bff2baa20b323fa3a7b",
    "extent": {
     "across": [
      -0.385,
@@ -402,7 +402,7 @@
   },
   "marine": {
    "file": "models/marine.glb",
-   "sha256": "ce9064e8ff4292a1815b1f78c60c198d060cd7057b2e19ee4f27d76d55c54888",
+   "sha256": "daa89400d96283d3546602f721018573d052b05684849efb7d3af09ebfae82c8",
    "extent": {
     "across": [
      -0.313,
@@ -419,7 +419,7 @@
     "https://github.com/civ-clone/models-realistic-cc0",
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt; posed, his arms at his sides and his rifle held by its grip, muzzle down"
+   "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down"
   },
   "engineer": {
    "file": "models/engineer.glb",
