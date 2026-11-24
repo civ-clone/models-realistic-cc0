@@ -50,13 +50,14 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     on and off as `plant` eases a foot, and where it holds it goes from key to key as the keys' eases say;
   - `grip`: the other hand on the prop (`L` or `R`), at a share of the way from its foot to its top, its arm bent to
     reach it. Eased on and off as `plant` is.
-  At a key that holds or grips the prop, a hand on it is turned as its forearm carries it (as the stance turns it on
-  the forearm), then the least that lays it along the prop (towards its top or its foot, whichever is nearer; but at
-  a hold next to a key that doesn't hold, the way the stance lays the hand that holds it). Between
-  keys, it turns from one key's turn to the next's as the chest carries it (as an arm brings a hand up, rather than
-  the hand turning over on the prop), and in every frame the prop passes it as it does the hand that holds it in the
-  stance (the other: through its middle). The hand that holds the prop eases from as the stance holds it as the hold
-  eases on, and back as it eases off. An arm bent to a prop bends its elbow the way the keys bend it.
+  At a key that holds or grips the prop (at the frame nearest it), a hand on it is turned as its forearm carries it
+  (as the stance turns it on the forearm), then the least that lays it along the prop (towards its top or its foot,
+  whichever is nearer; but at a hold next to a key that doesn't hold, the way the stance lays the hand that holds
+  it). Between keys, it turns from one key's turn to the next's as the chest carries it, easing out of one and into
+  the next (as an arm brings a hand up, rather than the hand turning over on the prop), and in every frame the prop
+  passes it as it does the hand that holds it in the stance (the other: through its middle). The hand that holds the
+  prop eases from as the stance holds it as the hold eases on, and back as it eases off. An arm bent to a prop bends
+  its elbow the way the keys bend it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -77,14 +78,14 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
 
 Every clip keys every joint's turn, the root's place, and the prop's size (and, where any key holds or grips it, the
 prop's place on the hand), so none leaves a joint as another left it. Clips are sampled at about FPS frames a second
-(a whole number of frames over each clip, and keys at least a frame apart, so none falls between them), played
+(a whole number of frames over each clip, and keys at least a frame apart, so each shows), played
 between frames by turning each joint linearly. It prints a report: for each clip, its frames, how far its first frame
 is from the bind, the most any edge of the figure grows and when, how many faces grow over 1.4 times, the most weight
 any point lost to the four kept, the furthest a fully planted ankle ends up from its place (`planted`), and where they
 apply, how far an ungrounded prop went below the ground (`below`) and the furthest each hand ends up from where it
 holds the prop (`grip`, by hand: the one that holds it whenever a key holds it at all, the other where it fully grips
-it; more than a few millimetres says the prop was out of the arm's reach), and the most each hand on it bends off the
-line of its forearm (`wrist`, in degrees).
+it; more than a few millimetres says the prop was out of the arm's reach, and over GRIP fails the build), and the
+most each hand on it bends off the line of its forearm (`wrist`, in degrees).
 With RIG_FRAMES set to a folder, it also writes each clip's points frame by frame (`<clip>.npy`) and its feet
 (`<clip>-feet.npz`: their plant weights and places, the joints, and how far each frame was lowered to the ground),
 to check a player or a clip against.
@@ -111,6 +112,7 @@ LEG_REACH = (0.08, 0.18)  # a leg's weight fades out from this far above its hip
 KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', 'hold', 'grip'}
 KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
 END = 0.015  # how near its end a prop's points are taken to find the middle of the end
+GRIP = 0.02  # the furthest a hand may end up from where it holds a prop, in metres
 
 
 def number(v, lo=-math.inf):
@@ -380,6 +382,8 @@ def prop_frame(pos, tri, top_way, back_way):
     d -= centre
     vecs = np.linalg.eigh((d * area[:, None]).T @ d)[1]
     along = vecs[:, 2] if vecs[:, 2] @ top_way >= 0 else -vecs[:, 2]
+    if abs(along @ top_way) < 0.5 * np.linalg.norm(top_way):
+        fail('prop: its muzzle should point along it, nearer its length than across it')
     back = vecs[:, 1] if back_way is None else back_way - (back_way @ along) * along
     if np.linalg.norm(back) < 1e-6:
         fail('prop: its back should lie across its length, not along it')
@@ -719,7 +723,7 @@ def main():
             span_n = len(t) - 1 if loop else len(t)  # a loop's last frame is its first
 
             def at_keys(has):
-                return {int(round(k['at'] / length * (len(t) - 1))) % span_n for k in keys if has(k)}
+                return {int(math.floor(k['at'] / length * (len(t) - 1) + 0.5)) % span_n for k in keys if has(k)}
 
             def between(rels, full, f):
                 """A hand's turn at frame f, as the chest carries it, from the keys' either side of it."""
@@ -736,7 +740,8 @@ def main():
                     if p is None or n is None:
                         return rels[n if p is None else p]
                     dp, dn = f - p, n - f
-                return rels[p] if p == n else blend(rels[p], rels[n], dp / (dp + dn))
+                u = dp / (dp + dn)
+                return rels[p] if p == n else blend(rels[p], rels[n], u * u * (3 - 2 * u))  # eased in and out
 
             full = {hand_side: at_keys(lambda k: 'hold' in k), other: at_keys(lambda k: other in k.get('grip', {}))}
             # A hold next to a key that doesn't hold (where it eases on or off) lays the hand as the stance does, so
@@ -884,6 +889,9 @@ def main():
             report[role]['below'] = round(max(0.0, -float(final[:, used, 1].min())), 3)
         if posing:
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
+            if max(report[role]['grip'].values()) > GRIP:
+                fail(f'clip {role}: a hand ends up {max(report[role]["grip"].values())} m from where it holds the prop, '
+                     'out of its arm\'s reach')
             report[role]['wrist'] = {s_: round(max(g, default=0)) for s_, g in sorted(wrists.items())}
         if os.environ.get('RIG_FRAMES'):  # each frame's points, to check a player against
             np.save(os.path.join(os.environ['RIG_FRAMES'], f'{role}.npy'), final.astype(np.float32))

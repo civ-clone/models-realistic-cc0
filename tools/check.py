@@ -812,8 +812,10 @@ def check_rigged(rel, entry):
             if muzzles:  # at the end of the prop: as far as it reaches that way from its joint, and on it
                 ibm_p = glb.accessor(gltf, binary, skins[0]['inverseBindMatrices'])[prop_j]
                 inv_p = [[ibm_p[c * 4 + r] for c in range(4)] for r in range(4)]
-                pts = [[sum(inv_p[r][c] * v for c, v in enumerate([*x, 1])) for r in range(3)]
-                       for x in glb.accessor(gltf, binary, prims[rig['prop']['part']]['attributes']['POSITION'])]
+                pp = prims[rig['prop']['part']]
+                points = glb.accessor(gltf, binary, pp['attributes']['POSITION'])
+                pts = [[sum(inv_p[r][c] * v for c, v in enumerate([*points[i], 1])) for r in range(3)]
+                       for i in sorted({i for f in glb.triangles(gltf, binary, pp) for i in f})]
                 m = nodes[muzzles[0]]['translation']
                 length = math.hypot(*m)
                 reach = max(sum(a * b for a, b in zip(x, m)) for x in pts) / max(length, 1e-9)

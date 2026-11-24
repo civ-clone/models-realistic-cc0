@@ -173,7 +173,7 @@
    "made": "generated; simplified; the rifle split off, made whole from its mirror image and put in his right hand; the owner's colour on the tunic; posed, his arms at his sides and his rifle grounded by his right foot",
    "rigged": {
     "file": "models/rigged/rifleman.glb",
-    "sha256": "7050279557ceebea2d3ad9d2efdaeb96baa02760ec4303b103050c59e7263830",
+    "sha256": "c921fcbf8b8c404f20cebdb48a95f938df8aa29dafd8b22a2be666a7eacb8862",
     "clips": {
      "idle": "idle",
      "move": "move",
@@ -377,7 +377,7 @@
    "made": "generated; rewrapped; his musket generated apart and put in his right hand; the owner's colour on the coat; posed, his arms at his sides and his musket grounded by his right foot",
    "rigged": {
     "file": "models/rigged/musketman.glb",
-    "sha256": "86095a1fbac196c0b167b199c2aec0fb9158e72d71ffcd8ce680a84a4b2f189a",
+    "sha256": "724279cb20e3770d6ed5551e349f0adb29ef7f162cc51246c1ae318183818aba",
     "clips": {
      "idle": "idle",
      "move": "move",
@@ -460,7 +460,7 @@
    "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the shirt and vest; posed, his arms at his sides and his rifle held by its grip, muzzle down",
    "rigged": {
     "file": "models/rigged/marine.glb",
-    "sha256": "c9f4708d324236b59087bdc074019798d4f8860900e094d3ff7f3814f8c3ea0b",
+    "sha256": "05b29bf1a3d8f1b4636293ba107f8b9ca9658568d31d02eaf4168fa94391ab69",
     "clips": {
      "idle": "idle",
      "move": "move",
