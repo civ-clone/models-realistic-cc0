@@ -122,7 +122,7 @@ def read_fingers(rule, J):
     """A stance's `fingers`, checked: for each hand it names, the hand as the figure stands in the file (its wrist, its
     length to the fingertips, the ways along it, towards its palm and across it) and how its fingers curl: from the
     knuckles, round an axis across the hand `radius` towards the palm from them (where a fist holds a prop's middle),
-    by up to `curl`, and drawn `together` towards the hand's middle, by that share at their tips."""
+    by up to `curl`, and with `together`, each finger's run across the hand cut by that share (see curl())."""
     fingers = rule.get('fingers', {})
     if not isinstance(fingers, dict) or set(fingers) - set(SIDES):
         fail('fingers should name hands, L or R')
@@ -151,26 +151,37 @@ def read_fingers(rule, J):
     return out
 
 
-def curl(hand, points, normals, mine, faces=(), weld=None):
+def curl(hand, points, normals, mine, faces, weld):
     """A hand's points past its knuckles (and their normals) with the fingers curled, as read_fingers() reads the
     hand: each bent round the curl's axis, as a finger's length wraps it (a point that far past the knuckles turned by
-    that far over the radius, keeping its height above the finger's middle), up to the curl, and straight on past
-    that; and first, with `together`, splayed fingers closed: each finger (a piece of the mesh, by `faces`, past the
-    first part of its length, points at one place, by `weld`, kept together) has that share taken off how far it
-    runs across the hand as it goes (beyond the fingers' usual), so it keeps its width. The points, the normals, and
-    which points moved (of `mine`, the points that are the hand's)."""
+    that far over the radius, keeping its height above the line from the wrist to the fingertips, towards the palm),
+    up to the curl, and straight on past that. A point further towards the palm than the axis would be turned through
+    it, inside out, so it's held at least a fifth of the radius short of the axis (and counted).
+
+    And first, with `together`, splayed fingers closed: each finger, a piece of the mesh (by `faces`, points at one
+    place, by `weld`, kept together) past the first part of its length, has that share taken off how far it runs
+    across the hand as it goes, beyond the pieces' middle run, so it runs nearer parallel to the others and keeps its
+    width. A thumb that reaches past the knuckles is such a piece too. A run is taken as at most 45 degrees across.
+
+    `mine` are the points that are the hand's. Returns the points, the normals, which points moved, and what was done:
+    how many moved, how many were held short of the axis, and, with `together`, how many pieces were found and the
+    most a point was moved across."""
     rel = points - hand['wrist']
     past = rel @ hand['along'] - hand['knuckles']
     up = rel @ hand['palm']
     radius = hand['radius']
+    moved = (past > 0) & mine
+    reach = radius - up  # from the axis, once turned
+    held = moved & (reach < 0.2 * radius)
+    reach = np.maximum(reach, 0.2 * radius)
     phi = np.clip(past / radius, 0, hand['curl'])
     on = np.maximum(past - hand['curl'] * radius, 0)
     c, s = np.cos(phi), np.sin(phi)
-    along = hand['knuckles'] + (radius - up) * s + on * c
-    palm = radius - (radius - up) * c + on * s
-    moved = (past > 0) & mine
+    along = hand['knuckles'] + reach * s + on * c
+    palm = radius - reach * c + on * s
     across = rel @ hand['across']
-    if hand['together'] and len(faces) and moved.any():
+    info = {'points': int(moved.sum()), 'held': int(held.sum())}
+    if hand['together'] and moved.any():
         finger = moved & (past > 0.15 * (hand['length'] - hand['knuckles']))  # past where the fingers part
         parent = np.arange(len(points))
 
@@ -183,22 +194,24 @@ def curl(hand, points, normals, mine, faces=(), weld=None):
             if finger[f].all():
                 for j in f[1:]:
                     parent[root(j)] = root(f[0])
-        if weld is not None:  # points at one place (split along a texture's seams) are one finger's
-            first = {}
-            for i in np.where(finger)[0]:
-                parent[root(i)] = root(first.setdefault(int(weld[i]), i))
+        first = {}  # points at one place (split along a texture's seams) are one finger's
+        for i in np.where(finger)[0]:
+            parent[root(i)] = root(first.setdefault(int(weld[i]), i))
         idx = np.where(finger)[0]
         roots = np.array([root(i) for i in idx])
         drift = {}  # each finger's run across the hand per metre along it
         for r in np.unique(roots):
             m = idx[roots == r]
             if len(m) >= 3 and np.ptp(past[m]) > 1e-3:
-                drift[r] = np.polyfit(past[m], across[m], 1)[0]
+                drift[r] = float(np.clip(np.polyfit(past[m], across[m], 1)[0], -1, 1))
+        shift = np.zeros(len(points))
         if drift:
             usual = float(np.median(list(drift.values())))
             for r, k in drift.items():
                 m = idx[roots == r]
-                across[m] -= hand['together'] * (k - usual) * past[m]
+                shift[m] = hand['together'] * (k - usual) * past[m]
+        across = across - shift
+        info.update({'pieces': len(drift), 'most across (mm)': round(float(np.abs(shift).max()) * 1000, 1)})
     new = points.copy()
     new[moved] = (hand['wrist'] + np.outer(along, hand['along']) + np.outer(palm, hand['palm']) +
                   np.outer(across, hand['across']))[moved]
@@ -207,4 +220,4 @@ def curl(hand, points, normals, mine, faces=(), weld=None):
               np.outer(normals @ hand['across'], hand['across']))
     new_normals = normals.copy()
     new_normals[moved] = turned[moved]
-    return new, new_normals, moved
+    return new, new_normals, moved, info

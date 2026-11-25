@@ -74,7 +74,8 @@ class Blender:
         if p.returncode or bad:
             sys.exit(f'{script} failed on {args[:2]}:\n' + '\n'.join(bad[:10] or (p.stdout + p.stderr).splitlines()[-10:]))
         for line in p.stdout.splitlines():
-            if line.startswith(('SPLIT ', 'CLOSE ', 'OWNER ', 'POSE ', 'RIG ')):
+            if line.startswith(('SPLIT ', 'CLOSE ', 'OWNER ', 'POSE ', 'RIG ')) or (
+                    line.startswith('ASSEMBLED') and '"fist"' in line):  # a fist's radius beside its prop's
                 print('  ' + line, flush=True)
 
     def original(self, roster, key):

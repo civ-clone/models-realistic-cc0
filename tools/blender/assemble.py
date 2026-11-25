@@ -247,8 +247,13 @@ if mode == "hand" and opt.get("posed"):
     lin = Gi3 @ A @ roll @ B @ G3 * s
     M = mathutils.Matrix.Translation(hand - Gi3 @ A @ (roll @ (B @ c) + anchor) * s) @ lin.to_4x4()
     placed = {"hand": [round(x, 3) for x in hand], "scale": round(s, 4), "grip": round(grip, 4),
-              "posed hand": [round(x, 3) for x in posed_hand], "posed": [round(x, 3) for x in want],
-              **({"fist": True} if fist is not None else {})}
+              "posed hand": [round(x, 3) for x in posed_hand], "posed": [round(x, 3) for x in want]}
+    if fist is not None:  # the prop's radius where it's held (by its points nearest the grip along it, as a shaft may
+        #  have points only at its ends), beside the fist's: best that and half a finger
+        near = sorted(canon, key=lambda v: abs(v.y - anchor.y))[:max(8, len(canon) // 20)]
+        band = sorted(math.hypot(v.x - anchor.x, v.z - anchor.z) * s for v in near)
+        placed.update({"fist": True, "fist radius": round(float(fist["radius"]), 4),
+                       "radius at grip": round(band[len(band) // 2], 4)})
 elif mode == "hand":
     s = float(opt["height"]) / pd.z
     grip = float(opt.get("grip", 0.4))

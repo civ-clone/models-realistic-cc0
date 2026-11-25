@@ -23,9 +23,10 @@ The rule gives the figure's skeleton as it stands in the file, and how to pose i
   start, a share of the way from the wrist to the fingertips; and how they curl, round an axis across the hand
   `radius` (metres) towards the palm from the knuckles, each point past them turned by how far past over the radius
   (so a finger's length wraps it, as round a held prop's handle), up to `curl` degrees; and may draw them `together`
-  (a share of each finger's run across the hand) so splayed fingers close. It curls the points the hand's
-  bone weighs most (not those of a part held whole), before the figure is posed; assemble.py puts a prop held in the
-  right hand across its palm, on the axis, where `fingers.R` is given.
+  (a share of each finger's run across the hand) so splayed fingers close (see skeleton.curl()). It curls the points
+  the hand's bone weighs half or more (not those of a part held whole), before the figure is posed, and reports what
+  it did (`curled`). assemble.py puts a prop held in the right hand across its palm, on the axis, where `fingers.R`
+  is given; its radius there is best the prop's at the grip and half a finger's thickness.
 
 Each point moves with the bones near it, as Blender's automatic weights share it among them; the file's own points and
 normals are moved, and nothing else in it changes but for the mesh's `extras`, which then say it's posed (so it isn't
@@ -259,14 +260,15 @@ def main():
         w[np.where(lost)[0], near] = 1
     w /= w.sum(axis=1, keepdims=True)
 
-    # Fingers curled, as the figure stands in the file: the points each hand's bone weighs most, not of a part held
-    #  whole (a prop), past its knuckles. Their weights stay as the bone heat gave them, on the open hand.
-    curled = 0
+    # Fingers curled, as the figure stands in the file: the points the hand's bone weighs half or more, not of a part
+    #  held whole (a prop), past its knuckles. Their weights stay as the bone heat gave them, on the open hand. Which
+    #  points are flat shaded, and how far each moves, are judged from the figure as it was.
+    pos0, nor0 = pos.copy(), nor.copy()
+    curled = {}
     for side, hand in hands.items():
         mine = (w[back][:, names.index(f'hand.{side}')] >= 0.5) & ~loose
-        new_p, new_n, moved_p = curl(hand, pos, nor, mine, faces, back)
+        new_p, new_n, moved_p, curled[side] = curl(hand, pos, nor, mine, faces, back)
         pos[moved_p], nor[moved_p] = new_p[moved_p], new_n[moved_p]
-        curled += int(moved_p.sum())
 
     # Each bone's turn, from the root out: aimed where the rule says, else carried by its parent.
     rot, moved = forward(skeleton, rule.get('aim', {}), rule.get('twist', {}))
@@ -283,8 +285,8 @@ def main():
         n = np.cross(p[faces[:, 1]] - p[faces[:, 0]], p[faces[:, 2]] - p[faces[:, 0]])
         length = np.linalg.norm(n, axis=1)
         return n / np.maximum(length, 1e-30)[:, None], length > 1e-12
-    fu, sound = face_normals(pos)
-    dots = np.einsum('fck,fk->fc', nor[faces], fu)
+    fu, sound = face_normals(pos0)
+    dots = np.einsum('fck,fk->fc', nor0[faces], fu)
     flat = np.ones(len(pos), dtype=bool)
     np.logical_and.at(flat, faces.ravel(), ((np.abs(dots) > 0.9999) | ~sound[:, None]).ravel())
     counted = np.zeros(len(pos), dtype=int)
@@ -340,7 +342,7 @@ def main():
                    'loose': np.where(loose)[0].tolist(),
                    'weights': [[[int(b), round(float(wb[i, b]), 6)] for b in np.where(wb[i] > 0)[0]] for i in range(len(pos))]},
                   open(a[2], 'w', encoding='utf-8'), separators=(',', ':'))
-    moved_by = np.linalg.norm(new_pos - pos, axis=1)
+    moved_by = np.linalg.norm(new_pos - pos0, axis=1)
     print('POSE', path, json.dumps({'weights': weighted, 'points': len(pos), 'moved': int((moved_by > 0.005).sum()), 'flat': int(flat.sum()),
                                     'unreached': int(lost.sum()), 'height': round(float(f32[:, 1].max()), 4),
                                     **({'curled': curled} if hands else {})}))

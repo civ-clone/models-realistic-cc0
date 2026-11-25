@@ -31,15 +31,18 @@
   past it.
 - **The credits** in CREDITS.md are as build.py writes them.
 - **Each stance** names every joint of the skeleton blender/stance.py fits, none of its bones shorter than 5 mm, and
-  only its bones; a model with one says "posed" in its `made`, and its mesh says `extras.posed`, and only then.
+  only its bones, and any hand's `fingers` (its palm a way across the hand, its knuckles a share between 0 and 1,
+  a radius over 0 and up to 0.2 m, a curl up to 360°, and `together` under 1); a model with one says "posed" in its
+  `made`, and its mesh says `extras.posed`, and only then.
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
   and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before its
   length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds whole, any
   shots within its clip, each from the prop, which is back in the hand by the clip's end, and any strike (when a blow
-  lands) within it too. A clip's `lag` gives bones a time under its length; a key's `ease` is one of EASES, its `hips`
-  [x, y, z], its `plant` feet each at [x, z] or `true`, and its `late` bones a time from 0, each bone's keys still in
-  order once late (a loop's before its length, none late on its first key; a clip played once none late on its last).
-  A clip played once has nothing on its first key but its time and feet planted where they stand (`true`).
+  lands) within it, in a clip played once with no shots. A clip's `lag` gives bones a time under its length; a key's
+  `ease` is one of EASES, its `hips` [x, y, z], its `plant` feet each at [x, z] or `true`, and its `late` bones a time
+  from 0, each bone's keys still in order once late (a loop's before its length, none late on its first key; a clip
+  played once none late on its last). A clip played once has nothing on its first key but its time and feet planted
+  where they stand (`true`).
 - **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
   - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
     stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints
@@ -308,6 +311,15 @@ def check_stance(where, rule):
                 'knuckles are (a share of the way from the wrist to the fingertips, between 0 and 1), and how its '
                 'fingers curl: a radius (metres, over 0 and up to 0.2) and degrees (over 0 and up to 360), and may '
                 'draw them together (a share, from 0 to under 1)')
+    elif isinstance(joints, dict) and set(joints) == JOINTS and all(
+            isinstance(p, list) and len(p) == 3 and all(number(v) for v in p) for p in joints.values()):
+        for side, f in fingers.items():
+            along = [t - w for w, t in zip(joints[f'wrist.{side}'], joints[f'hand.{side}'])]
+            n = math.hypot(*along)
+            if n > 0:
+                d = sum(p * a / n for p, a in zip(f['palm'], along))
+                if math.hypot(*(p - d * a / n for p, a in zip(f['palm'], along))) < 1e-6:
+                    problem(f'{where}: fingers.{side}.palm should be a way across the hand, not along it')
 
 
 def direction(d):
@@ -440,8 +452,10 @@ def check_rig(where, rig, stance):
                         + ('before the loop\'s length' if role in LOOPS else 'none late at its last key'))
         if role in LOOPS and isinstance(keys[0].get('late'), dict) and keys[0]['late']:
             problem(f'{at}: a loop\'s first key has no late bones (they would jump where the loop starts again)')
-        if 'strike' in clip and not (number(clip['strike'], 0) and clip['strike'] <= length):
-            problem(f'{at}: strike should be the time in the clip a blow lands, over 0 and up to its length')
+        if 'strike' in clip and not (number(clip['strike'], 0) and clip['strike'] <= length and role in ONCE and
+                                     not clip.get('shots')):
+            problem(f'{at}: strike should be the time a blow lands, over 0 and up to its length, in a clip played once '
+                    'with no shots (a melee fight)')
         shots = clip.get('shots', [])
         if not isinstance(shots, list) or not all(shot_ok(x, prop, length) for x in shots):
             problem(f'{at}: shots should each be a time in the clip (at), the joint they leave from (prop, or its '
