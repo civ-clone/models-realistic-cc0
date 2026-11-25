@@ -382,22 +382,22 @@ def check_rig(where, rig, stance):
                 problem(f'{at}: late should give bones a time from 0, in seconds')
             if 'hold' in k:
                 h = k['hold']
-                if not (hand and 'back' in prop and isinstance(h, dict) and {'aim', 'up', 'butt'} <= set(h) <= {'aim', 'up', 'butt', 'hand'} and
+                if not (hand and 'back' in prop and 'muzzle' in prop and isinstance(h, dict) and {'aim', 'up', 'butt'} <= set(h) <= {'aim', 'up', 'butt', 'hand'} and
                         direction(h['aim']) and direction(h['up']) and isinstance(h['butt'], list) and
                         len(h['butt']) == 3 and all(number(v) for v in h['butt']) and
                         ('hand' not in h or (number(h['hand']) and 0 <= h['hand'] <= 1))):
-                    problem(f'{at}: hold is for a prop a hand holds, with a back: its aim and up (ways), its butt [x, y, z], '
-                            'and where the hand holds it (hand, 0 to 1)')
+                    problem(f'{at}: hold is for a prop a hand holds, with a muzzle and a back: its aim and up (ways), its '
+                            'butt [x, y, z], and where the hand holds it (hand, 0 to 1)')
                 else:
                     a, u = h['aim'], h['up']
                     cross = math.hypot(a[1] * u[2] - a[2] * u[1], a[2] * u[0] - a[0] * u[2], a[0] * u[1] - a[1] * u[0])
                     if cross <= 1e-6 * math.hypot(*a) * math.hypot(*u):
                         problem(f'{at}: a hold\'s up should lie across its aim, not along it')
             grip = k.get('grip')
-            if 'grip' in k and (not (isinstance(grip, dict) and grip and hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
+            if 'grip' in k and (not (isinstance(grip, dict) and grip and hand and 'muzzle' in prop and 'back' in prop) or set(grip) - ({'L', 'R'} - {hand}) or not all(
                     number(v) and 0 <= v <= 1 for v in grip.values())):
-                problem(f'{at}: grip is for a prop a hand holds: it gives the other hand (L or R) a share of the way '
-                        'along it, 0 to 1')
+                problem(f'{at}: grip is for a prop a hand holds, with a muzzle and a back: it gives the other hand (L or R) '
+                        'a share of the way along it, 0 to 1')
         if any(t['axis'] != turns[0]['axis'] or t['about'] != turns[0]['about'] for t in turns):
             problem(f'{at}: its turns should share their axis and the place they turn about')
         times = [k.get('at') for k in keys]

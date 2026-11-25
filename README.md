@@ -59,8 +59,9 @@ map draws each type from one set.
   as the Partisans do, the weapon held as they stand. In `move` the Riflemen and Musketmen carry theirs across the
   chest at port arms, and the Marines at the low ready (the butt in the shoulder, the muzzle down ahead), both hands
   on it. In `fight` they bring it to the shoulder, the left hand on the fore-end and the head down to the stock. The
-  Riflemen and Musketmen fire once at 0.54 s, and the Marines a three-round burst at 0.5, 0.625 and 0.75 s, each shot
-  leaving as he holds still and then kicking the muzzle up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
+  Riflemen and Musketmen fire once at 0.54 s, and the Marines a three-round burst at 0.5, 0.667 and 0.833 s, each
+  shot leaving as he holds still (for a frame, so the map finds the muzzle where it fired) and then kicking the muzzle
+  up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
   Their shots are bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its
   barrel's end.
 
@@ -87,7 +88,7 @@ map draws each type from one set.
   - each model's file and its SHA-256, its triangles, how far it reaches (`extent`, in metres), where it's from and
     what was done to it;
   - a rigged model's rigged file, its SHA-256, its clips by role, and its shots by clip: when each leaves, the joint
-    or node it leaves from, and what flies, where it isn't the default bottle (`rigged`);
+    or node it leaves from, and what flies, where the roster says (`kind`; a bottle without one) (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I

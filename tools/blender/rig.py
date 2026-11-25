@@ -12,8 +12,9 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   that holds it (`bone`), with its origin at the middle of the part as it stands (so a shot from it leaves from
   there). Unless a key holds it otherwise (`hold`, below) it stays in the hand as the stance holds it: only its size
   changes, as a shot throws it. Its long way and ends are its own: the line its surface lies along most, its top the
-  end towards `muzzle` (a way [x, y, z]; up, without one), and its back, across that, the side facing `back` (a way,
-  as the stance holds it: a rifle's sights; a prop a key holds needs one, as its shape can't say). With `muzzle`, a
+  end towards `muzzle` (a way [x, y, z], within 45 degrees of its length), and its back, across that, the side facing
+  `back` (a way, as the stance holds it, nearer across it than along it: a rifle's sights; its shape can't say). A prop
+  a key holds or grips needs both. With `muzzle`, a
   node of that name (not a joint) sits at the middle of its top, a child of the prop's joint, for shots to leave
   from. With `grounded` false, it's left out of standing the figure on the ground (a rifle's butt by a foot would
   lift him as the hand moves), and the report says how far it went below.
@@ -167,17 +168,17 @@ def read_rig(rig):
                      'late, hold and grip')
             if 'hold' in k:
                 h = k['hold']
-                if not (hand and 'back' in prop and isinstance(h, dict) and {'aim', 'up', 'butt'} <= set(h) <= {'aim', 'up', 'butt', 'hand'} and
+                if not (hand and 'back' in prop and 'muzzle' in prop and isinstance(h, dict) and {'aim', 'up', 'butt'} <= set(h) <= {'aim', 'up', 'butt', 'hand'} and
                         way(h['aim']) and way(h['up']) and finite(h['butt'], 3) and
                         np.linalg.norm(np.cross(h['aim'], h['up'])) > 1e-6 * np.linalg.norm(h['aim']) * np.linalg.norm(h['up']) and
                         ('hand' not in h or (number(h['hand']) and 0 <= h['hand'] <= 1))):
-                    fail(f'{where}: hold is for a prop a hand holds, with a back: its aim and up (ways, not the same), its '
-                         'butt [x, y, z], and where the hand holds it (hand, 0 to 1)')
+                    fail(f'{where}: hold is for a prop a hand holds, with a muzzle and a back: its aim and up (ways, not the '
+                         'same), its butt [x, y, z], and where the hand holds it (hand, 0 to 1)')
             grip = k.get('grip')
-            if 'grip' in k and (not (isinstance(grip, dict) and grip and hand) or set(grip) - ({'L', 'R'} - {hand}) or not all(
+            if 'grip' in k and (not (isinstance(grip, dict) and grip and hand and 'muzzle' in prop and 'back' in prop) or set(grip) - ({'L', 'R'} - {hand}) or not all(
                     number(v) and 0 <= v <= 1 for v in grip.values())):
-                fail(f'{where}: grip is for a prop a hand holds: it gives the other hand (L or R) a share of the way along it, '
-                     '0 to 1')
+                fail(f'{where}: grip is for a prop a hand holds, with a muzzle and a back: it gives the other hand (L or R) a '
+                     'share of the way along it, 0 to 1')
             late = k.get('late', {})
             if not isinstance(late, dict) or set(late) - BONES or not all(number(v) and v >= 0 for v in late.values()):
                 fail(f'{where}: late should give bones (by name) a time from 0, in seconds')
@@ -386,9 +387,9 @@ def prop_frame(pos, tri, top_way, back_way):
     along = vecs[:, 2] if vecs[:, 2] @ top_way >= 0 else -vecs[:, 2]
     if abs(along @ top_way) < math.sqrt(0.5) * np.linalg.norm(top_way):
         fail('prop: its muzzle should point along it, nearer its length than across it')
+    if back_way is not None and abs(back_way @ along) > math.sqrt(0.5) * np.linalg.norm(back_way):
+        fail('prop: its back should lie across its length, nearer across it than along it')
     back = vecs[:, 1] if back_way is None else back_way - (back_way @ along) * along
-    if np.linalg.norm(back) < 1e-6:
-        fail('prop: its back should lie across its length, not along it')
     back = back / np.linalg.norm(back)
     points = pos[np.unique(tri)]
     t = (points - centre) @ along
