@@ -59,9 +59,12 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   those frames, as a hand changes its grip), and the prop passes it as it does the hand that holds it in the stance
   (the other: through its middle). The hand that holds the prop eases from as the stance holds it as the hold eases
   on, and back as it eases off (off the prop's line by a little as it does), its elbow's bend eased with it from as
-  the keys bend it to as the full hold would: the hand slides along the prop (by up to SLIDE) to where the wrist is
-  as far from the shoulder as that bend puts it, so a nearly straight arm bends steadily rather than snapping. An arm
-  bends its elbow the way the keys bend it.
+  the keys bend it to as the full hold would (a full hold out of the arm's reach eased to all the same): the hand
+  slides along the prop (by up to SLIDE, and never past its ends) to where the wrist is as far from the shoulder as
+  that bend puts it, or where the prop's line doesn't come that near, to where it comes nearest; so a nearly
+  straight arm bends steadily rather than snapping. Where that slide would go more than SLIDE_STEP from one frame to
+  the next (the prop passing the shoulder fast as the hold eases), the build fails. An arm's elbow points the way the
+  keys point it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -118,7 +121,9 @@ KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', '
 KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
 END = 0.015  # how near its end a prop's points are taken to find the middle of the end
 GRIP = 0.02  # the furthest a hand may end up from where it holds a prop, in metres
-SLIDE = 0.1  # the furthest a hand slides along a prop, as a hold comes on, to ease its elbow's bend, in metres
+SLIDE = 0.1  # the furthest a hand slides along a prop, as a hold eases on or off, to ease its elbow's bend, in metres
+SLIDE_STEP = 0.05  # the furthest that slide may go from one frame to the next, in metres
+FULL = 0.999  # a hold or grip this near 1 counts as full: the hand on the prop where the key puts it
 
 
 def number(v, lo=-math.inf):
@@ -764,6 +769,7 @@ def main():
         for pass_ in ((0, 1) if posing else (1,)):
             if posing:
                 gaps = {hand_side: [], other: []}
+                slid = {}  # how far the hand that holds the prop slid along it, by frame (where it did)
             for f in range(len(t)):
                 rot, moved = {}, {}
                 for i, n in enumerate(names):
@@ -826,7 +832,7 @@ def main():
                         at = (prop_m @ prop_inv @ np.append(foot + share[f] * span * along, 1))[:3]
                         there = np.eye(4)
                         there[:3, :3], there[:3, 3] = hand_r, at - hand_r @ near[side]
-                        if side == hand_side and weight[f] < 1:
+                        if side == hand_side and weight[f] < FULL:
                             # Its elbow eased from as the keys bend it to as the full hold would (the hand on the
                             #  prop as the key holds it), so a nearly straight arm bends steadily rather than in a
                             #  snap: the hand slid along the prop to where its wrist is that far from the shoulder.
@@ -836,25 +842,30 @@ def main():
                             ua_v, fa_v = (rot[x] @ (skeleton[x][1] - skeleton[x][0]) for x in (ua_n, fa_n))
                             bend_keyed = math.acos(np.clip(ua_v @ fa_v / a_ / b_, -1, 1))
                             r_full = float(np.linalg.norm(full_at - there[:3, :3] @ near[side] - (moved[ua_n] - shift)))
-                            bend_held = math.acos(np.clip((r_full ** 2 - a_ * a_ - b_ * b_) / (2 * a_ * b_), -1, 1))
+                            cos_held = (r_full ** 2 - a_ * a_ - b_ * b_) / (2 * a_ * b_)
+                            bend_held = math.acos(np.clip(cos_held, -1, 1))
                             bend_now = bend_keyed + (bend_held - bend_keyed) * weight[f]
                             stretch = math.sqrt(a_ * a_ + b_ * b_ + 2 * a_ * b_ * math.cos(bend_now))
+                            if abs(cos_held) > 1:  # the full hold out of the arm's reach (or nearer than it folds):
+                                #  eased to all the same, so the hand comes to rest on the prop where the key holds it
+                                stretch += weight[f] * (r_full - (a_ + b_ if cos_held > 1 else abs(a_ - b_)))
                             there = mix(prop_m @ np.linalg.inv(carry), there, weight[f])
                             way = prop_m[:3, :3] @ bind[nb, :3, :3].T @ along
                             from_ = there[:3, 3] - (moved[ua_n] - shift)  # the wrist, from the shoulder
                             b2, c2 = float(way @ from_), float(from_ @ from_) - stretch * stretch
                             slide = -b2 if b2 * b2 < c2 else min((-b2 - math.sqrt(b2 * b2 - c2), -b2 + math.sqrt(b2 * b2 - c2)), key=abs)
-                            slide = min(max(slide, -SLIDE), SLIDE)
+                            slide = min(max(slide, -SLIDE, -share[f] * span), SLIDE, (1 - share[f]) * span)  # on the prop
+                            slid[f] = slide
                             there[:3, 3] += slide * way
                             at = at + slide * way  # where it holds the prop now
                         short = bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
                         fa, hd = f'forearm.{side}', f'hand.{side}'
-                        if side == hand_side or weight[f] > 0.999:
+                        if side == hand_side or weight[f] >= FULL:
                             # How far the hand ends up from where it holds the prop: fully holding it, from its place
                             #  (short of it, out of reach); easing on or off, from the prop's line.
                             way = prop_m[:3, :3] @ bind[nb, :3, :3].T @ along
                             miss = moved[hd] - shift + rot[hd] @ near[side] - at
-                            gaps[side].append(short if weight[f] > 0.999 else float(np.linalg.norm(miss - (miss @ way) * way)))
+                            gaps[side].append(short if weight[f] >= FULL else float(np.linalg.norm(miss - (miss @ way) * way)))
                             ua = rot[f'upper_arm.{side}'] @ (skeleton[f'upper_arm.{side}'][1] - skeleton[f'upper_arm.{side}'][0])
                             fv = rot[fa] @ (skeleton[fa][1] - skeleton[fa][0])
                             elbows[side].append(math.degrees(math.acos(np.clip(ua @ fv / np.linalg.norm(ua) / np.linalg.norm(fv), -1, 1))))
@@ -922,6 +933,15 @@ def main():
         if not standing.all():
             report[role]['below'] = round(max(0.0, -float(final[:, used, 1].min())), 3)
         if posing:
+            # The slide follows where the shoulder comes nearest the prop's line, so a prop passing the shoulder fast
+            #  (or the wrist passing that point, where the slide turns from one side to the other) would jerk the hand
+            #  along it.
+            for f in range(1, len(t)):
+                step = abs(slid.get(f, 0.0) - slid.get(f - 1, 0.0))
+                if step > SLIDE_STEP:
+                    fail(f'clip {role}: the hand that holds the prop would slide {step:.3f} m along it from one frame '
+                         f'to the next at {t[f]:.3f} s, as the hold eases with the prop passing its shoulder; key the '
+                         'prop to pass more slowly, or once the hold is full (as a port arms key does)')
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
             if max(report[role]['grip'].values()) > GRIP:
                 fail(f'clip {role}: a hand ends up {max(report[role]["grip"].values())} m from where it holds the prop, '
