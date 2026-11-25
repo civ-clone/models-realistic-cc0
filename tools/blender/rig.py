@@ -58,8 +58,10 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   the next, as an arm brings a hand up (where the two lay it opposite ways, it turns end for end on the prop over
   those frames, as a hand changes its grip), and the prop passes it as it does the hand that holds it in the stance
   (the other: through its middle). The hand that holds the prop eases from as the stance holds it as the hold eases
-  on, and back as it eases off (off the prop's line by a little as it does); an arm bends its elbow the way the keys
-  bend it.
+  on, and back as it eases off (off the prop's line by a little as it does), its elbow's bend eased with it from as
+  the keys bend it to as the full hold would: the hand slides along the prop (by up to SLIDE) to where the wrist is
+  as far from the shoulder as that bend puts it, so a nearly straight arm bends steadily rather than snapping. An arm
+  bends its elbow the way the keys bend it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -116,6 +118,7 @@ KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', '
 KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
 END = 0.015  # how near its end a prop's points are taken to find the middle of the end
 GRIP = 0.02  # the furthest a hand may end up from where it holds a prop, in metres
+SLIDE = 0.1  # the furthest a hand slides along a prop, as a hold comes on, to ease its elbow's bend, in metres
 
 
 def number(v, lo=-math.inf):
@@ -824,7 +827,26 @@ def main():
                         there = np.eye(4)
                         there[:3, :3], there[:3, 3] = hand_r, at - hand_r @ near[side]
                         if side == hand_side and weight[f] < 1:
+                            # Its elbow eased from as the keys bend it to as the full hold would (the hand on the
+                            #  prop as the key holds it), so a nearly straight arm bends steadily rather than in a
+                            #  snap: the hand slid along the prop to where its wrist is that far from the shoulder.
+                            full_at = (kept @ prop_inv @ np.append(foot + share[f] * span * along, 1))[:3]
+                            ua_n, fa_n = f'upper_arm.{side}', f'forearm.{side}'
+                            a_, b_ = (float(np.linalg.norm(skeleton[x][1] - skeleton[x][0])) for x in (ua_n, fa_n))
+                            ua_v, fa_v = (rot[x] @ (skeleton[x][1] - skeleton[x][0]) for x in (ua_n, fa_n))
+                            bend_keyed = math.acos(np.clip(ua_v @ fa_v / a_ / b_, -1, 1))
+                            r_full = float(np.linalg.norm(full_at - there[:3, :3] @ near[side] - (moved[ua_n] - shift)))
+                            bend_held = math.acos(np.clip((r_full ** 2 - a_ * a_ - b_ * b_) / (2 * a_ * b_), -1, 1))
+                            bend_now = bend_keyed + (bend_held - bend_keyed) * weight[f]
+                            stretch = math.sqrt(a_ * a_ + b_ * b_ + 2 * a_ * b_ * math.cos(bend_now))
                             there = mix(prop_m @ np.linalg.inv(carry), there, weight[f])
+                            way = prop_m[:3, :3] @ bind[nb, :3, :3].T @ along
+                            from_ = there[:3, 3] - (moved[ua_n] - shift)  # the wrist, from the shoulder
+                            b2, c2 = float(way @ from_), float(from_ @ from_) - stretch * stretch
+                            slide = -b2 if b2 * b2 < c2 else min((-b2 - math.sqrt(b2 * b2 - c2), -b2 + math.sqrt(b2 * b2 - c2)), key=abs)
+                            slide = min(max(slide, -SLIDE), SLIDE)
+                            there[:3, 3] += slide * way
+                            at = at + slide * way  # where it holds the prop now
                         short = bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
                         fa, hd = f'forearm.{side}', f'hand.{side}'
                         if side == hand_side or weight[f] > 0.999:
