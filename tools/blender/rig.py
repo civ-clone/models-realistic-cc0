@@ -17,7 +17,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   a key holds or grips needs both. With `muzzle`, a
   node of that name (not a joint) sits at the middle of its top, a child of the prop's joint, for shots to leave
   from. With `grounded` false, it's left out of standing the figure on the ground (a rifle's butt by a foot would
-  lift him as the hand moves), and the report says how far it went below.
+  lift him as the hand moves), and the report says how far it went below. With `slides` false, the hand that holds
+  it can't slide along it (a pistol grip): as a hold eases, the prop moves with the hand instead (below).
 - **`clips`:** by role: `idle`, `move` and `work` loop; `fight`, `die` and `settle` play once. Each has a `length` in
   seconds and its `keys`, each a pose at a time (`at`):
   - `aim` and `twist`, as a stance's, laid over the stance's own: a bone a key names is aimed (or twisted) as the key
@@ -62,9 +63,10 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   the keys bend it to as the full hold would (a full hold out of the arm's reach eased to all the same): the hand
   slides along the prop (by up to SLIDE, and never past its ends) to where the wrist is as far from the shoulder as
   that bend puts it, or where the prop's line doesn't come that near, to where it comes nearest; so a nearly
-  straight arm bends steadily rather than snapping. Where that slide would go more than SLIDE_STEP from one frame to
-  the next (a hold eased on or off in too few frames, or the prop passing the shoulder fast as it eases), the build
-  fails. An arm's elbow points the way the keys point it.
+  straight arm bends steadily rather than snapping. A prop whose `slides` is false moves with the hand instead,
+  straight towards or away from the shoulder (by up to SLIDE), the hand staying where it holds it. Where that slide
+  or move would change by more than SLIDE_STEP from one frame to the next (a hold eased on or off in too few frames,
+  or the prop passing the shoulder fast as it eases), the build fails. An arm's elbow points the way the keys point it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -150,12 +152,12 @@ def read_rig(rig):
     if not isinstance(rig, dict) or set(rig) - {'prop', 'clips'} or not isinstance(rig.get('clips'), dict) or not rig['clips']:
         fail('the rig should have clips, and may have a prop')
     prop = rig.get('prop')
-    if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded'}
+    if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded', 'slides'}
                                  and prop['bone'] in BONES and isinstance(prop['part'], int) and not isinstance(prop['part'], bool)
                                  and all(way(prop[k]) for k in ('muzzle', 'back') if k in prop)
-                                 and isinstance(prop.get('grounded', True), bool)):
+                                 and all(isinstance(prop.get(k, True), bool) for k in ('grounded', 'slides'))):
         fail('prop should be a part and the bone it follows, and may have a muzzle and a back (ways [x, y, z]) and '
-             'grounded (true or false)')
+             'grounded (true or false) and slides (true or false)')
     hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None
     for role, clip in rig['clips'].items():
         where = f'clip {role}'
@@ -769,7 +771,7 @@ def main():
         for pass_ in ((0, 1) if posing else (1,)):
             if posing:
                 gaps = {hand_side: [], other: []}
-                slid = {}  # how far the hand that holds the prop slid along it, by frame (where it did)
+                slid = {}  # how far the hand that holds the prop slid along it (or moved it), by frame (where it did)
             for f in range(len(t)):
                 rot, moved = {}, {}
                 for i, n in enumerate(names):
@@ -852,15 +854,25 @@ def main():
                             there = mix(prop_m @ np.linalg.inv(carry), there, weight[f])
                             way = prop_m[:3, :3] @ bind[nb, :3, :3].T @ along
                             from_ = there[:3, 3] - (moved[ua_n] - shift)  # the wrist, from the shoulder
-                            b2, c2 = float(way @ from_), float(from_ @ from_) - stretch * stretch
-                            slide = -b2 if b2 * b2 < c2 else min((-b2 - math.sqrt(b2 * b2 - c2), -b2 + math.sqrt(b2 * b2 - c2)), key=abs)
-                            # Never past the prop's ends (whatever SLIDE allows), from where the hand is on it, eased
-                            #  from the stance's grip.
-                            place = share[f] * span + float((there[:3, 3] + there[:3, :3] @ near[side] - at) @ way)
-                            slide = min(max(min(max(slide, -SLIDE), SLIDE), -place), span - place)
-                            slid[f] = slide
-                            there[:3, 3] += slide * way
-                            at = at + slide * way  # the hold's place, slid as the hand was (not where the hand is)
+                            if not rig['prop'].get('slides', True):
+                                # The hand stays where it holds the prop, and the prop moves with it, straight
+                                #  towards or away from the shoulder.
+                                far = float(np.linalg.norm(from_))
+                                slid[f] = min(max(stretch - far, -SLIDE), SLIDE)
+                                shove = slid[f] * from_ / far
+                                there[:3, 3] += shove
+                                at = at + shove
+                                prop_m[:3, 3] += shove
+                            else:
+                                b2, c2 = float(way @ from_), float(from_ @ from_) - stretch * stretch
+                                slide = -b2 if b2 * b2 < c2 else min((-b2 - math.sqrt(b2 * b2 - c2), -b2 + math.sqrt(b2 * b2 - c2)), key=abs)
+                                # Never past the prop's ends (whatever SLIDE allows), from where the hand is on it,
+                                #  eased from the stance's grip.
+                                place = share[f] * span + float((there[:3, 3] + there[:3, :3] @ near[side] - at) @ way)
+                                slide = min(max(min(max(slide, -SLIDE), SLIDE), -place), span - place)
+                                slid[f] = slide
+                                there[:3, 3] += slide * way
+                                at = at + slide * way  # the hold's place, slid as the hand was (not where the hand is)
                         short = bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
                         fa, hd = f'forearm.{side}', f'hand.{side}'
                         if side == hand_side or weight[f] >= FULL:
@@ -942,10 +954,10 @@ def main():
             for f in range(1, len(t)):
                 step = abs(slid.get(f, 0.0) - slid.get(f - 1, 0.0))
                 if step > SLIDE_STEP:
-                    fail(f'clip {role}: the hand that holds the prop would change its slide along it by {step:.3f} m from '
-                         f'one frame to the next at {t[f]:.3f} s, as the hold eases (too fast, or with the prop passing its '
-                         'shoulder); ease the hold over more frames, or key the prop to pass the shoulder once the hold '
-                         'is full (as a port arms key does)')
+                    fail(f'clip {role}: the hand that holds the prop would change how far it slides along it (or moves '
+                         f'it) by {step:.3f} m from one frame to the next at {t[f]:.3f} s, as the hold eases (too fast, or '
+                         'with the prop passing its shoulder); ease the hold over more frames, or key the prop to pass '
+                         'the shoulder once the hold is full (as a port arms key does)')
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
             if max(report[role]['grip'].values()) > GRIP:
                 fail(f'clip {role}: a hand ends up {max(report[role]["grip"].values())} m from where it holds the prop, '
