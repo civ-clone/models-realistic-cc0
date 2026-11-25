@@ -46,14 +46,24 @@ map draws each type from one set.
   (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. Blender weights each point
   to the bones near it, and the file's points and normals are moved; nothing else in it changes but a mark on the mesh
   (`extras.posed`).
-- **Rigged and animated:** the Partisans, so far. `models/rigged/partisan.glb` is the model as it stands, bound to the
-  skeleton it was posed with, with four clips: `idle` (3 s, breathing, looking about and shifting his weight) and
+- **Rigged and animated:** the Partisans, Riflemen, Marines and Musketmen, so far. Each `models/rigged/<model>.glb` is
+  the model as it stands, bound to the skeleton it was posed with, with four clips. The Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and
   `move` (a 1 s stride in place), which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his
   hand at 0.5 s, back in it by the end) and `die` (1.5 s: the shot throws him back, his knees give, his left foot
   slides out and kicks up while his right stays where he stood, and he lands on his back, his head and arms after him,
   his right leg flopping out straight and his left knee falling last), which play once. The map draws what flies: the
   manifest gives each clip's shots (`rigged.shots`), each the time it leaves and the joint it leaves from (here the
   molotov's, `prop`, whose origin is the bottle's middle as he stands).
+
+  The Riflemen, Marines and Musketmen keep their weapons in their hands throughout. In `idle` they shift their weight
+  as the Partisans do, the weapon held as they stand. In `move` the Riflemen and Musketmen carry theirs across the
+  chest at port arms, and the Marines at the low ready (the butt in the shoulder, the muzzle down ahead), both hands
+  on it. In `fight` they bring it to the shoulder, the left hand on the fore-end and the head down to the stock. The
+  Riflemen and Musketmen fire once at 0.54 s, and the Marines a three-round burst at 0.5, 0.667 and 0.833 s, each
+  shot leaving as he holds still (for a frame, so the map finds the muzzle where it fired) and then kicking the muzzle
+  up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
+  Their shots are bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its
+  barrel's end.
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
@@ -64,16 +74,21 @@ map draws each type from one set.
   after the body), or lag through the whole clip, so a movement passes from the body out to the limbs. Every frame is
   stood on the ground by its lowest point, and played in place: the map moves units from square to square itself. The
   file has a root node, `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads
-  without the dot: `hand.R` is `handR`), and the molotov's, `prop`, a child of his right hand's. Each clip keys every
-  joint's turn, the root's place, and the molotov's size (it's 0 from just after the throw until it grows back in his
-  hand). A clip that plays once starts as the model stands (its feet can be planted there from the start, so they
-  don't slide as it begins), and a loop ends where it starts.
+  without the dot: `hand.R` is `handR`), and the held piece's, `prop`, a child of his right hand's. Each clip keys every
+  joint's turn, the root's place, and the prop's size (the molotov's is 0 from just after the throw until it grows
+  back in his hand). A key can also hold the prop as it says rather than as the hand does: where it points, which way
+  its back faces and where its butt goes, carried by the chest as it turns. The hand that holds it, and the other
+  hand, are then bent to reach it, each lying along it as its forearm carries it at the keys, and every clip keys
+  the prop's place on the hand as well. A prop whose `grounded` is false (as these weapons' are) is left out of
+  standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once starts as the model stands (its feet can be planted there
+  from the start, so they don't slide as it begins), and a loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;
   - each model's file and its SHA-256, its triangles, how far it reaches (`extent`, in metres), where it's from and
     what was done to it;
-  - a rigged model's rigged file, its SHA-256, its clips by role, and where its shots leave from, by clip (`rigged`);
+  - a rigged model's rigged file, its SHA-256, its clips by role, and its shots by clip: when each leaves, the joint
+    or node it leaves from, and what flies, where the roster says (`kind`; a bottle without one) (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
