@@ -854,12 +854,13 @@ def main():
                             from_ = there[:3, 3] - (moved[ua_n] - shift)  # the wrist, from the shoulder
                             b2, c2 = float(way @ from_), float(from_ @ from_) - stretch * stretch
                             slide = -b2 if b2 * b2 < c2 else min((-b2 - math.sqrt(b2 * b2 - c2), -b2 + math.sqrt(b2 * b2 - c2)), key=abs)
-                            # Never past the prop's ends, from where the hand is on it, eased from the stance's grip.
+                            # Never past the prop's ends (whatever SLIDE allows), from where the hand is on it, eased
+                            #  from the stance's grip.
                             place = share[f] * span + float((there[:3, 3] + there[:3, :3] @ near[side] - at) @ way)
-                            slide = min(max(slide, -SLIDE, -place), SLIDE, span - place)
+                            slide = min(max(min(max(slide, -SLIDE), SLIDE), -place), span - place)
                             slid[f] = slide
                             there[:3, 3] += slide * way
-                            at = at + slide * way  # where it holds the prop now
+                            at = at + slide * way  # the hold's place, slid as the hand was (not where the hand is)
                         short = bend_arm(skeleton, rot, moved, shift, side, there[:3, 3], there[:3, :3], wt)
                         fa, hd = f'forearm.{side}', f'hand.{side}'
                         if side == hand_side or weight[f] >= FULL:
@@ -941,8 +942,8 @@ def main():
             for f in range(1, len(t)):
                 step = abs(slid.get(f, 0.0) - slid.get(f - 1, 0.0))
                 if step > SLIDE_STEP:
-                    fail(f'clip {role}: the hand that holds the prop would slide {step:.3f} m further along it from one '
-                         f'frame to the next at {t[f]:.3f} s, as the hold eases (too fast, or with the prop passing its '
+                    fail(f'clip {role}: the hand that holds the prop would change its slide along it by {step:.3f} m from '
+                         f'one frame to the next at {t[f]:.3f} s, as the hold eases (too fast, or with the prop passing its '
                          'shoulder); ease the hold over more frames, or key the prop to pass the shoulder once the hold '
                          'is full (as a port arms key does)')
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
