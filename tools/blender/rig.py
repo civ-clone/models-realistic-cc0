@@ -63,8 +63,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   slides along the prop (by up to SLIDE, and never past its ends) to where the wrist is as far from the shoulder as
   that bend puts it, or where the prop's line doesn't come that near, to where it comes nearest; so a nearly
   straight arm bends steadily rather than snapping. Where that slide would go more than SLIDE_STEP from one frame to
-  the next (the prop passing the shoulder fast as the hold eases), the build fails. An arm's elbow points the way the
-  keys point it.
+  the next (a hold eased on or off in too few frames, or the prop passing the shoulder fast as it eases), the build
+  fails. An arm's elbow points the way the keys point it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -854,7 +854,9 @@ def main():
                             from_ = there[:3, 3] - (moved[ua_n] - shift)  # the wrist, from the shoulder
                             b2, c2 = float(way @ from_), float(from_ @ from_) - stretch * stretch
                             slide = -b2 if b2 * b2 < c2 else min((-b2 - math.sqrt(b2 * b2 - c2), -b2 + math.sqrt(b2 * b2 - c2)), key=abs)
-                            slide = min(max(slide, -SLIDE, -share[f] * span), SLIDE, (1 - share[f]) * span)  # on the prop
+                            # Never past the prop's ends, from where the hand is on it, eased from the stance's grip.
+                            place = share[f] * span + float((there[:3, 3] + there[:3, :3] @ near[side] - at) @ way)
+                            slide = min(max(slide, -SLIDE, -place), SLIDE, span - place)
                             slid[f] = slide
                             there[:3, 3] += slide * way
                             at = at + slide * way  # where it holds the prop now
@@ -933,15 +935,16 @@ def main():
         if not standing.all():
             report[role]['below'] = round(max(0.0, -float(final[:, used, 1].min())), 3)
         if posing:
-            # The slide follows where the shoulder comes nearest the prop's line, so a prop passing the shoulder fast
-            #  (or the wrist passing that point, where the slide turns from one side to the other) would jerk the hand
-            #  along it.
+            # The slide follows the eased bend and where the shoulder comes nearest the prop's line, so a hold eased
+            #  on or off in too few frames, or a prop passing the shoulder fast (or the wrist passing that point, where
+            #  the slide turns from one side to the other), would jerk the hand along it.
             for f in range(1, len(t)):
                 step = abs(slid.get(f, 0.0) - slid.get(f - 1, 0.0))
                 if step > SLIDE_STEP:
-                    fail(f'clip {role}: the hand that holds the prop would slide {step:.3f} m along it from one frame '
-                         f'to the next at {t[f]:.3f} s, as the hold eases with the prop passing its shoulder; key the '
-                         'prop to pass more slowly, or once the hold is full (as a port arms key does)')
+                    fail(f'clip {role}: the hand that holds the prop would slide {step:.3f} m further along it from one '
+                         f'frame to the next at {t[f]:.3f} s, as the hold eases (too fast, or with the prop passing its '
+                         'shoulder); ease the hold over more frames, or key the prop to pass the shoulder once the hold '
+                         'is full (as a port arms key does)')
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
             if max(report[role]['grip'].values()) > GRIP:
                 fail(f'clip {role}: a hand ends up {max(report[role]["grip"].values())} m from where it holds the prop, '
