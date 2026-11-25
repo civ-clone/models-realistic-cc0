@@ -323,12 +323,12 @@ def check_rig(where, rig, stance):
         problem(f'{where}: a rig binds the skeleton a stance fits, so needs a stance')
         return
     prop = rig.get('prop')
-    if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded'}
+    if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded', 'slides'}
                                  and {'part': prop.get('part'), 'bone': prop.get('bone')} in stance.get('whole', []) and
                                  all(direction(prop[k]) for k in ('muzzle', 'back') if k in prop) and
-                                 isinstance(prop.get('grounded', True), bool)):
+                                 all(isinstance(prop.get(k, True), bool) for k in ('grounded', 'slides'))):
         problem(f'{where}.prop: should be a part and its bone, as the stance holds it whole, and may have a muzzle and a '
-                'back (ways [x, y, z]) and grounded (true or false)')
+                'back (ways [x, y, z]) and grounded (true or false) and slides (true or false)')
         prop = None
     hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None
     clips = rig.get('clips')
