@@ -112,7 +112,7 @@
   },
   "explorer": {
    "file": "models/explorer.glb",
-   "sha256": "56a98b53c56aedb79ecd50c4c2e6c62b2f606713405ac19799c6a2b2ab50c30e",
+   "sha256": "73ab988771fb457136e13ccfa06b21936a14ff75e2e51ce42709d4ddad97b39b",
    "extent": {
     "across": [
      -0.395,
@@ -124,14 +124,14 @@
     ],
     "height": 1.8
    },
-   "triangles": 1979,
+   "triangles": 1985,
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
    "made": "generated; his coil of rope dropped; rewrapped; the owner's colour on the jacket; posed, his arms at his sides",
    "rigged": {
     "file": "models/rigged/explorer.glb",
-    "sha256": "7451796553d41c3913b576b85bbf7dd28ddceb34e18b42f82865181cdeefb046",
+    "sha256": "5c5c3e5b350e7c72109822f916359faae5bfadf3e1b69116d1b64322c765cd80",
     "clips": {
      "idle": "idle",
      "move": "move",

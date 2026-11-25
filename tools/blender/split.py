@@ -1,5 +1,6 @@
 """split.py : splits a piece a figure holds or carries (a slung rifle, say) off it, where its original fuses the piece to
-the body as one skin, so the piece can be put back as a prop of its own and move with a hand.
+the body as one skin, so the piece can be put back as a prop of its own and move with a hand; or only drops something
+fused to it that the cut can't draw.
 
 Args (after --): GLB BODY.glb PIECE.glb RULE.json STAGING.json. Writes the body without the piece, in the original's
 frame, and the piece, in the staged frame below, each with the original's material; and the staging (the matrix taking
@@ -22,7 +23,9 @@ what that covers).
 `drop` gives chains the same way for what goes with neither: where the original has made a piece twice over, say, or a
 sling left hanging once its rifle has gone. The piece's chains come first where they overlap. A rule may have only
 `drop`, for something the cut can't draw (the Explorer's coil of rope): then nothing is split off, no PIECE is written,
-and build.py stages the body by its own box, as it would without a split (STAGING is written all the same).
+and build.py stages the body by its own box, as it would without a split (STAGING is written all the same). So it fails
+if what it drops moves that box by more than a millimetre (something reaching past the rest of the figure, below his
+boots, say): the stance's joints were fitted to the box as it was.
 
 Whatever of the body the cut leaves unconnected (points joined by place, as originals split them along texture seams)
 goes too: scraps of the piece left behind. Each connected piece of the original keeps its largest remaining part; a
@@ -166,6 +169,8 @@ if chains and (picked == 0 or picked == nf):
     raise RuntimeError(f'Error: the chains pick {picked} of the {nf} faces')
 if not chains and not drop.any():
     raise RuntimeError('Error: a rule with only drop should drop something')
+if (pick | drop).all():
+    raise RuntimeError(f'Error: the rule takes all {nf} faces, leaving no body')
 
 # Points joined by place; each connected piece of the original keeps its largest part left by the cut.
 key = np.round(V / (np.linalg.norm(mx - mn) * 1e-6)).astype(np.int64)
@@ -481,6 +486,9 @@ for ob, name, out in ((obj, 'body', body_out),) + (((piece, 'piece', piece_out),
         off = max(float(np.abs(Sa.min(0) - Sb.min(0)).max()), float(np.abs(Sa.max(0) - Sb.max(0)).max()))
         report[name] = {'holes closed': closed, 'holes the original had': kept, 'faces peeled': peeled,
                         'own box off (mm)': round(off * 1000, 1)}
+        if not chains and off > 0.001:  # staged by its own box, it would be sized and placed away from its joints
+            raise RuntimeError(f'Error: what the rule drops moves the body\'s box by {off * 1000:.1f} mm: '
+                               'one that only drops should leave the box as it was')
     else:  # in the staged frame, where the rule (and a prop's `top`) gives places
         ob.data.transform(mathutils.Matrix(Mb.tolist())); ob.data.update()
         if rule.get('mirror'):

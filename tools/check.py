@@ -458,7 +458,9 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.stage: needs measure (height or along) and a size over 0')
         if not number(st.get('turn', 0)) or ('draught' in st and not number(st['draught'], 0)):
             problem(f'{where}.stage: turn and draught should be numbers (draught over 0)')
-    splits = isinstance(e.get('split'), dict) and bool(e['split'].get('chains'))  # a piece split off, not only dropping
+    # whether it splits a piece off (not only dropping): None where check_split finds its rule malformed (said there)
+    chains = e['split'].get('chains', []) if isinstance(e.get('split'), dict) else None
+    splits = (bool(chains) if isinstance(chains, list) else None) if 'split' in e else False
     if 'split' in e:
         check_split(f'{where}.split', e['split'])
         if splits and 'prop' not in e:
@@ -469,7 +471,7 @@ def check_build_entry(where, e, allowed, sources):
         p = e['prop']
         if p.get('mode') not in ('hand', 'chute', 'hat', 'bonehat') or p.get('source') not in set(sources) | {'split'}:
             problem(f'{where}.prop: needs a mode (hand, chute, hat or bonehat) and a source in the roster (or split)')
-        if (p.get('source') == 'split') != splits:
+        if splits is not None and (p.get('source') == 'split') != splits:
             problem(f'{where}.prop: its source should be split exactly when the model splits a piece off')
         opts = p.get('options')
         if not isinstance(opts, dict):
@@ -527,9 +529,9 @@ def check_build_entry(where, e, allowed, sources):
         check_rig(f'{where}.rig', e['rig'], e.get('stance'))
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
-    elif splits != ('split off' in e['made']):
+    elif splits is not None and splits != ('split off' in e['made']):
         problem(f'{where}: made should say "split off" exactly when a piece is split off')
-    elif 'split' in e and not splits and 'dropped' not in e['made']:
+    elif 'split' in e and splits is False and 'dropped' not in e['made']:
         problem(f'{where}: made should say what was dropped where the split rule only drops')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
