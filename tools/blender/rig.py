@@ -97,7 +97,12 @@ apply, how far an ungrounded prop went below the ground (`below`) and the furthe
 holds the prop (`grip`, by hand: where it fully holds or grips it, from its place there; where the hand that holds it
 eases on or off, from the prop's line; more than a centimetre or so says the prop was out of the arm's reach, and over
 GRIP fails the build), the most each hand on it bends off the line of its forearm (`wrist`, in degrees), and the least its elbow
-bends there (`elbow`: near 0, the arm is at full reach, and whips as it bends).
+bends there (`elbow`: near 0, the arm is at full reach, and whips as it bends). Where a hold eases, it gives `slide`:
+the most the hand that holds the prop slid along it (or moved it, if it doesn't slide), its largest change from one
+frame to the next, and how many frames it was `capped` (held back at SLIDE or the prop's ends, or the prop's line
+not coming as near the shoulder as the eased bend needs), where the elbow snaps as it would without the slide. A
+slide that jumps from one side of where the shoulder comes nearest the prop's line to the other, by more than GRIP,
+fails the build.
 With RIG_FRAMES set to a folder, it also writes each clip's points frame by frame (`<clip>.npy`) and its feet
 (`<clip>-feet.npz`: their plant weights and places, the joints, and how far each frame was lowered to the ground),
 to check a player or a clip against.
@@ -776,6 +781,8 @@ def main():
             if posing:
                 gaps = {hand_side: [], other: []}
                 slid = {}  # how far the hand that holds the prop slid along it (or moved it), by frame (where it did)
+                capped = set()  # frames where it couldn't slide (or move) as far as the eased bend needed
+                sides = {}  # frames where it slid out from the shoulder, and which way along the prop (+1 or -1)
             for f in range(len(t)):
                 rot, moved = {}, {}
                 for i, n in enumerate(names):
@@ -862,6 +869,8 @@ def main():
                                 # The hand stays where it holds the prop, and the prop moves with it, straight
                                 #  towards or away from the shoulder.
                                 far = float(np.linalg.norm(from_))
+                                if abs(stretch - far) > SLIDE:
+                                    capped.add(f)
                                 shove = min(max(stretch - far, -SLIDE), SLIDE) * from_ / far
                                 slid[f] = shove  # (as a move, as its way turns from frame to frame too)
                                 there[:3, 3] += shove
@@ -873,7 +882,12 @@ def main():
                                 # Never past the prop's ends (whatever SLIDE allows), from where the hand is on it,
                                 #  eased from the stance's grip.
                                 place = share[f] * span + float((there[:3, 3] + there[:3, :3] @ near[side] - at) @ way)
+                                wanted = slide
                                 slide = min(max(min(max(slide, -SLIDE), SLIDE), -place), span - place)
+                                if b2 * b2 < c2 or abs(slide - wanted) > 1e-9:  # the line not that near, or held back
+                                    capped.add(f)
+                                if c2 < 0 and slide:
+                                    sides[f] = math.copysign(1.0, slide)
                                 slid[f] = slide
                                 there[:3, 3] += slide * way
                                 at = at + slide * way  # the hold's place, slid as the hand was (not where the hand is)
@@ -956,14 +970,25 @@ def main():
             #  on or off in too few frames, or a prop passing the shoulder fast (or the wrist passing that point, where
             #  the slide turns from one side to the other), would jerk the hand along it; likewise a prop that moves
             #  with the hand would jerk.
+            steps = [float(np.linalg.norm(np.asarray(slid.get(f, 0.0)) - np.asarray(slid.get(f - 1, 0.0))))
+                     for f in range(len(t))]
             for f in range(1, len(t)):
-                step = float(np.linalg.norm(np.asarray(slid.get(f, 0.0)) - np.asarray(slid.get(f - 1, 0.0))))
+                step = steps[f]
+                # Slid out from the shoulder one way along the prop and then the other: the wrist passed where the
+                #  shoulder comes nearest the prop's line, and the hand jumps from one side to the other.
+                if sides.get(f, 0) * sides.get(f - 1, 0) < 0 and step > GRIP:
+                    fail(f'clip {role}: the hand that holds the prop would jump {step:.3f} m along it at {t[f]:.3f} s, '
+                         'from one side of where the shoulder comes nearest its line to the other, as the hold eases; '
+                         'key the prop so the hand passes the shoulder once the hold is full (as a port arms key does)')
                 if step > SLIDE_STEP:
                     fail(f'clip {role}: the hand that holds the prop would change how far it slides along it (or moves '
                          f'it) by {step:.3f} m from one frame to the next at {t[f]:.3f} s, as the hold eases (too fast, or '
                          'with the prop passing its shoulder); ease the hold over more frames, or key the prop to pass '
                          'the shoulder once the hold is full (as a port arms key does)')
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
+            if slid:
+                report[role]['slide'] = {'most': round(max(float(np.linalg.norm(v)) for v in slid.values()), 3),
+                                         'step': round(max(steps[1:], default=0.0), 3), 'capped': len(capped)}
             if max(report[role]['grip'].values()) > GRIP:
                 fail(f'clip {role}: a hand ends up {max(report[role]["grip"].values())} m from where it holds the prop, '
                      'out of its arm\'s reach')
