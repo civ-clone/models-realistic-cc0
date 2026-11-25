@@ -154,16 +154,20 @@ def finite_vec(value, n):
 
 
 def check_split(where, split):
-    """A split rule, as blender/split.py reads it: chains of at least two stations [place, across, deep, gap]."""
+    """A split rule, as blender/split.py reads it: chains of at least two stations [place, across, deep, gap] (the
+    piece's, and what to `drop`; a rule may only drop, with no chains)."""
     if not keys_ok(where, split, SPLIT):
         return
-    chains = split.get('chains')
-    if not (isinstance(chains, list) and chains and all(isinstance(c, list) and len(c) >= 2 for c in chains)):
+    chains = split.get('chains', [])
+    if not (isinstance(chains, list) and all(isinstance(c, list) and len(c) >= 2 for c in chains)):
         problem(f'{where}: chains should be a list of chains, each of two or more stations')
         return
     drop = split.get('drop', [])
     if not (isinstance(drop, list) and all(isinstance(c, list) and len(c) >= 2 for c in drop)):
         problem(f'{where}: drop should be a list of chains, each of two or more stations')
+        return
+    if not chains and not drop:
+        problem(f'{where}: should have chains (a piece to split off), or drop, or both')
         return
     depth = split.get('depth', [0, 0, 1])
     if 'depth' in split and not (finite_vec(depth, 3) and any(depth)):
@@ -197,8 +201,8 @@ def check_split(where, split):
                 if max(chain[j][1], chain[j][2]) * math.sin(bend / 2) > 0.01:
                     problem(f'{where}.{name}[{i}][{j}]: its bend ({math.degrees(bend):.0f}°) leaves the outside of it '
                             f'uncovered past the 1 cm its stretches reach: add a station, or narrow it')
-    if 'mirror' in split and not isinstance(split['mirror'], bool):
-        problem(f'{where}.mirror: should be true or false')
+    if 'mirror' in split and not (isinstance(split['mirror'], bool) and (chains or not split['mirror'])):
+        problem(f'{where}.mirror: should be true or false (and only true with chains, a piece to mirror)')
 
 
 def check_cut(where, cut):
@@ -454,9 +458,10 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.stage: needs measure (height or along) and a size over 0')
         if not number(st.get('turn', 0)) or ('draught' in st and not number(st['draught'], 0)):
             problem(f'{where}.stage: turn and draught should be numbers (draught over 0)')
+    splits = isinstance(e.get('split'), dict) and bool(e['split'].get('chains'))  # a piece split off, not only dropping
     if 'split' in e:
         check_split(f'{where}.split', e['split'])
-        if 'prop' not in e:
+        if splits and 'prop' not in e:
             problem(f'{where}: a piece split off should be put back as its prop')
         if isinstance(st, dict) and set(st) & {'draught', 'keep', 'pose'}:
             problem(f'{where}: split.py stages a figure as it stands, so its stage can\'t have draught, keep or pose')
@@ -464,8 +469,8 @@ def check_build_entry(where, e, allowed, sources):
         p = e['prop']
         if p.get('mode') not in ('hand', 'chute', 'hat', 'bonehat') or p.get('source') not in set(sources) | {'split'}:
             problem(f'{where}.prop: needs a mode (hand, chute, hat or bonehat) and a source in the roster (or split)')
-        if (p.get('source') == 'split') != ('split' in e):
-            problem(f'{where}.prop: its source should be split exactly when the model has a split rule')
+        if (p.get('source') == 'split') != splits:
+            problem(f'{where}.prop: its source should be split exactly when the model splits a piece off')
         opts = p.get('options')
         if not isinstance(opts, dict):
             problem(f'{where}.prop: options should be an object')
@@ -522,8 +527,10 @@ def check_build_entry(where, e, allowed, sources):
         check_rig(f'{where}.rig', e['rig'], e.get('stance'))
     if not isinstance(e.get('made'), str) or not e['made']:
         problem(f'{where}: made should say what was done')
-    elif ('split' in e) != ('split off' in e['made']):
-        problem(f'{where}: made should say "split off" exactly when there is a split rule')
+    elif splits != ('split off' in e['made']):
+        problem(f'{where}: made should say "split off" exactly when a piece is split off')
+    elif 'split' in e and not splits and 'dropped' not in e['made']:
+        problem(f'{where}: made should say what was dropped where the split rule only drops')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
     elif ('owner' in e) != ("the owner's colour" in e['made']):

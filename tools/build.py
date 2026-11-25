@@ -110,7 +110,9 @@ class Blender:
                 json.dump({'stage': entry['stage'], **entry['split']}, f)
             staging_file = os.path.join(self.work, 'split', slug + '-staging.json')
             self.run('split.py', src, body, piece, rule, staging_file)
-            staging = json.load(open(staging_file, encoding='utf-8'))  # the body staged as the original was
+            if entry['split'].get('chains'):  # the body staged as the original was (the piece may have reached past it)
+                staging = json.load(open(staging_file, encoding='utf-8'))
+            # (where it only drops, by its own box, as without a split: the stance's joints were fitted to that)
             src = body
         cut = self.cut(src, os.path.join(self.work, 'cut', slug), entry['cut'])
         prop = entry.get('prop')
