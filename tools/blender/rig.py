@@ -67,8 +67,9 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   straight arm bends steadily rather than snapping. A prop whose `slides` is false moves with the hand instead,
   straight towards or away from the shoulder (by up to SLIDE), the hand staying where the keys' holds put it on the
   prop. Where that slide or move would change by more than SLIDE_STEP from one frame to the next (a hold eased on
-  or off in too few frames, or the prop passing the shoulder fast as it eases), the build fails. An arm's elbow
-  points the way the keys point it.
+  or off in too few frames, or the prop passing the shoulder fast as it eases), or the slide would jump by more than
+  GRIP from one side of where the shoulder comes nearest the prop's line to the other, the build fails. An arm's
+  elbow points the way the keys point it.
   Each clip may give bones a `lag` in seconds: they turn as they would that much earlier (in a clip that plays once,
   less and less towards its end, so it ends as it would without), so a movement passes from the body out to the limbs
   and head.
@@ -99,10 +100,10 @@ eases on or off, from the prop's line; more than a centimetre or so says the pro
 GRIP fails the build), the most each hand on it bends off the line of its forearm (`wrist`, in degrees), and the least its elbow
 bends there (`elbow`: near 0, the arm is at full reach, and whips as it bends). Where a hold eases, it gives `slide`:
 the most the hand that holds the prop slid along it (or moved it, if it doesn't slide), its largest change from one
-frame to the next, and how many frames it was `capped` (held back at SLIDE or the prop's ends, or the prop's line
-not coming as near the shoulder as the eased bend needs), where the elbow snaps as it would without the slide. A
-slide that jumps from one side of where the shoulder comes nearest the prop's line to the other, by more than GRIP,
-fails the build.
+frame to the next, how many frames it was `capped` (held back at SLIDE or the prop's ends, or the prop's line not
+coming as near the shoulder as the eased bend needs), where the elbow falls short of the eased bend (as far as it
+would without the slide, at worst), and how many times it `flips` from one side of where the shoulder comes nearest
+the prop's line to the other (over GRIP in a frame fails the build).
 With RIG_FRAMES set to a folder, it also writes each clip's points frame by frame (`<clip>.npy`) and its feet
 (`<clip>-feet.npz`: their plant weights and places, the joints, and how far each frame was lowered to the ground),
 to check a player or a clip against.
@@ -886,8 +887,8 @@ def main():
                                 slide = min(max(min(max(slide, -SLIDE), SLIDE), -place), span - place)
                                 if b2 * b2 < c2 or abs(slide - wanted) > 1e-9:  # the line not that near, or held back
                                     capped.add(f)
-                                if c2 < 0 and slide:
-                                    sides[f] = math.copysign(1.0, slide)
+                                if c2 < 0 and wanted:  # (its side as it would be, whatever holds it back)
+                                    sides[f] = math.copysign(1.0, wanted)
                                 slid[f] = slide
                                 there[:3, 3] += slide * way
                                 at = at + slide * way  # the hold's place, slid as the hand was (not where the hand is)
@@ -972,8 +973,10 @@ def main():
             #  with the hand would jerk.
             steps = [float(np.linalg.norm(np.asarray(slid.get(f, 0.0)) - np.asarray(slid.get(f - 1, 0.0))))
                      for f in range(len(t))]
+            flips = 0
             for f in range(1, len(t)):
                 step = steps[f]
+                flips += sides.get(f, 0) * sides.get(f - 1, 0) < 0
                 # Slid out from the shoulder one way along the prop and then the other: the wrist passed where the
                 #  shoulder comes nearest the prop's line, and the hand jumps from one side to the other.
                 if sides.get(f, 0) * sides.get(f - 1, 0) < 0 and step > GRIP:
@@ -988,7 +991,8 @@ def main():
             report[role]['grip'] = {s_: round(float(max(g, default=0)), 3) for s_, g in sorted(gaps.items())}
             if slid:
                 report[role]['slide'] = {'most': round(max(float(np.linalg.norm(v)) for v in slid.values()), 3),
-                                         'step': round(max(steps[1:], default=0.0), 3), 'capped': len(capped)}
+                                         'step': round(max(steps[1:], default=0.0), 3), 'capped': len(capped),
+                                         'flips': int(flips)}
             if max(report[role]['grip'].values()) > GRIP:
                 fail(f'clip {role}: a hand ends up {max(report[role]["grip"].values())} m from where it holds the prop, '
                      'out of its arm\'s reach')
