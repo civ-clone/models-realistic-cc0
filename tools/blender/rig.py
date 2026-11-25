@@ -87,6 +87,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     joint's place then, and draws it. A bottle is the prop, thrown: it leaves from the prop, which is gone from 1 ms
     after `at` until 0.2 s before `back` (at least 0.25 s after `at`), growing back in the hand over those 0.2 s.
     The rest leave the prop where it is.
+  - `strike`, in a clip: the time a blow lands (a melee fight's, which has no shots), for the map to time the
+    blow and the attacker's lunge by. Nothing in the figure changes with it.
 
 Every clip keys every joint's turn, the root's place, and the prop's size (and, where any key holds or grips it, the
 prop's place on the hand), so none leaves a joint as another left it. Clips are sampled at about FPS frames a second
@@ -172,8 +174,11 @@ def read_rig(rig):
         where = f'clip {role}'
         if role not in LOOPS | ONCE:
             fail(f'{where}: a clip is one of {sorted(LOOPS | ONCE)}')
-        if not isinstance(clip, dict) or set(clip) - {'length', 'keys', 'shots', 'lag'} or not number(clip.get('length'), 0):
-            fail(f'{where}: a clip has a length over 0 and keys, and may have shots and lag')
+        if not isinstance(clip, dict) or set(clip) - {'length', 'keys', 'shots', 'strike', 'lag'} or \
+                not number(clip.get('length'), 0):
+            fail(f'{where}: a clip has a length over 0 and keys, and may have shots, a strike and lag')
+        if 'strike' in clip and not (number(clip['strike'], 0) and clip['strike'] <= clip['length']):
+            fail(f'{where}: strike should be the time in the clip a blow lands, over 0 and up to its length')
         keys = clip.get('keys')
         if not isinstance(keys, list) or not keys:
             fail(f'{where}: keys should be a list of poses')

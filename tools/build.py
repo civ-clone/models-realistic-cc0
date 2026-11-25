@@ -217,6 +217,8 @@ def finish(roster, built):
                            'clips': {role: role for role in e['rig']['clips']}}
             if check.shots_of(e['rig']):
                 m['rigged']['shots'] = check.shots_of(e['rig'])
+            if check.strikes_of(e['rig']):
+                m['rigged']['strikes'] = check.strikes_of(e['rig'])
         models[mid] = m
         for u in e['units']:
             names[u] = mid

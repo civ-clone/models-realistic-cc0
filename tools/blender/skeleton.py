@@ -1,13 +1,14 @@
 """skeleton.py : the skeleton stance.py fits to a figure and rig.py binds it to, and how its bones are turned.
 
 A stance's `joints` give each joint's place as the figure stands in the file; `bones()` makes the skeleton from them,
-and `forward()` turns its bones as an `aim` and a `twist` say (see stance.py), from the root out.
+and `forward()` turns its bones as an `aim` and a `twist` say (see stance.py), from the root out. `read_fingers()` reads
+a stance's `fingers`, each hand's frame as the figure stands in the file, and `curl()` bends a hand's fingers so.
 """
 import math
 
 import numpy as np
 
-from check import BONES, JOINTS, STANCE
+from check import BONES, FINGERS, JOINTS, STANCE
 
 SIDES = ('L', 'R')
 
@@ -116,3 +117,94 @@ def read_rule(rule):
             fail(f'whole: {b!r} should be a bone with a part, a line and radius, or a box of x, y or z ranges')
     return J, skeleton
 
+
+def read_fingers(rule, J):
+    """A stance's `fingers`, checked: for each hand it names, the hand as the figure stands in the file (its wrist, its
+    length to the fingertips, the ways along it, towards its palm and across it) and how its fingers curl: from the
+    knuckles, round an axis across the hand `radius` towards the palm from them (where a fist holds a prop's middle),
+    by up to `curl`, and drawn `together` towards the hand's middle, by that share at their tips."""
+    fingers = rule.get('fingers', {})
+    if not isinstance(fingers, dict) or set(fingers) - set(SIDES):
+        fail('fingers should name hands, L or R')
+    out = {}
+    for side, f in fingers.items():
+        if not (isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together'} and finite(f['palm'], 3) and
+                finite([f['knuckles'], f['radius'], f['curl'], f.get('together', 0)]) and 0 < f['knuckles'] < 1 and
+                0 < f['radius'] <= 0.2 and 0 < f['curl'] <= 360 and 0 <= f.get('together', 0) < 1):
+            fail(f'fingers.{side} should give the way its palm faces [x, y, z], where its knuckles are (a share of '
+                 'the way from the wrist to the fingertips, between 0 and 1), and how its fingers curl: a radius '
+                 '(metres, over 0 and up to 0.2) and degrees (over 0 and up to 360), and may draw them `together` '
+                 '(from 0 to under 1)')
+        wrist, tip = J[f'wrist.{side}'], J[f'hand.{side}']
+        length = float(np.linalg.norm(tip - wrist))
+        along = (tip - wrist) / length
+        palm = np.array(f['palm'], dtype=float)
+        palm -= along * (palm @ along)
+        if np.linalg.norm(palm) < 1e-6:
+            fail(f'fingers.{side}.palm should be a way across the hand, not along it')
+        palm /= np.linalg.norm(palm)
+        knuckles, radius = f['knuckles'] * length, float(f['radius'])
+        out[side] = {'wrist': wrist, 'along': along, 'palm': palm, 'across': np.cross(along, palm),
+                     'knuckles': knuckles, 'radius': radius, 'curl': math.radians(f['curl']), 'length': length,
+                     'together': float(f.get('together', 0)),
+                     'centre': wrist + along * knuckles + palm * radius}
+    return out
+
+
+def curl(hand, points, normals, mine, faces=(), weld=None):
+    """A hand's points past its knuckles (and their normals) with the fingers curled, as read_fingers() reads the
+    hand: each bent round the curl's axis, as a finger's length wraps it (a point that far past the knuckles turned by
+    that far over the radius, keeping its height above the finger's middle), up to the curl, and straight on past
+    that; and first, with `together`, splayed fingers closed: each finger (a piece of the mesh, by `faces`, past the
+    first part of its length, points at one place, by `weld`, kept together) has that share taken off how far it
+    runs across the hand as it goes (beyond the fingers' usual), so it keeps its width. The points, the normals, and
+    which points moved (of `mine`, the points that are the hand's)."""
+    rel = points - hand['wrist']
+    past = rel @ hand['along'] - hand['knuckles']
+    up = rel @ hand['palm']
+    radius = hand['radius']
+    phi = np.clip(past / radius, 0, hand['curl'])
+    on = np.maximum(past - hand['curl'] * radius, 0)
+    c, s = np.cos(phi), np.sin(phi)
+    along = hand['knuckles'] + (radius - up) * s + on * c
+    palm = radius - (radius - up) * c + on * s
+    moved = (past > 0) & mine
+    across = rel @ hand['across']
+    if hand['together'] and len(faces) and moved.any():
+        finger = moved & (past > 0.15 * (hand['length'] - hand['knuckles']))  # past where the fingers part
+        parent = np.arange(len(points))
+
+        def root(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+        for f in faces:
+            if finger[f].all():
+                for j in f[1:]:
+                    parent[root(j)] = root(f[0])
+        if weld is not None:  # points at one place (split along a texture's seams) are one finger's
+            first = {}
+            for i in np.where(finger)[0]:
+                parent[root(i)] = root(first.setdefault(int(weld[i]), i))
+        idx = np.where(finger)[0]
+        roots = np.array([root(i) for i in idx])
+        drift = {}  # each finger's run across the hand per metre along it
+        for r in np.unique(roots):
+            m = idx[roots == r]
+            if len(m) >= 3 and np.ptp(past[m]) > 1e-3:
+                drift[r] = np.polyfit(past[m], across[m], 1)[0]
+        if drift:
+            usual = float(np.median(list(drift.values())))
+            for r, k in drift.items():
+                m = idx[roots == r]
+                across[m] -= hand['together'] * (k - usual) * past[m]
+    new = points.copy()
+    new[moved] = (hand['wrist'] + np.outer(along, hand['along']) + np.outer(palm, hand['palm']) +
+                  np.outer(across, hand['across']))[moved]
+    na, npl = normals @ hand['along'], normals @ hand['palm']
+    turned = (np.outer(na * c - npl * s, hand['along']) + np.outer(na * s + npl * c, hand['palm']) +
+              np.outer(normals @ hand['across'], hand['across']))
+    new_normals = normals.copy()
+    new_normals[moved] = turned[moved]
+    return new, new_normals, moved

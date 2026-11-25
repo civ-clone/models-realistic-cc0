@@ -33,13 +33,13 @@
 - **Each stance** names every joint of the skeleton blender/stance.py fits, none of its bones shorter than 5 mm, and
   only its bones; a model with one says "posed" in its `made`, and its mesh says `extras.posed`, and only then.
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
-  and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before
-  its length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds
-  whole, and any shots within its clip, each from the prop, which is back in the hand by the clip's end. A clip's
-  `lag` gives bones a time under its length; a key's `ease` is one of EASES, its `hips` [x, y, z], its `plant` feet
-  each at [x, z] or `true`, and its `late` bones a time from 0, each bone's keys still in order once late (a loop's
-  before its length, none late on its first key; a clip played once none late on its last). A clip played once has
-  nothing on its first key but its time and feet planted where they stand (`true`).
+  and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before its
+  length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds whole, any
+  shots within its clip, each from the prop, which is back in the hand by the clip's end, and any strike (when a blow
+  lands) within it too. A clip's `lag` gives bones a time under its length; a key's `ease` is one of EASES, its `hips`
+  [x, y, z], its `plant` feet each at [x, z] or `true`, and its `late` bones a time from 0, each bone's keys still in
+  order once late (a loop's before its length, none late on its first key; a clip played once none late on its last).
+  A clip played once has nothing on its first key but its time and feet planted where they stand (`true`).
 - **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
   - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
     stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints
@@ -51,7 +51,7 @@
     across the ground in a loop, and 2.5 m in a clip played once. Each joint's property is keyed once. The prop's
     part moves with the prop's joint alone, which is a child of its bone, kept as it is held: its size is 1 but
     while it's thrown, and 0 from just after each shot until it grows back;
-  - the manifest gives its file, SHA-256, clips, and any shots by clip (`rigged`).
+  - the manifest gives its file, SHA-256, clips, and any shots and strikes by clip (`rigged`).
 """
 import hashlib
 import json
@@ -92,10 +92,11 @@ CUT = {'mode', 'tris', 'texture', 'depth', 'solidify', 'close'}
 STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
-STANCE = {'joints', 'aim', 'twist', 'whole'}
+STANCE = {'joints', 'aim', 'twist', 'whole', 'fingers'}
+FINGERS = {'palm', 'knuckles', 'radius', 'curl'}  # a hand's, in a stance's `fingers`
 # A rig, as blender/rig.py reads it, and its clips by role: those that loop, and those that play once.
 RIG = {'prop', 'clips'}
-CLIP = {'length', 'keys', 'shots', 'lag'}
+CLIP = {'length', 'keys', 'shots', 'strike', 'lag'}
 KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', 'hold', 'grip'}
 KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
 FPS = 24  # as blender/rig.py samples clips
@@ -297,6 +298,16 @@ def check_stance(where, rule):
                     span(b[k], -math.inf, math.inf) and b[k][0] <= b[k][1] for k in 'xyz' if k in b)))
             for b in whole_):
         problem(f'{where}: whole should be a list, each a bone with a part, a line and radius, or a box of x, y or z ranges')
+    fingers = rule.get('fingers', {})
+    if not isinstance(fingers, dict) or set(fingers) - {'L', 'R'} or not all(
+            isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together'} and direction(f['palm']) and
+            number(f['knuckles']) and 0 < f['knuckles'] < 1 and number(f['radius']) and 0 < f['radius'] <= 0.2 and
+            number(f['curl']) and 0 < f['curl'] <= 360 and number(f.get('together', 0)) and
+            0 <= f.get('together', 0) < 1 for f in fingers.values()):
+        problem(f'{where}: fingers should give a hand (L or R) the way its palm faces [x, y, z], where its '
+                'knuckles are (a share of the way from the wrist to the fingertips, between 0 and 1), and how its '
+                'fingers curl: a radius (metres, over 0 and up to 0.2) and degrees (over 0 and up to 360), and may '
+                'draw them together (a share, from 0 to under 1)')
 
 
 def direction(d):
@@ -429,6 +440,8 @@ def check_rig(where, rig, stance):
                         + ('before the loop\'s length' if role in LOOPS else 'none late at its last key'))
         if role in LOOPS and isinstance(keys[0].get('late'), dict) and keys[0]['late']:
             problem(f'{at}: a loop\'s first key has no late bones (they would jump where the loop starts again)')
+        if 'strike' in clip and not (number(clip['strike'], 0) and clip['strike'] <= length):
+            problem(f'{at}: strike should be the time in the clip a blow lands, over 0 and up to its length')
         shots = clip.get('shots', [])
         if not isinstance(shots, list) or not all(shot_ok(x, prop, length) for x in shots):
             problem(f'{at}: shots should each be a time in the clip (at), the joint they leave from (prop, or its '
@@ -721,6 +734,11 @@ def check_file(rel, skinned_ok, texture, owner, posed):
     except (glb.Bad, KeyError, TypeError, ValueError, IndexError, AttributeError) as e:
         problem(f'models/{rel}: {e}')
         return None
+
+
+def strikes_of(rig):
+    """The manifest's strikes for a rig: by clip, the time its blow lands."""
+    return {role: clip['strike'] for role, clip in rig['clips'].items() if 'strike' in clip}
 
 
 def shots_of(rig):
@@ -1066,6 +1084,9 @@ def main():
             shots = shots_of(entry['rig'])
             if shots:
                 want['rigged']['shots'] = shots
+            strikes = strikes_of(entry['rig'])
+            if strikes:
+                want['rigged']['strikes'] = strikes
         for k in sorted(set(want) | set(m)):
             if m.get(k) != want.get(k):
                 problem(f'manifest: {mid}.{k} should be {json.dumps(want.get(k))[:100]}, as its file and the roster say')

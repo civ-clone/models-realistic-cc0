@@ -41,8 +41,9 @@ map draws each type from one set.
   Warriors, Alpine Troops, Engineers and the Settlers stood naturally already, and the riders sit their horses.
 
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
-  it stands in the file, the way each bone should point, and any pieces that move whole (the Partisan's molotov, the
-  rifles and muskets in their hands). The Riflemen's rifle was split off the back it was generated slung across
+  it stands in the file, the way each bone should point, any pieces that move whole (the Partisan's molotov, the
+  rifles and muskets in their hands), and how a hand's fingers curl, where it's made open (`fingers`; none here yet:
+  models-realistic-by's Fanatics have them). The Riflemen's rifle was split off the back it was generated slung across
   (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. The Explorer's coil of rope,
   which the cut to 2,000 triangles drew as jagged slivers, was dropped before the cut (a `split` that only drops).
   Blender weights each point to the bones near it, and the file's points and normals are moved; nothing else in it
@@ -95,7 +96,8 @@ map draws each type from one set.
   - each model's file and its SHA-256, its triangles, how far it reaches (`extent`, in metres), where it's from and
     what was done to it;
   - a rigged model's rigged file, its SHA-256, its clips by role, and its shots by clip: when each leaves, the joint
-    or node it leaves from, and what flies, where the roster says (`kind`; a bottle without one) (`rigged`);
+    or node it leaves from, and what flies, where the roster says (`kind`; a bottle without one); and, for a fight
+    with no shots, when its blow lands (`strikes`, by clip; none here yet) (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
