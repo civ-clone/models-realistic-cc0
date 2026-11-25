@@ -112,7 +112,7 @@
   },
   "explorer": {
    "file": "models/explorer.glb",
-   "sha256": "2ef2815268eee07c141f36fd96b366ea0df836b0d8cfa7af2be314acba8dcd61",
+   "sha256": "73ab988771fb457136e13ccfa06b21936a14ff75e2e51ce42709d4ddad97b39b",
    "extent": {
     "across": [
      -0.395,
@@ -128,7 +128,16 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the jacket; posed, his arms at his sides"
+   "made": "generated; his coil of rope dropped; rewrapped; the owner's colour on the jacket; posed, his arms at his sides",
+   "rigged": {
+    "file": "models/rigged/explorer.glb",
+    "sha256": "5c5c3e5b350e7c72109822f916359faae5bfadf3e1b69116d1b64322c765cd80",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "die": "die"
+    }
+   }
   },
   "sail": {
    "file": "models/sail.glb",
@@ -289,7 +298,16 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the coat; posed, her arms at her sides"
+   "made": "generated; rewrapped; the owner's colour on the coat; posed, her arms at her sides",
+   "rigged": {
+    "file": "models/rigged/spy.glb",
+    "sha256": "c07d08bf093f2ecdd2eb1a0f3a7c7ef9b146bfab409fd164da5bbe05da820053",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "die": "die"
+    }
+   }
   },
   "bomber": {
    "file": "models/bomber.glb",

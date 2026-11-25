@@ -43,17 +43,19 @@ map draws each type from one set.
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
   it stands in the file, the way each bone should point, and any pieces that move whole (the Partisan's molotov, the
   rifles and muskets in their hands). The Riflemen's rifle was split off the back it was generated slung across
-  (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. Blender weights each point
-  to the bones near it, and the file's points and normals are moved; nothing else in it changes but a mark on the mesh
-  (`extras.posed`).
-- **Rigged and animated:** the Partisans, Riflemen, Marines and Musketmen, so far. Each `models/rigged/<model>.glb` is
-  the model as it stands, bound to the skeleton it was posed with, with four clips. The Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and
-  `move` (a 1 s stride in place), which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his
-  hand at 0.5 s, back in it by the end) and `die` (1.5 s: the shot throws him back, his knees give, his left foot
-  slides out and kicks up while his right stays where he stood, and he lands on his back, his head and arms after him,
-  his right leg flopping out straight and his left knee falling last), which play once. The map draws what flies: the
-  manifest gives each clip's shots (`rigged.shots`), each the time it leaves and the joint it leaves from (here the
-  molotov's, `prop`, whose origin is the bottle's middle as he stands).
+  (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. The Explorer's coil of rope,
+  which the cut to 2,000 triangles drew as jagged slivers, was dropped before the cut (a `split` that only drops).
+  Blender weights each point to the bones near it, and the file's points and normals are moved; nothing else in it
+  changes but a mark on the mesh (`extras.posed`).
+- **Rigged and animated:** the Partisans, Riflemen, Marines, Musketmen, Explorer and Spy, so far. Each
+  `models/rigged/<model>.glb` is the model as it stands, bound to the skeleton it was posed with, with its clips. The
+  Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and `move` (a 1 s stride in place), which
+  loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his hand at 0.5 s, back in it by the end) and
+  `die` (1.5 s: the shot throws him back, his knees give, his left foot slides out and kicks up while his right stays
+  where he stood, and he lands on his back, his head and arms after him, his right leg flopping out straight and his
+  left knee falling last), which play once. The map draws what flies: the manifest gives each clip's shots
+  (`rigged.shots`), each the time it leaves and the joint it leaves from (here the molotov's, `prop`, whose origin is
+  the bottle's middle as he stands).
 
   The Riflemen, Marines and Musketmen keep their weapons in their hands throughout. In `idle` they shift their weight
   as the Partisans do, the weapon held as they stand. In `move` the Riflemen and Musketmen carry theirs across the
@@ -65,6 +67,8 @@ map draws each type from one set.
   up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
   Their shots are bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its
   barrel's end.
+
+  The Explorer and the Spy, who don't fight, have the Partisans' `idle`, `move` and `die`.
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
@@ -97,11 +101,11 @@ map draws each type from one set.
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
     made, the prompt;
   - each model: the unit types it draws, its source, a piece its original fuses to the figure and how it's split off
-    (`split`: the Rifleman's rifle, made whole from its mirror image), how it's cut (part by part, or wrapped in one new
-    surface, which can be closed over a split piece's slits), how it's turned and sized, how deep a ship floats, the
-    prop put in (the Partisan's molotov, or the piece split off, turned to stand as the figure is posed), where its
-    owner's colour goes, how a figure is posed, how it's rigged and its clips, its budget, and its scale where it isn't
-    the set's.
+    (`split`: the Rifleman's rifle, made whole from its mirror image) or what's dropped before it's cut (the Explorer's
+    rope), how it's cut (part by part, or wrapped in one new surface, which can be closed over a split piece's slits),
+    how it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov, or the piece split off,
+    turned to stand as the figure is posed), where its owner's colour goes, how a figure is posed, how it's rigged and
+    its clips, its budget, and its scale where it isn't the set's.
 
   The set's scale draws a 1.8 m person as tall as the other sets' people, 0.168 squares. The 3D map draws units
   bigger than life, so the rest have scales of their own, close to models-cimpletoon's sizes: riders 0.21 to 0.22

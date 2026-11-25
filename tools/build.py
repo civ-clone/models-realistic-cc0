@@ -5,7 +5,7 @@
 
 With --originals, it builds each model the roster lists (or only those NAMEd, by model id or extra path) in Blender:
 it finds each original in DIR by its SHA-256, leaves out any parts the roster drops, splits off a piece fused to a
-figure where the roster says (blender/split.py), cuts it to its budget and bakes its colour into one texture
+figure, or drops what the cut can't draw, where the roster says (blender/split.py), cuts it to its budget and bakes its colour into one texture
 (blender/cut.py), turns, sizes and grounds it, or floats it at its draught (blender/normalise.py), puts in its prop,
 which may be the piece split off (blender/assemble.py), puts its owner's colour where the roster says
 (blender/owner.py), stands a figure in a natural pose (blender/stance.py), and rigs it with its clips into
@@ -101,7 +101,7 @@ class Blender:
             self.run('drop_parts.py', src, fixed, *entry['drop'])
             src = fixed
         piece, staging = None, {}
-        if entry.get('split'):  # a piece fused to the figure, split off to be put back as its prop
+        if entry.get('split'):  # a piece fused to the figure, split off to be put back as its prop (or only dropped)
             body = os.path.join(self.work, 'split', slug + '-body.glb')
             piece = os.path.join(self.work, 'split', slug + '-piece.glb')
             rule = os.path.join(self.work, 'split', slug + '.json')
@@ -110,7 +110,11 @@ class Blender:
                 json.dump({'stage': entry['stage'], **entry['split']}, f)
             staging_file = os.path.join(self.work, 'split', slug + '-staging.json')
             self.run('split.py', src, body, piece, rule, staging_file)
-            staging = json.load(open(staging_file, encoding='utf-8'))  # the body staged as the original was
+            if entry['split'].get('chains'):  # the body staged as the original was (the piece may have reached past it)
+                staging = json.load(open(staging_file, encoding='utf-8'))
+            else:  # it only drops: no piece (nor a stale one from an earlier build), and the body staged by its own box,
+                #  as without a split (split.py holds that box where it was: the stance's joints were fitted to it)
+                piece = None
             src = body
         cut = self.cut(src, os.path.join(self.work, 'cut', slug), entry['cut'])
         prop = entry.get('prop')
