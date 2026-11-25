@@ -19,14 +19,17 @@ The rule gives the figure's skeleton as it stands in the file, and how to pose i
   after owner.py has added its own), each with a `bone`: their points (of a part, those its faces use) move with that
   bone alone, for things that must stay rigid, such as a slung rifle or a held torch.
 - `fingers`: for a hand (`L`, `R`), its fingers curled, as a figure made with its hands open can't hold a prop or let
-  a hand hang naturally: `palm`, the way the palm faces as the figure stands in the file; `knuckles`, where the fingers
-  start, a share of the way from the wrist to the fingertips; and how they curl, round an axis across the hand
+  a hand hang naturally: `palm`, the way the palm faces as the figure stands in the file; `knuckles`, where the
+  fingers start, a share of the way from the wrist to the fingertips; and how they curl, round an axis across the hand
   `radius` (metres) towards the palm from the knuckles, each point past them turned by how far past over the radius
   (so a finger's length wraps it, as round a held prop's handle), up to `curl` degrees; and may draw them `together`
   (a share of each finger's run across the hand) so splayed fingers close (see skeleton.curl()). It curls the points
   the hand's bone weighs half or more (not those of a part held whole), before the figure is posed, and reports what
-  it did (`curled`). assemble.py puts a prop held in the right hand across its palm, on the axis, where `fingers.R`
-  is given; its radius there is best the prop's at the grip and half a finger's thickness.
+  it did (`curled`), and fails where over a third of them lie beyond the axis (a radius too small for the palm's
+  depth; a palm given the wrong way round curls the fingers back, which it can't tell). assemble.py puts a prop held
+  in the right hand across its palm, on the axis, where `fingers.R` is given; the radius is best the prop's at the
+  grip and the palm's depth there (from the line from the wrist to the fingertips, which a cupped hand's palm may lie
+  well below).
 
 Each point moves with the bones near it, as Blender's automatic weights share it among them; the file's own points and
 normals are moved, and nothing else in it changes but for the mesh's `extras`, which then say it's posed (so it isn't
@@ -268,6 +271,9 @@ def main():
     for side, hand in hands.items():
         mine = (w[back][:, names.index(f'hand.{side}')] >= 0.5) & ~loose
         new_p, new_n, moved_p, curled[side] = curl(hand, pos, nor, mine, faces, back)
+        if curled[side]['held'] * 3 > curled[side]['points']:
+            fail(f"fingers.{side}: {curled[side]['held']} of its {curled[side]['points']} points past the knuckles lie "
+                 'beyond the axis they curl round: its radius is too small for its palm\'s depth')
         pos[moved_p], nor[moved_p] = new_p[moved_p], new_n[moved_p]
 
     # Each bone's turn, from the root out: aimed where the rule says, else carried by its parent.

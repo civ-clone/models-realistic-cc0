@@ -9,9 +9,9 @@ MODE hand: prop upright in the figure's right hand (its -X side). Options: heigh
   so that, once stance.py has posed the figure and carried it with the right hand (the stance holds it whole on
   hand.R), its top points that way; or, where the stance gives the right hand's `fingers`, held in its fist: laid
   across the palm on the axis the fingers curl round, its top the end that, posed, points nearer that way (the
-  stance's own turn of the hand points it); with ground=1 its grip is where its foot, so posed, rests 5 mm above
-  the body's lowest point (as the figure stands, so the stance mustn't move the legs, which would stand him higher
-  or lower).
+  stance's own turn of the hand points it; `roll` then turns it from the least turn onto that axis); with ground=1 its
+  grip is where its foot, so posed, rests 5 mm above the body's lowest point (as the figure stands, so the stance
+  mustn't move the legs, which would stand him higher or lower).
 MODE chute: prop centred above the figure. Options: width (prop's widest horizontal size, m), bottom (height of the
   prop's lowest point, m).
 MODE hat: prop on the head. Options: width (brim width, m), sink (how far down over the head, m).

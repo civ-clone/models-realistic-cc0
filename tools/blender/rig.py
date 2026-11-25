@@ -87,8 +87,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
     joint's place then, and draws it. A bottle is the prop, thrown: it leaves from the prop, which is gone from 1 ms
     after `at` until 0.2 s before `back` (at least 0.25 s after `at`), growing back in the hand over those 0.2 s.
     The rest leave the prop where it is.
-  - `strike`, in a clip played once with no shots (a melee fight): the time its blow lands, for the map to time
-    the blow and the attacker's lunge by. Nothing in the figure changes with it.
+  - `strike`, in a clip played once with no shots (a melee fight's, for one): the time its blow lands, for the map
+    to time the blow and the attacker's lunge by. Nothing in the figure changes with it.
 
 Every clip keys every joint's turn, the root's place, and the prop's size (and, where any key holds or grips it, the
 prop's place on the hand), so none leaves a joint as another left it. Clips are sampled at about FPS frames a second

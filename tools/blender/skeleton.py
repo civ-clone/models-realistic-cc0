@@ -129,6 +129,7 @@ def read_fingers(rule, J):
     out = {}
     for side, f in fingers.items():
         if not (isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together'} and finite(f['palm'], 3) and
+                1e-6 < np.linalg.norm(f['palm']) < 1e6 and
                 finite([f['knuckles'], f['radius'], f['curl'], f.get('together', 0)]) and 0 < f['knuckles'] < 1 and
                 0 < f['radius'] <= 0.2 and 0 < f['curl'] <= 360 and 0 <= f.get('together', 0) < 1):
             fail(f'fingers.{side} should give the way its palm faces [x, y, z], where its knuckles are (a share of '
@@ -161,7 +162,8 @@ def curl(hand, points, normals, mine, faces, weld):
     And first, with `together`, splayed fingers closed: each finger, a piece of the mesh (by `faces`, points at one
     place, by `weld`, kept together) past the first part of its length, has that share taken off how far it runs
     across the hand as it goes, beyond the pieces' middle run, so it runs nearer parallel to the others and keeps its
-    width. A thumb that reaches past the knuckles is such a piece too. A run is taken as at most 45 degrees across.
+    width; the share grows from where the fingers part, so nothing jumps there. A thumb that reaches past the knuckles
+    is such a piece too. A run is taken as at most 45 degrees across.
 
     `mine` are the points that are the hand's. Returns the points, the normals, which points moved, and what was done:
     how many moved, how many were held short of the axis, and, with `together`, how many pieces were found and the
@@ -182,7 +184,8 @@ def curl(hand, points, normals, mine, faces, weld):
     across = rel @ hand['across']
     info = {'points': int(moved.sum()), 'held': int(held.sum())}
     if hand['together'] and moved.any():
-        finger = moved & (past > 0.15 * (hand['length'] - hand['knuckles']))  # past where the fingers part
+        start = 0.15 * (hand['length'] - hand['knuckles'])  # where the fingers part
+        finger = moved & (past > start)
         parent = np.arange(len(points))
 
         def root(i):
@@ -209,7 +212,7 @@ def curl(hand, points, normals, mine, faces, weld):
             usual = float(np.median(list(drift.values())))
             for r, k in drift.items():
                 m = idx[roots == r]
-                shift[m] = hand['together'] * (k - usual) * past[m]
+                shift[m] = hand['together'] * (k - usual) * (past[m] - start)  # from where they part, so none jumps
         across = across - shift
         info.update({'pieces': len(drift), 'most across (mm)': round(float(np.abs(shift).max()) * 1000, 1)})
     new = points.copy()
