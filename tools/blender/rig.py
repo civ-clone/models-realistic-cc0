@@ -22,8 +22,9 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   `hand` still moves the hand along it.)
 - **`muzzle`:** for a figure whose weapon isn't a prop of its own but part of him, held whole by a bone as its stance
   says (a slung gun his chest carries, say): a node of that name (not a joint), a child of that bone's joint
-  (`bone`), at `at` ([x, y, z], as the posed figure stands in the file), for shots to leave from: on the weapon, within
-  MUZZLE_NEAR of a point that bone alone moves. A rig has one muzzle at most: this, or its prop's.
+  (`bone`), at `at` ([x, y, z], as the posed figure stands in the file), for shots to leave from, within MUZZLE_NEAR
+  (check.py's) of a point that bone alone moves: something it carries whole, as the weapon should be (which thing, the
+  tools can't tell). A rig has one muzzle at most: this, or its prop's.
 - **`clips`:** by role: `idle`, `move` and `work` loop; `fight`, `die` and `settle` play once. Each has a `length` in
   seconds and its `keys`, each a pose at a time (`at`):
   - `aim` and `twist`, as a stance's, laid over the stance's own: a bone a key names is aimed (or twisted) as the key
@@ -125,7 +126,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import glb  # noqa: E402
-from check import BONES  # noqa: E402
+from check import BONES, MUZZLE_NEAR, muzzle_rule_ok  # noqa: E402
 from skeleton import SIDES, about, fail, finite, forward, read_aim, read_rule, turn  # noqa: E402
 
 FPS = 24
@@ -139,7 +140,6 @@ END = 0.015  # how near its end a prop's points are taken to find the middle of 
 GRIP = 0.02  # the furthest a hand may end up from where it holds a prop, in metres
 SLIDE = 0.1  # the furthest a hand slides along a prop (or moves one that doesn't slide), as a hold eases on or off, to
 #  ease its elbow's bend, in metres
-MUZZLE_NEAR = 0.02  # how near a muzzle of the rig's own must be to a point its bone alone moves (on the weapon), in metres
 SLIDE_STEP = 0.05  # the furthest that slide (or move) may change from one frame to the next, in metres
 FULL = 0.999  # a hold or grip this near 1 counts as full: the hand on the prop where the key puts it
 
@@ -169,18 +169,17 @@ def read_rig(rig):
     if not isinstance(rig, dict) or set(rig) - {'prop', 'muzzle', 'clips'} or not isinstance(rig.get('clips'), dict) or not rig['clips']:
         fail('the rig should have clips, and may have a prop or a muzzle')
     prop = rig.get('prop')
-    muzzle = rig.get('muzzle')
-    if 'muzzle' in rig and not (isinstance(muzzle, dict) and set(muzzle) == {'bone', 'at'} and muzzle['bone'] in BONES
-                                and finite(muzzle['at'], 3)):
-        fail('muzzle should be the bone that carries it and where it is (at, [x, y, z], as the posed figure stands)')
-    if muzzle is not None and prop is not None and 'muzzle' in prop:
-        fail('the rig has a muzzle of its own and its prop has one too: shots leave from one')
     if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded', 'slides'}
                                  and prop['bone'] in BONES and isinstance(prop['part'], int) and not isinstance(prop['part'], bool)
                                  and all(way(prop[k]) for k in ('muzzle', 'back') if k in prop)
                                  and all(isinstance(prop.get(k, True), bool) for k in ('grounded', 'slides'))):
         fail('prop should be a part and the bone it follows, and may have a muzzle and a back (ways [x, y, z]) and '
              'grounded (true or false) and slides (true or false)')
+    muzzle = rig.get('muzzle')
+    if 'muzzle' in rig and not muzzle_rule_ok(muzzle):
+        fail('muzzle should be the bone that carries it and where it is (at, [x, y, z], as the posed figure stands)')
+    if muzzle is not None and prop is not None and 'muzzle' in prop:
+        fail('the rig has a muzzle of its own and its prop has one too: shots leave from one')
     hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None
     for role, clip in rig['clips'].items():
         where = f'clip {role}'
@@ -561,7 +560,7 @@ def main():
         alone = w[:, joints.index(rig['muzzle']['bone'])] > 1 - 1e-6
         if not alone.any() or float(np.linalg.norm(pos[alone] - np.array(rig['muzzle']['at'], dtype=float), axis=1).min()) > MUZZLE_NEAR:
             fail(f'muzzle: no point {rig["muzzle"]["bone"]} alone moves lies within {MUZZLE_NEAR} m of it: it should be on '
-                 'the weapon that bone carries, held whole in the stance')
+                 'something that bone carries whole, as a weapon the stance holds whole')
     # The four biggest weights of each point, shared again to add up to one. Points at one place have the same
     #  weights (stance.py weighted them as one), so they keep the same four, and seams stay shut.
     order = np.argsort(-w, axis=1, kind='stable')[:, :INFLUENCES]

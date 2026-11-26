@@ -56,8 +56,8 @@
     across the ground in a loop, and 2.5 m in a clip played once. Each joint's property is keyed once. The prop's
     part moves with the prop's joint alone, which is a child of its bone, kept as it is held: its size is 1 but
     while it's thrown, and 0 from just after each shot until it grows back. A muzzle of the rig's own is one node, a
-    child of its bone's joint, with only its place, where the rig says as the figure stands, and within 2 cm of a
-    point that bone alone moves (on the weapon it carries);
+    child of its bone's joint, with only its place, where the rig says as the figure stands, and within MUZZLE_NEAR of
+    a point that bone alone moves (on something it carries whole, as the weapon should be);
   - the manifest gives its file, SHA-256, clips, and any shots and strikes by clip (`rigged`).
 """
 import hashlib
@@ -106,6 +106,7 @@ RIG = {'prop', 'muzzle', 'clips'}
 CLIP = {'length', 'keys', 'shots', 'strike', 'lag'}
 KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', 'hold', 'grip'}
 KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
+MUZZLE_NEAR = 0.02  # how near a rig's own muzzle must be to a point its bone alone moves (the weapon it carries), metres
 FPS = 24  # as blender/rig.py samples clips
 EASES = ('stop', 'through', 'hit', 'snap')
 LOOPS = {'idle', 'move', 'work'}
@@ -332,6 +333,12 @@ def direction(d):
     return isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
 
 
+def muzzle_rule_ok(m):
+    """Whether a rig's own muzzle is a bone and a place: {"bone", "at"}."""
+    return isinstance(m, dict) and set(m) == {'bone', 'at'} and isinstance(m['bone'], str) and m['bone'] in BONES and \
+        isinstance(m['at'], list) and len(m['at']) == 3 and all(number(v) for v in m['at'])
+
+
 def shot_ok(x, prop, length, muzzle=False):
     """Whether a shot is a time in the clip, the joint it leaves from, what flies, and (a bottle) when it's back.
     `muzzle`: whether the rig has a muzzle of its own (on a bone, not its prop)."""
@@ -366,9 +373,7 @@ def check_rig(where, rig, stance):
                 'back (ways [x, y, z]) and grounded (true or false) and slides (true or false)')
         prop = None
     muzzle = rig.get('muzzle')
-    if 'muzzle' in rig and not (isinstance(muzzle, dict) and set(muzzle) == {'bone', 'at'} and muzzle['bone'] in BONES
-                                   and isinstance(muzzle['at'], list) and len(muzzle['at']) == 3
-                                   and all(number(v) for v in muzzle['at'])):
+    if 'muzzle' in rig and not muzzle_rule_ok(muzzle):
         problem(f'{where}.muzzle: should be the bone that carries it and where it is (at, [x, y, z], as the posed figure '
                 'stands)')
         muzzle = None
@@ -797,7 +802,7 @@ def check_rigged(rel, entry):
         gltf, binary = glb.read(path)
         static, static_bin = glb.read(os.path.join(ROOT, 'models', static_rel))
         rig = entry['rig']
-        if not isinstance(rig.get('muzzle', {}), dict):  # a bad rule, which the roster's check reports
+        if 'muzzle' in rig and not muzzle_rule_ok(rig['muzzle']):  # a bad rule, which the roster's check reports
             rig = {k: v for k, v in rig.items() if k != 'muzzle'}
         skins = gltf.get('skins', [])
         if len(skins) != 1:
@@ -914,9 +919,9 @@ def check_rigged(rel, entry):
                                              glb.accessor(gltf, binary, p['attributes']['JOINTS_0']),
                                              glb.accessor(gltf, binary, p['attributes']['WEIGHTS_0']))
                         if sum(w for j, w in zip(js, ws) if j == bone_j) > 1 - 1e-6), default=math.inf)
-            if near > 0.02:
-                raise glb.Bad(f'its muzzle should be on the weapon {rig["muzzle"]["bone"]} carries: no point that bone '
-                              'alone moves lies within 2 cm of it')
+            if near > MUZZLE_NEAR:
+                raise glb.Bad(f'its muzzle should be on something {rig["muzzle"]["bone"]} carries whole: no point that '
+                              f'bone alone moves lies within {MUZZLE_NEAR} m of it')
         # The clips: by role, each keying the same joints' turns and places, from 0 to its length.
         anims = {a.get('name'): a for a in gltf.get('animations', [])}
         posed = posing(rig)
