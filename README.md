@@ -36,25 +36,27 @@ map draws each type from one set.
   texture's colour, solid, at that half size. The rest of each model is drawn from its JPEG as before. Where the
   colour goes is each model's `owner` rule in `roster.json`.
 - **Poses:** the Riflemen, Musketmen, Explorer, Spy, Partisans and Marines, generated standing in an A-pose, stand with
-  their arms at their sides. The Riflemen and Musketmen hold their rifles or muskets upright by their right feet
-  (order arms), and the Marines hold theirs by its grip, muzzle down, a carbine too short to ground at the hand. The
-  Warriors, Alpine Troops, Engineers and the Settlers stood naturally already, and the riders sit their horses.
+  their arms at their sides. The Riflemen and Musketmen hold their rifles or muskets upright by their right feet (order
+  arms), and the Marines hold theirs by its grip, muzzle down, a carbine too short to ground at the hand. The Warriors
+  and Engineers stand as they were made, their arms a little out from their sides: the Warriors with a club in the right
+  hand and a round shield on the left arm, under their cloaks, and the Engineers with a rolled drawing in the left hand.
+  The Alpine Troops and the Settlers stood naturally already, and the riders sit their horses.
 
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
-  it stands in the file, the way each bone should point, any pieces that move whole (the Partisan's molotov, the
-  rifles and muskets in their hands), and how a hand's fingers curl, where it's made open (`fingers`; none here yet:
-  models-realistic-by's Fanatics have them). The Riflemen's rifle was split off the back it was generated slung across
-  (`split`); the Marines' rifle and the Musketmen's musket were generated apart from them. The Explorer's coil of rope,
-  which the cut to 2,000 triangles drew as jagged slivers, was dropped before the cut (a `split` that only drops).
-  Blender weights each point to the bones near it, and the file's points and normals are moved; nothing else in it
-  changes but a mark on the mesh (`extras.posed`).
-- **Rigged and animated:** the Partisans, Riflemen, Marines, Musketmen, Explorer and Spy, so far. Each
-  `models/rigged/<model>.glb` is the model as it stands, bound to the skeleton it was posed with, with its clips. The
-  Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and `move` (a 1 s stride in place), which
-  loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his hand at 0.5 s, back in it by the end) and
-  `die` (1.5 s: the shot throws him back, his knees give, his left foot slides out and kicks up while his right stays
-  where he stood, and he lands on his back, his head and arms after him, his right leg flopping out straight and his
-  left knee falling last), which play once. The map draws what flies: the manifest gives each clip's shots
+  it stands in the file, the way each bone should point, any pieces that move whole (the Partisan's molotov, the rifles
+  and muskets in their hands, the Warriors' club and shield and the Engineers' drawing), and how a hand's fingers curl,
+  where it's made open (`fingers`; none here yet: models-realistic-by's Fanatics have them). The Riflemen's rifle was
+  split off the back it was generated slung across (`split`); the Marines' rifle and the Musketmen's musket were
+  generated apart from them. The Explorer's coil of rope, which the cut to 2,000 triangles drew as jagged slivers, was
+  dropped before the cut (a `split` that only drops). Blender weights each point to the bones near it, and the file's
+  points and normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
+- **Rigged and animated:** the Partisans, Riflemen, Marines, Musketmen, Explorer, Spy, Warriors and Engineers, so far.
+  Each `models/rigged/<model>.glb` is the model as it stands, bound to the skeleton it was posed with, with its clips.
+  The Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and `move` (a 1 s stride in place),
+  which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his hand at 0.5 s, back in it by the
+  end) and `die` (1.5 s: the shot throws him back, his knees give, his left foot slides out and kicks up while his right
+  stays where he stood, and he lands on his back, his head and arms after him, his right leg flopping out straight and
+  his left knee falling last), which play once. The map draws what flies: the manifest gives each clip's shots
   (`rigged.shots`), each the time it leaves and the joint it leaves from (here the molotov's, `prop`, whose origin is
   the bottle's middle as he stands).
 
@@ -69,7 +71,17 @@ map draws each type from one set.
   Their shots are bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its
   barrel's end.
 
-  The Explorer and the Spy, who don't fight, have the Partisans' `idle`, `move` and `die`.
+  The Explorer, the Spy and the Engineers, who don't fight, have the Partisans' `idle`, `move` and `die`, the Engineers'
+  arms swinging from where they hold them. Lying dead, the Engineers' drawing lies beside them, and their heads are
+  brought forward so their hard hats' brims don't hold them off the ground.
+
+  The Warriors have the Partisans' `idle`, `move` and `die` too, their arms swinging from where they hold them (the
+  shield arm half as far, the shield clear of the legs), and a `fight` of their own (1.5 s): an overhand blow with the
+  club, from the Partisans' throw. He raises it behind him and over his head, its head behind him, and brings it over
+  his head and down at an enemy ahead of him, his shield arm brought forward to guard him; it lands at 0.5 s (`strike`),
+  its head about 1.5 m up and 1.3 m ahead of his hips, and carries on down. His back foot stays where it is as he steps
+  into it. In `die` he lands a little short of flat, as his cloak's thick folds would otherwise meet the ground first,
+  then settles flat, and lies with his club on the ground beside him and his shield nearly flat beside his head.
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
@@ -80,8 +92,9 @@ map draws each type from one set.
   after the body), or lag through the whole clip, so a movement passes from the body out to the limbs. Every frame is
   stood on the ground by its lowest point, and played in place: the map moves units from square to square itself. The
   file has a root node, `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads
-  without the dot: `hand.R` is `handR`), and the held piece's, `prop`, a child of his right hand's. Each clip keys every
-  joint's turn, the root's place, and the prop's size (the molotov's is 0 from just after the throw until it grows
+  without the dot: `hand.R` is `handR`), and, for a figure whose held piece is split off to move on its own (the
+  Partisans', Riflemen's, Musketmen's and Marines'), the piece's, `prop`, a child of his right hand's. Each clip keys
+  every joint's turn, the root's place, and any prop's size (the molotov's is 0 from just after the throw until it grows
   back in his hand). A key can also hold the prop as it says rather than as the hand does: where it points, which way
   its back faces and where its butt goes, carried by the chest as it turns. The hand that holds it, and the other
   hand, are then bent to reach it, each lying along it as its forearm carries it at the keys, and every clip keys
@@ -97,7 +110,7 @@ map draws each type from one set.
     what was done to it;
   - a rigged model's rigged file, its SHA-256, its clips by role, and its shots by clip: when each leaves, the joint
     or node it leaves from, and what flies, where the roster says (`kind`; a bottle without one); and, for a fight
-    with no shots, when its blow lands (`strikes`, by clip; none here yet) (`rigged`);
+    with no shots, when its blow lands (`strikes`, by clip: the Warriors') (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
