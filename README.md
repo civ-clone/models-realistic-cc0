@@ -16,7 +16,7 @@ map draws each type from one set.
 
 - **`models/*.glb`:** one glTF binary for each model, facing `+z`, with one baked colour texture (JPEG, 512 px for
   people and 1024 px for the rest), and a PNG at half that size for its owner's colour; the Partisans, Riflemen,
-  Marines and Musketmen have a second JPEG (256 px), for their molotov, rifle or musket. Each was cut down to its budget where it was over
+  Marines, Musketmen and Alpine Troops have a second JPEG (256 px), for their molotov, rifle or musket. Each was cut down to its budget where it was over
   (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500 for an aircraft, 3,500 for a ship),
   and its colour baked into the texture. Each carries its credit in `asset.copyright`, and its credit, licence and
   what was done to it in `asset.extras`.
@@ -41,7 +41,7 @@ map draws each type from one set.
   and Engineers stand as they were made, their arms a little out from their sides: the Warriors with a club in the right
   hand and a round shield on the left arm, under their cloaks, and the Engineers with a rolled drawing in the left hand.
   The Alpine Troops, generated again without ski poles, stand with their arms at their sides and their rifles at the
-  trail in their right hands, level and muzzle forward, the hand along it (grounded by the foot, a rifle's muzzle would
+  trail in their right hands, muzzle forward and a little up, the hand along it (grounded by the foot, its muzzle would
   run up into their thick sleeves); their skis are short, about 0.75 m, all ahead of the heel, as Meshy made them. The
   Settlers stood naturally already, and the riders sit their horses.
 
@@ -77,12 +77,13 @@ map draws each type from one set.
   barrel's end.
 
   The Alpine Troops keep their rifles in their hands throughout too. Their `idle` is the Riflemen's, the rifle at the
-  trail. Their `move` is a ski glide (1.2 s): both skis stay on the snow, flat, each sliding ahead of where it stands
-  and back as the other does the opposite, his hips dropping as his legs part, leaning into it, his arms swinging
-  against his legs. Their `fight` is the Riflemen's from the trail: he raises the rifle on a slant to his shoulder,
-  fires once at 0.54 s, and lowers it to the trail again. In `die` he's hit as the Riflemen are, then falls sideways
-  onto his left side (on his back, his thick rucksack would hold him off the ground, legs and skis in the air): his
-  skis lie on their edges along the ground, his rucksack behind him and his rifle in front of him.
+  trail. Their `move` is a ski glide (1.2 s): both skis stay on the snow, each sliding ahead of where it stands and
+  back as the other does the opposite, his hips dropping as his legs part, leaning into it, his arms swinging against
+  his legs (a ski behind him lifts its tail a few centimetres). Their `fight` is the Riflemen's from the trail: he
+  raises the rifle on a slant to his shoulder, fires once at 0.54 s, and lowers it to the trail again. In `die` he's
+  hit as the Riflemen are, then falls sideways onto his left side (on his back, his thick rucksack would hold him off
+  the ground, legs and skis in the air): his skis lie on their edges on the ground, his right leg forward of his left,
+  his rucksack behind him and his rifle in front of him.
 
   The Explorer, the Spy and the Engineers, who don't fight, have the Partisans' `idle`, `move` and `die`, the Engineers'
   arms swinging from where they hold them. Lying dead, the Engineers' drawing lies beside them, and their heads are
@@ -114,8 +115,9 @@ map draws each type from one set.
   every clip keys the prop's place on the hand as well. As a hold eases on or off, the elbow's bend is eased with it,
   the hand sliding along the prop to keep it so; a prop whose `slides` is false (the Marine's rifle, held by its
   pistol grip) moves with the hand instead. A prop whose `grounded` is false (as these weapons' are) is left out of
-  standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once starts as the model stands (its feet can be planted there
-  from the start, so they don't slide as it begins), and a loop ends where it starts.
+  standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once
+  starts as the model stands (its feet can be planted there from the start, so they don't slide as it begins), and a
+  loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;
