@@ -71,7 +71,7 @@
   },
   "warrior": {
    "file": "models/warrior.glb",
-   "sha256": "73ebdd04c6e7780f96a79a0abfde2270cca48d35ff7f8e3c1c63514e49b35d27",
+   "sha256": "0c128780a8b6513e14fcf4be8fd9bcf6ba6a31b54c450de92ccb33c72b13e159",
    "extent": {
     "across": [
      -0.553,
@@ -87,7 +87,20 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the cloak"
+   "made": "generated; rewrapped; the owner's colour on the cloak; posed, his club and shield held whole",
+   "rigged": {
+    "file": "models/rigged/warrior.glb",
+    "sha256": "a5e8b85c1563c4121c4bbe7dd3445b9cb51af18dacc1fe44ed46bacaae7bc44f",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "fight": "fight",
+     "die": "die"
+    },
+    "strikes": {
+     "fight": 0.5
+    }
+   }
   },
   "knight": {
    "file": "models/knight.glb",
@@ -508,7 +521,7 @@
   },
   "engineer": {
    "file": "models/engineer.glb",
-   "sha256": "0f7cc703b3fe3b727f5c5477eeca1105b94ab109f27b42e23e341109bfed407a",
+   "sha256": "777c2d43479784a518f6cbd5f2717adfb9812222f198da8190e9aecacd416cfe",
    "extent": {
     "across": [
      -0.353,
@@ -524,7 +537,16 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the vest"
+   "made": "generated; rewrapped; the owner's colour on the vest; posed, his rolled drawing held whole",
+   "rigged": {
+    "file": "models/rigged/engineer.glb",
+    "sha256": "1965110e82475637e471ca18282082daab16427f0a23b78e198a67575b0fdab3",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "die": "die"
+    }
+   }
   },
   "stealth-bomber": {
    "file": "models/stealth-bomber.glb",
