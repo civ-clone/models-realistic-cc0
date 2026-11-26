@@ -144,10 +144,10 @@
       "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
       "ai": true,
       "generated": true,
-      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
-      "prompt": "A realistic Second World War mountain infantry ski trooper, full body, standing in A-pose, seen in a three-quarter front view from slightly to his right so the full length of both skis is clearly visible on the ground, wearing a white hooded snow camouflage smock with the hood up over a white woollen cap, white over-trousers, grey wool gloves, a bolt-action rifle slung across his back, a small rucksack, standing on a pair of long wooden military skis about two metres long, two long ski poles held loosely in his hands, no helmet, no national insignia, no badges, no markings, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.5 image to 3D (Ultra 2K, 2K texture, A-pose)",
+      "prompt": "A realistic Second World War mountain infantry ski trooper, full body, standing in A-pose with his arms held out from his sides, seen in a three-quarter front view from slightly to his right so the full length of both skis is clearly visible on the ground, wearing a white hooded snow camouflage smock with the hood up over a white woollen cap, white over-trousers, grey wool gloves, a small rucksack on his back, standing on a pair of long wooden military skis about two metres long, hands empty and open, no ski poles, no rifle, no weapon, no sling, no helmet, no national insignia, no badges, no markings, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
       "file": "the generated GLB, kept by me, not published",
-      "sha256": "4da4e6607bdf4df19373bfcdd514056a03a5fc54e0bb49f1d5f3529b818f1d3d"
+      "sha256": "0cdab58de3877ca7b806c4cd3bc6167ee675d412f2e13c34b69c3246180e2035"
     },
     "generated-partisan": {
       "work": "Masked civilian resistance fighter for Partisans (generated for civ.one)",
@@ -377,6 +377,22 @@
       "file": "the generated GLB, kept by me, not published",
       "sha256": "2576b92d74196cf7cb70eb6678ee33cbe4a43175169e9977382ceb975fe9af76",
       "prompt": "A realistic late eighteenth-century flintlock infantry musket, full length, seen from its left side and slightly from above, a long dark walnut stock, a long round steel barrel held by brass bands, a flintlock lock with its hammer, a brass trigger guard and butt plate, a long triangular socket bayonet fixed at the muzzle, a ramrod under the barrel, no sling, the whole musket and bayonet in frame, isolated, centred, plain neutral grey background, soft studio lighting, no text, no markings, reference image for a 3D model"
+    },
+    "generated-bolt-rifle": {
+      "work": "Second World War bolt-action rifle for the Alpine Troops' hands (generated for civ.one)",
+      "author": "dom111",
+      "url": "https://github.com/civ-clone/models-realistic-cc0",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
+      "ai": true,
+      "generated": true,
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.5 image to 3D (Ultra 2K, 2K texture)",
+      "file": "the generated GLB, kept by me, not published",
+      "sha256": "a257aec2f95503880bb3ab907d934f7545cf597f3f2fa7e1cb48d6ddf7188fd0",
+      "prompt": "A realistic Second World War bolt-action infantry rifle, full length, seen from its left side and slightly from above, a dark walnut stock with a straight wrist, a round steel barrel with a hooded front sight near the muzzle, a turned-down bolt handle, a metal butt plate, sling swivels, no sling, no bayonet, no scope, the whole rifle in frame, isolated, centred, plain neutral grey background, soft studio lighting, no text, no markings, no logos, reference image for a 3D model"
     }
   },
   "models": {
@@ -5579,9 +5595,10 @@
       ],
       "source": "generated-alpine-trooper",
       "cut": {
-        "mode": "parts",
-        "tris": 2000,
-        "texture": 512
+        "mode": "rewrap",
+        "tris": 1700,
+        "texture": 512,
+        "depth": 8
       },
       "stage": {
         "measure": "height",
@@ -5611,7 +5628,1834 @@
         ]
       },
       "budget": 2000,
-      "made": "generated; simplified; the owner's colour on the jacket"
+      "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the smock; posed, his arms at his sides and his rifle at the trail in his right hand",
+      "prop": {
+        "mode": "hand",
+        "source": "generated-bolt-rifle",
+        "cut": {
+          "mode": "rewrap",
+          "tris": 250,
+          "texture": 256,
+          "depth": 7
+        },
+        "options": {
+          "height": 1.11,
+          "top": [
+            -0.95,
+            0,
+            0
+          ],
+          "posed": [
+            0,
+            0.25,
+            1
+          ],
+          "grip": 0.42
+        }
+      },
+      "stance": {
+        "joints": {
+          "pelvis": [
+            -0.003,
+            0.954,
+            -0.132
+          ],
+          "chest": [
+            0.003,
+            1.296,
+            -0.11
+          ],
+          "neck": [
+            0.002,
+            1.494,
+            -0.15
+          ],
+          "head": [
+            0.001,
+            1.566,
+            -0.125
+          ],
+          "top": [
+            0.001,
+            1.8,
+            -0.125
+          ],
+          "hip.L": [
+            0.096,
+            0.9,
+            -0.132
+          ],
+          "knee.L": [
+            0.149,
+            0.513,
+            -0.148
+          ],
+          "ankle.L": [
+            0.16,
+            0.09,
+            -0.177
+          ],
+          "toe.L": [
+            0.16,
+            0.036,
+            0.463
+          ],
+          "hip.R": [
+            -0.102,
+            0.9,
+            -0.132
+          ],
+          "knee.R": [
+            -0.153,
+            0.513,
+            -0.136
+          ],
+          "ankle.R": [
+            -0.148,
+            0.09,
+            -0.177
+          ],
+          "toe.R": [
+            -0.148,
+            0.036,
+            0.459
+          ],
+          "shoulder.L": [
+            0.182,
+            1.458,
+            -0.17
+          ],
+          "elbow.L": [
+            0.389,
+            1.21,
+            -0.147
+          ],
+          "wrist.L": [
+            0.552,
+            1.097,
+            -0.097
+          ],
+          "hand.L": [
+            0.672,
+            0.947,
+            -0.041
+          ],
+          "shoulder.R": [
+            -0.179,
+            1.458,
+            -0.17
+          ],
+          "elbow.R": [
+            -0.387,
+            1.21,
+            -0.144
+          ],
+          "wrist.R": [
+            -0.551,
+            1.096,
+            -0.092
+          ],
+          "hand.R": [
+            -0.672,
+            0.964,
+            -0.017
+          ]
+        },
+        "aim": {
+          "upper_arm.L": [
+            0.34,
+            -1,
+            0.04
+          ],
+          "forearm.L": [
+            0.19,
+            -1,
+            0.28
+          ],
+          "hand.L": [
+            0.15,
+            -1,
+            0.2
+          ],
+          "upper_arm.R": [
+            -0.4,
+            -1,
+            0.06
+          ],
+          "forearm.R": [
+            -0.22,
+            -1,
+            0.18
+          ],
+          "hand.R": [
+            0.0,
+            0.25,
+            1.0
+          ]
+        },
+        "whole": [
+          {
+            "part": 2,
+            "bone": "hand.R"
+          }
+        ]
+      },
+      "rig": {
+        "prop": {
+          "part": 2,
+          "bone": "hand.R",
+          "muzzle": [
+            0,
+            0.25,
+            1
+          ],
+          "back": [
+            0,
+            1,
+            0
+          ],
+          "grounded": false
+        },
+        "clips": {
+          "idle": {
+            "length": 3,
+            "keys": [
+              {
+                "at": 0,
+                "plant": {
+                  "L": true,
+                  "R": true
+                }
+              },
+              {
+                "at": 1.1,
+                "aim": {
+                  "chest": [
+                    0.02,
+                    1,
+                    -0.17
+                  ],
+                  "upper_arm.L": [
+                    0.39,
+                    -1,
+                    0.08
+                  ]
+                },
+                "twist": {
+                  "head": 9
+                },
+                "hips": [
+                  0.025,
+                  -0.006,
+                  0
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                }
+              },
+              {
+                "at": 2.1,
+                "aim": {
+                  "spine": [
+                    -0.09,
+                    1,
+                    -0.05
+                  ],
+                  "chest": [
+                    0.03,
+                    1,
+                    -0.1
+                  ],
+                  "upper_arm.L": [
+                    0.4,
+                    -1,
+                    0.04
+                  ]
+                },
+                "twist": {
+                  "head": -7
+                },
+                "hips": [
+                  -0.02,
+                  -0.004,
+                  0.005
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                }
+              }
+            ],
+            "lag": {
+              "chest": 0.1,
+              "neck": 0.2,
+              "head": 0.25,
+              "upper_arm.L": 0.15,
+              "forearm.L": 0.25
+            }
+          },
+          "move": {
+            "length": 1.2,
+            "lag": {
+              "chest": 0.03,
+              "neck": 0.06,
+              "head": 0.08,
+              "upper_arm.L": 0.05,
+              "forearm.L": 0.08
+            },
+            "keys": [
+              {
+                "at": 0.0,
+                "plant": {
+                  "L": [
+                    0.16,
+                    0.103
+                  ],
+                  "R": [
+                    -0.148,
+                    -0.457
+                  ]
+                },
+                "hips": [
+                  0,
+                  -0.13,
+                  0.03
+                ],
+                "aim": {
+                  "spine": [
+                    0,
+                    1,
+                    0.225
+                  ],
+                  "chest": [
+                    0,
+                    1,
+                    0.45
+                  ],
+                  "neck": [
+                    0,
+                    1,
+                    0.1
+                  ],
+                  "head": [
+                    0,
+                    1,
+                    0.05
+                  ],
+                  "upper_arm.L": [
+                    0.34,
+                    -1,
+                    -0.31
+                  ],
+                  "forearm.L": [
+                    0.19,
+                    -1,
+                    -0.175
+                  ],
+                  "hand.L": [
+                    0.15,
+                    -1,
+                    -0.255
+                  ],
+                  "upper_arm.R": [
+                    -0.4,
+                    -1,
+                    0.21
+                  ],
+                  "forearm.R": [
+                    -0.22,
+                    -1,
+                    0.375
+                  ],
+                  "hand.R": [
+                    0.0,
+                    0.25,
+                    1.195
+                  ]
+                },
+                "twist": {
+                  "chest": 6
+                }
+              },
+              {
+                "at": 0.3,
+                "plant": {
+                  "L": [
+                    0.16,
+                    -0.177
+                  ],
+                  "R": [
+                    -0.148,
+                    -0.177
+                  ]
+                },
+                "hips": [
+                  0,
+                  -0.09,
+                  0.03
+                ],
+                "aim": {
+                  "spine": [
+                    0,
+                    1,
+                    0.225
+                  ],
+                  "chest": [
+                    0,
+                    1,
+                    0.45
+                  ],
+                  "neck": [
+                    0,
+                    1,
+                    0.1
+                  ],
+                  "head": [
+                    0,
+                    1,
+                    0.05
+                  ],
+                  "upper_arm.L": [
+                    0.34,
+                    -1,
+                    0.04
+                  ],
+                  "forearm.L": [
+                    0.19,
+                    -1,
+                    0.28
+                  ],
+                  "hand.L": [
+                    0.15,
+                    -1,
+                    0.2
+                  ],
+                  "upper_arm.R": [
+                    -0.4,
+                    -1,
+                    0.06
+                  ],
+                  "forearm.R": [
+                    -0.22,
+                    -1,
+                    0.18
+                  ],
+                  "hand.R": [
+                    0.0,
+                    0.25,
+                    1.0
+                  ]
+                },
+                "twist": {
+                  "chest": 0
+                }
+              },
+              {
+                "at": 0.6,
+                "plant": {
+                  "L": [
+                    0.16,
+                    -0.457
+                  ],
+                  "R": [
+                    -0.148,
+                    0.103
+                  ]
+                },
+                "hips": [
+                  0,
+                  -0.13,
+                  0.03
+                ],
+                "aim": {
+                  "spine": [
+                    0,
+                    1,
+                    0.225
+                  ],
+                  "chest": [
+                    0,
+                    1,
+                    0.45
+                  ],
+                  "neck": [
+                    0,
+                    1,
+                    0.1
+                  ],
+                  "head": [
+                    0,
+                    1,
+                    0.05
+                  ],
+                  "upper_arm.L": [
+                    0.34,
+                    -1,
+                    0.39
+                  ],
+                  "forearm.L": [
+                    0.19,
+                    -1,
+                    0.735
+                  ],
+                  "hand.L": [
+                    0.15,
+                    -1,
+                    0.655
+                  ],
+                  "upper_arm.R": [
+                    -0.4,
+                    -1,
+                    -0.09
+                  ],
+                  "forearm.R": [
+                    -0.22,
+                    -1,
+                    -0.015
+                  ],
+                  "hand.R": [
+                    0.0,
+                    0.25,
+                    0.805
+                  ]
+                },
+                "twist": {
+                  "chest": -6
+                }
+              },
+              {
+                "at": 0.9,
+                "plant": {
+                  "L": [
+                    0.16,
+                    -0.177
+                  ],
+                  "R": [
+                    -0.148,
+                    -0.177
+                  ]
+                },
+                "hips": [
+                  0,
+                  -0.09,
+                  0.03
+                ],
+                "aim": {
+                  "spine": [
+                    0,
+                    1,
+                    0.225
+                  ],
+                  "chest": [
+                    0,
+                    1,
+                    0.45
+                  ],
+                  "neck": [
+                    0,
+                    1,
+                    0.1
+                  ],
+                  "head": [
+                    0,
+                    1,
+                    0.05
+                  ],
+                  "upper_arm.L": [
+                    0.34,
+                    -1,
+                    0.04
+                  ],
+                  "forearm.L": [
+                    0.19,
+                    -1,
+                    0.28
+                  ],
+                  "hand.L": [
+                    0.15,
+                    -1,
+                    0.2
+                  ],
+                  "upper_arm.R": [
+                    -0.4,
+                    -1,
+                    0.06
+                  ],
+                  "forearm.R": [
+                    -0.22,
+                    -1,
+                    0.18
+                  ],
+                  "hand.R": [
+                    0.0,
+                    0.25,
+                    1.0
+                  ]
+                },
+                "twist": {
+                  "chest": 0
+                }
+              }
+            ]
+          },
+          "fight": {
+            "length": 1.5,
+            "keys": [
+              {
+                "at": 0,
+                "plant": {
+                  "L": true,
+                  "R": true
+                }
+              },
+              {
+                "at": 0.041667,
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "hold": {
+                  "aim": [
+                    -0.0023,
+                    0.2468,
+                    0.9691
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.2864,
+                    0.8466,
+                    -0.4964
+                  ]
+                }
+              },
+              {
+                "at": 0.166667,
+                "hips": [
+                  0,
+                  -0.015,
+                  0
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "hold": {
+                  "aim": [
+                    0.2,
+                    0.6,
+                    0.8
+                  ],
+                  "up": [
+                    0.0,
+                    1.0,
+                    0.0
+                  ],
+                  "butt": [
+                    -0.22,
+                    1.0,
+                    -0.2
+                  ],
+                  "hand": 0.35
+                },
+                "aim": {
+                  "upper_arm.R": [
+                    -0.35,
+                    -1,
+                    0.35
+                  ],
+                  "forearm.R": [
+                    -0.1,
+                    -0.3,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    0.1,
+                    -0.8,
+                    0.6
+                  ],
+                  "forearm.L": [
+                    -0.2,
+                    0,
+                    1
+                  ],
+                  "hand.L": null
+                },
+                "twist": {
+                  "chest": -10.0
+                }
+              },
+              {
+                "at": 0.375,
+                "hips": [
+                  0,
+                  -0.03,
+                  0.01
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "spine": [
+                    -0.03,
+                    1,
+                    0.1
+                  ],
+                  "neck": [
+                    -0.2,
+                    1,
+                    0.45
+                  ],
+                  "head": [
+                    -0.3,
+                    1,
+                    0.55
+                  ],
+                  "upper_arm.R": [
+                    -0.75,
+                    -0.35,
+                    0.3
+                  ],
+                  "forearm.R": [
+                    0.25,
+                    0.05,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    -0.2,
+                    -0.55,
+                    0.7
+                  ],
+                  "forearm.L": [
+                    -0.3,
+                    0.15,
+                    1
+                  ],
+                  "hand.L": [
+                    -0.2,
+                    0.1,
+                    1
+                  ]
+                },
+                "twist": {
+                  "chest": -30,
+                  "head": 25,
+                  "forearm.R": 70.0
+                },
+                "hold": {
+                  "aim": [
+                    0.5,
+                    -0.015,
+                    0.866
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.095,
+                    1.41,
+                    -0.04
+                  ],
+                  "hand": 0.22
+                },
+                "grip": {
+                  "L": 0.45
+                }
+              },
+              {
+                "at": 0.541667,
+                "hips": [
+                  0,
+                  -0.03,
+                  0.01
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "spine": [
+                    -0.03,
+                    1,
+                    0.1
+                  ],
+                  "neck": [
+                    -0.2,
+                    1,
+                    0.45
+                  ],
+                  "head": [
+                    -0.3,
+                    1,
+                    0.55
+                  ],
+                  "upper_arm.R": [
+                    -0.75,
+                    -0.35,
+                    0.3
+                  ],
+                  "forearm.R": [
+                    0.25,
+                    0.05,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    -0.2,
+                    -0.55,
+                    0.7
+                  ],
+                  "forearm.L": [
+                    -0.3,
+                    0.15,
+                    1
+                  ],
+                  "hand.L": [
+                    -0.2,
+                    0.1,
+                    1
+                  ]
+                },
+                "twist": {
+                  "chest": -30,
+                  "head": 25,
+                  "forearm.R": 70.0
+                },
+                "hold": {
+                  "aim": [
+                    0.5,
+                    -0.015,
+                    0.866
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.095,
+                    1.41,
+                    -0.04
+                  ],
+                  "hand": 0.22
+                },
+                "grip": {
+                  "L": 0.45
+                }
+              },
+              {
+                "at": 0.583333,
+                "hips": [
+                  0,
+                  -0.03,
+                  0.01
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "spine": [
+                    -0.03,
+                    1,
+                    0.1
+                  ],
+                  "neck": [
+                    -0.2,
+                    1,
+                    0.45
+                  ],
+                  "head": [
+                    -0.3,
+                    1,
+                    0.55
+                  ],
+                  "upper_arm.R": [
+                    -0.75,
+                    -0.35,
+                    0.3
+                  ],
+                  "forearm.R": [
+                    0.25,
+                    0.05,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    -0.2,
+                    -0.55,
+                    0.7
+                  ],
+                  "forearm.L": [
+                    -0.3,
+                    0.15,
+                    1
+                  ],
+                  "hand.L": [
+                    -0.2,
+                    0.1,
+                    1
+                  ]
+                },
+                "twist": {
+                  "chest": -30,
+                  "head": 25,
+                  "forearm.R": 70.0
+                },
+                "hold": {
+                  "aim": [
+                    0.5,
+                    -0.015,
+                    0.866
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.095,
+                    1.41,
+                    -0.04
+                  ],
+                  "hand": 0.22
+                },
+                "grip": {
+                  "L": 0.45
+                }
+              },
+              {
+                "at": 0.666667,
+                "hips": [
+                  0,
+                  -0.03,
+                  -0.020000000000000004
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "spine": [
+                    -0.03,
+                    1,
+                    -0.1
+                  ],
+                  "neck": [
+                    -0.2,
+                    1,
+                    0.2
+                  ],
+                  "head": [
+                    -0.3,
+                    1,
+                    0.25
+                  ],
+                  "upper_arm.R": [
+                    -0.75,
+                    -0.35,
+                    0.3
+                  ],
+                  "forearm.R": [
+                    0.25,
+                    0.05,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    -0.2,
+                    -0.55,
+                    0.7
+                  ],
+                  "forearm.L": [
+                    -0.3,
+                    0.15,
+                    1
+                  ],
+                  "hand.L": [
+                    -0.2,
+                    0.1,
+                    1
+                  ]
+                },
+                "twist": {
+                  "chest": -30,
+                  "head": 25,
+                  "forearm.R": 70.0
+                },
+                "hold": {
+                  "aim": [
+                    0.5,
+                    0.2,
+                    0.866
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.095,
+                    1.425,
+                    -0.05
+                  ],
+                  "hand": 0.22
+                },
+                "grip": {
+                  "L": 0.45
+                },
+                "ease": "snap"
+              },
+              {
+                "at": 0.833333,
+                "hips": [
+                  0,
+                  -0.03,
+                  0.01
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "spine": [
+                    -0.03,
+                    1,
+                    0.1
+                  ],
+                  "neck": [
+                    -0.2,
+                    1,
+                    0.45
+                  ],
+                  "head": [
+                    -0.3,
+                    1,
+                    0.55
+                  ],
+                  "upper_arm.R": [
+                    -0.75,
+                    -0.35,
+                    0.3
+                  ],
+                  "forearm.R": [
+                    0.25,
+                    0.05,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    -0.2,
+                    -0.55,
+                    0.7
+                  ],
+                  "forearm.L": [
+                    -0.3,
+                    0.15,
+                    1
+                  ],
+                  "hand.L": [
+                    -0.2,
+                    0.1,
+                    1
+                  ]
+                },
+                "twist": {
+                  "chest": -30,
+                  "head": 25,
+                  "forearm.R": 70.0
+                },
+                "hold": {
+                  "aim": [
+                    0.5,
+                    -0.015,
+                    0.866
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.095,
+                    1.41,
+                    -0.04
+                  ],
+                  "hand": 0.22
+                },
+                "grip": {
+                  "L": 0.45
+                }
+              },
+              {
+                "at": 1.041667,
+                "hips": [
+                  0,
+                  -0.03,
+                  0.01
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "spine": [
+                    -0.03,
+                    1,
+                    0.1
+                  ],
+                  "neck": [
+                    -0.2,
+                    1,
+                    0.45
+                  ],
+                  "head": [
+                    -0.3,
+                    1,
+                    0.55
+                  ],
+                  "upper_arm.R": [
+                    -0.75,
+                    -0.35,
+                    0.3
+                  ],
+                  "forearm.R": [
+                    0.25,
+                    0.05,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    -0.2,
+                    -0.55,
+                    0.7
+                  ],
+                  "forearm.L": [
+                    -0.3,
+                    0.15,
+                    1
+                  ],
+                  "hand.L": [
+                    -0.2,
+                    0.1,
+                    1
+                  ]
+                },
+                "twist": {
+                  "chest": -30,
+                  "head": 25,
+                  "forearm.R": 70.0
+                },
+                "hold": {
+                  "aim": [
+                    0.5,
+                    -0.015,
+                    0.866
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.095,
+                    1.41,
+                    -0.04
+                  ],
+                  "hand": 0.22
+                },
+                "grip": {
+                  "L": 0.45
+                }
+              },
+              {
+                "at": 1.291667,
+                "hips": [
+                  0,
+                  -0.015,
+                  0
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "hold": {
+                  "aim": [
+                    0.2,
+                    0.6,
+                    0.8
+                  ],
+                  "up": [
+                    0.0,
+                    1.0,
+                    0.0
+                  ],
+                  "butt": [
+                    -0.22,
+                    1.0,
+                    -0.2
+                  ],
+                  "hand": 0.35
+                },
+                "aim": {
+                  "upper_arm.R": [
+                    -0.35,
+                    -1,
+                    0.35
+                  ],
+                  "forearm.R": [
+                    -0.1,
+                    -0.3,
+                    1
+                  ],
+                  "upper_arm.L": [
+                    0.1,
+                    -0.8,
+                    0.6
+                  ],
+                  "forearm.L": [
+                    -0.2,
+                    0,
+                    1
+                  ],
+                  "hand.L": null
+                },
+                "twist": {
+                  "chest": -10.0
+                }
+              },
+              {
+                "at": 1.458333,
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "hold": {
+                  "aim": [
+                    -0.0023,
+                    0.2468,
+                    0.9691
+                  ],
+                  "up": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "butt": [
+                    -0.2864,
+                    0.8466,
+                    -0.4964
+                  ]
+                }
+              },
+              {
+                "at": 1.5
+              }
+            ],
+            "shots": [
+              {
+                "at": 0.541667,
+                "joint": "muzzle",
+                "kind": "bullet"
+              }
+            ],
+            "lag": {
+              "neck": 0.03,
+              "head": 0.06
+            }
+          },
+          "die": {
+            "length": 1.5,
+            "keys": [
+              {
+                "at": 0,
+                "plant": {
+                  "L": true,
+                  "R": true
+                }
+              },
+              {
+                "at": 0.166667,
+                "ease": "snap",
+                "hips": [
+                  0,
+                  -0.02,
+                  0.07
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "spine": [
+                    -0.117,
+                    1,
+                    -0.55
+                  ],
+                  "chest": [
+                    0.02,
+                    1,
+                    -0.75
+                  ],
+                  "neck": [
+                    0,
+                    1,
+                    -0.05
+                  ],
+                  "head": [
+                    0,
+                    1,
+                    0.08
+                  ],
+                  "upper_arm.L": [
+                    0.8,
+                    0.25,
+                    -0.45
+                  ],
+                  "forearm.L": [
+                    0.45,
+                    0.85,
+                    -0.3
+                  ],
+                  "hand.L": null,
+                  "upper_arm.R": [
+                    -0.85,
+                    -0.25,
+                    -0.35
+                  ],
+                  "forearm.R": [
+                    -0.7,
+                    0.3,
+                    -0.2
+                  ],
+                  "hand.R": null,
+                  "shoulder.L": [
+                    1,
+                    0.25,
+                    -0.2
+                  ],
+                  "shoulder.R": [
+                    -1,
+                    0.1,
+                    -0.2
+                  ]
+                },
+                "twist": {
+                  "spine": 8
+                },
+                "late": {
+                  "forearm.L": 0.041667,
+                  "forearm.R": 0.041667,
+                  "head": 0.041667
+                }
+              },
+              {
+                "at": 0.25,
+                "hips": [
+                  -0.02,
+                  -0.1,
+                  0.05
+                ],
+                "plant": {
+                  "L": true,
+                  "R": true
+                },
+                "aim": {
+                  "hips": [
+                    0.1,
+                    -1,
+                    0
+                  ],
+                  "spine": [
+                    -0.117,
+                    1,
+                    -0.55
+                  ],
+                  "chest": [
+                    0.02,
+                    1,
+                    -0.65
+                  ],
+                  "neck": [
+                    0,
+                    1,
+                    -0.3
+                  ],
+                  "head": [
+                    0,
+                    1,
+                    -0.35
+                  ],
+                  "upper_arm.L": [
+                    0.75,
+                    0.05,
+                    -0.3
+                  ],
+                  "forearm.L": [
+                    0.5,
+                    0.6,
+                    -0.1
+                  ],
+                  "hand.L": null,
+                  "upper_arm.R": [
+                    -0.8,
+                    -0.4,
+                    -0.2
+                  ],
+                  "forearm.R": [
+                    -0.6,
+                    0.1,
+                    0.1
+                  ],
+                  "hand.R": null,
+                  "shoulder.L": [
+                    1,
+                    0.15,
+                    -0.15
+                  ],
+                  "shoulder.R": [
+                    -1,
+                    0.05,
+                    -0.15
+                  ]
+                },
+                "twist": {
+                  "spine": 10,
+                  "hips": 6
+                }
+              },
+              {
+                "at": 0.458333,
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    0.3,
+                    0,
+                    -0.177
+                  ],
+                  "degrees": -35.0
+                },
+                "hips": [
+                  0,
+                  -0.12,
+                  0
+                ],
+                "plant": {
+                  "L": true
+                },
+                "aim": {
+                  "spine": [
+                    0.2,
+                    1.0,
+                    -0.15
+                  ],
+                  "chest": [
+                    0.25,
+                    1.0,
+                    -0.25
+                  ],
+                  "neck": [
+                    0.1,
+                    1.0,
+                    0.1
+                  ],
+                  "head": [
+                    0.0,
+                    1.0,
+                    0.2
+                  ],
+                  "upper_arm.L": [
+                    0.9,
+                    -0.4,
+                    0.2
+                  ],
+                  "forearm.L": [
+                    0.7,
+                    -0.6,
+                    0.3
+                  ],
+                  "hand.L": null,
+                  "upper_arm.R": [
+                    -0.6,
+                    0.2,
+                    0.6
+                  ],
+                  "forearm.R": [
+                    -0.3,
+                    0.4,
+                    0.8
+                  ],
+                  "hand.R": null,
+                  "thigh.R": [
+                    -0.15,
+                    -0.9,
+                    0.3
+                  ],
+                  "shin.R": [
+                    -0.1,
+                    -1.0,
+                    -0.2
+                  ]
+                }
+              },
+              {
+                "at": 0.666667,
+                "ease": "hit",
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    0.3,
+                    0,
+                    -0.177
+                  ],
+                  "degrees": -90
+                },
+                "late": {
+                  "upper_arm.L": 0.06,
+                  "forearm.L": 0.08,
+                  "upper_arm.R": 0.06,
+                  "forearm.R": 0.08,
+                  "head": 0.05
+                },
+                "hips": [
+                  0,
+                  -0.1,
+                  0
+                ],
+                "aim": {
+                  "spine": [
+                    -0.1,
+                    1.0,
+                    0.1
+                  ],
+                  "chest": [
+                    -0.15,
+                    1.0,
+                    0.15
+                  ],
+                  "neck": [
+                    0.35,
+                    1.0,
+                    0.1
+                  ],
+                  "head": [
+                    0.35,
+                    1.0,
+                    0.2
+                  ],
+                  "upper_arm.L": [
+                    -0.05,
+                    0.5,
+                    1.0
+                  ],
+                  "forearm.L": [
+                    -0.05,
+                    0.7,
+                    0.8
+                  ],
+                  "hand.L": null,
+                  "upper_arm.R": [
+                    0.35,
+                    -0.6,
+                    0.75
+                  ],
+                  "forearm.R": [
+                    0.6,
+                    -0.2,
+                    0.75
+                  ],
+                  "hand.R": null,
+                  "thigh.L": [
+                    0.0,
+                    -1.0,
+                    0.05
+                  ],
+                  "shin.L": [
+                    0.0,
+                    -1.0,
+                    -0.1
+                  ],
+                  "thigh.R": [
+                    -0.08,
+                    -0.8,
+                    0.6
+                  ],
+                  "shin.R": [
+                    0.05,
+                    -1.0,
+                    0.05
+                  ]
+                }
+              },
+              {
+                "at": 0.875,
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    0.3,
+                    0,
+                    -0.177
+                  ],
+                  "degrees": -86.0
+                },
+                "hips": [
+                  0,
+                  -0.1,
+                  0
+                ],
+                "aim": {
+                  "spine": [
+                    -0.1,
+                    1.0,
+                    0.1
+                  ],
+                  "chest": [
+                    -0.15,
+                    1.0,
+                    0.15
+                  ],
+                  "neck": [
+                    0.35,
+                    1.0,
+                    0.1
+                  ],
+                  "head": [
+                    0.35,
+                    1.0,
+                    0.2
+                  ],
+                  "upper_arm.L": [
+                    -0.05,
+                    0.5,
+                    1.0
+                  ],
+                  "forearm.L": [
+                    -0.05,
+                    0.7,
+                    0.8
+                  ],
+                  "hand.L": null,
+                  "upper_arm.R": [
+                    0.35,
+                    -0.6,
+                    0.75
+                  ],
+                  "forearm.R": [
+                    0.6,
+                    -0.2,
+                    0.75
+                  ],
+                  "hand.R": null,
+                  "thigh.L": [
+                    0.0,
+                    -1.0,
+                    0.05
+                  ],
+                  "shin.L": [
+                    0.0,
+                    -1.0,
+                    -0.1
+                  ],
+                  "thigh.R": [
+                    -0.08,
+                    -0.8,
+                    0.6
+                  ],
+                  "shin.R": [
+                    0.05,
+                    -1.0,
+                    0.05
+                  ]
+                }
+              },
+              {
+                "at": 1.041667,
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    0.3,
+                    0,
+                    -0.177
+                  ],
+                  "degrees": -90
+                },
+                "hips": [
+                  0,
+                  -0.1,
+                  0
+                ],
+                "aim": {
+                  "spine": [
+                    -0.1,
+                    1.0,
+                    0.1
+                  ],
+                  "chest": [
+                    -0.15,
+                    1.0,
+                    0.15
+                  ],
+                  "neck": [
+                    0.35,
+                    1.0,
+                    0.1
+                  ],
+                  "head": [
+                    0.35,
+                    1.0,
+                    0.2
+                  ],
+                  "upper_arm.L": [
+                    -0.05,
+                    0.5,
+                    1.0
+                  ],
+                  "forearm.L": [
+                    -0.05,
+                    0.7,
+                    0.8
+                  ],
+                  "hand.L": null,
+                  "upper_arm.R": [
+                    0.35,
+                    -0.6,
+                    0.75
+                  ],
+                  "forearm.R": [
+                    0.6,
+                    -0.2,
+                    0.75
+                  ],
+                  "hand.R": null,
+                  "thigh.L": [
+                    0.0,
+                    -1.0,
+                    0.05
+                  ],
+                  "shin.L": [
+                    0.0,
+                    -1.0,
+                    -0.1
+                  ],
+                  "thigh.R": [
+                    -0.08,
+                    -0.8,
+                    0.6
+                  ],
+                  "shin.R": [
+                    0.05,
+                    -1.0,
+                    0.05
+                  ]
+                }
+              },
+              {
+                "at": 1.5,
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    0.3,
+                    0,
+                    -0.177
+                  ],
+                  "degrees": -90
+                },
+                "hips": [
+                  0,
+                  -0.1,
+                  0
+                ],
+                "aim": {
+                  "spine": [
+                    -0.1,
+                    1.0,
+                    0.1
+                  ],
+                  "chest": [
+                    -0.15,
+                    1.0,
+                    0.15
+                  ],
+                  "neck": [
+                    0.35,
+                    1.0,
+                    0.1
+                  ],
+                  "head": [
+                    0.35,
+                    1.0,
+                    0.2
+                  ],
+                  "upper_arm.L": [
+                    -0.05,
+                    0.5,
+                    1.0
+                  ],
+                  "forearm.L": [
+                    -0.05,
+                    0.7,
+                    0.8
+                  ],
+                  "hand.L": null,
+                  "upper_arm.R": [
+                    0.35,
+                    -0.6,
+                    0.75
+                  ],
+                  "forearm.R": [
+                    0.6,
+                    -0.2,
+                    0.75
+                  ],
+                  "hand.R": null,
+                  "thigh.L": [
+                    0.0,
+                    -1.0,
+                    0.05
+                  ],
+                  "shin.L": [
+                    0.0,
+                    -1.0,
+                    -0.1
+                  ],
+                  "thigh.R": [
+                    -0.08,
+                    -0.8,
+                    0.6
+                  ],
+                  "shin.R": [
+                    0.05,
+                    -1.0,
+                    0.05
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
     },
     "partisan": {
       "units": [
