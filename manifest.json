@@ -256,7 +256,7 @@
    "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the smock; posed, his arms at his sides and his rifle at the trail in his right hand",
    "rigged": {
     "file": "models/rigged/alpine-trooper.glb",
-    "sha256": "0b84c24059f51e3dd389c6feb718dc0db1f9a63e08c4c9f9047513e840f0fdb9",
+    "sha256": "93dd411ae49eb0380ddd2ac0f7e9b193fa3c322fc126b049567162187870e395",
     "clips": {
      "idle": "idle",
      "move": "move",
