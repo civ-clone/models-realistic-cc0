@@ -71,7 +71,7 @@
   },
   "warrior": {
    "file": "models/warrior.glb",
-   "sha256": "0c128780a8b6513e14fcf4be8fd9bcf6ba6a31b54c450de92ccb33c72b13e159",
+   "sha256": "5e733477fe413f9e1752a7916029a507cf8806f4f8822e655eb7b78b100e3c18",
    "extent": {
     "across": [
      -0.553,
@@ -90,7 +90,7 @@
    "made": "generated; rewrapped; the owner's colour on the cloak; posed, his club and shield held whole",
    "rigged": {
     "file": "models/rigged/warrior.glb",
-    "sha256": "a5e8b85c1563c4121c4bbe7dd3445b9cb51af18dacc1fe44ed46bacaae7bc44f",
+    "sha256": "3a36a9149164a25a2794b90a6a9b4adb0385ac07cce0fd01aa36cc89323e46d4",
     "clips": {
      "idle": "idle",
      "move": "move",
@@ -540,7 +540,7 @@
    "made": "generated; rewrapped; the owner's colour on the vest; posed, his rolled drawing held whole",
    "rigged": {
     "file": "models/rigged/engineer.glb",
-    "sha256": "1965110e82475637e471ca18282082daab16427f0a23b78e198a67575b0fdab3",
+    "sha256": "8ee1e4046cfdc855b2a281f49d70a274bbbcdfc8b4cc69361553c541a8aac523",
     "clips": {
      "idle": "idle",
      "move": "move",

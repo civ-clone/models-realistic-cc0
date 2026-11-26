@@ -72,15 +72,16 @@ map draws each type from one set.
   barrel's end.
 
   The Explorer, the Spy and the Engineers, who don't fight, have the Partisans' `idle`, `move` and `die`, the Engineers'
-  arms swinging from where they hold them.
+  arms swinging from where they hold them. Lying dead, the Engineers' drawing lies beside them, and their heads are
+  brought forward so their hard hats' brims don't hold them off the ground.
 
   The Warriors have the Partisans' `idle`, `move` and `die` too, their arms swinging from where they hold them (the
   shield arm half as far, the shield clear of the legs), and a `fight` of their own (1.5 s): an overhand blow with the
-  club, from the Partisans' throw. He raises it over his head, its head behind him, and brings it over and down at an
-  enemy ahead of him, his shield arm brought forward to guard him; it lands at 0.5 s (`strike`), its head about 1.5 m up
-  and 1.3 m ahead of his hips, and carries on down. His back foot stays where it is as he steps into it. In `die` he
-  lands a little short of flat, as his cloak's thick folds would otherwise meet the ground first, and lies with his club
-  on the ground beside him.
+  club, from the Partisans' throw. He raises it out to his side and over his head, its head behind him, and brings it
+  over his right shoulder and down at an enemy ahead of him, his shield arm brought forward to guard him; it lands at
+  0.5 s (`strike`), its head about 1.5 m up and 1.3 m ahead of his hips, and carries on down. His back foot stays where
+  it is as he steps into it. In `die` he lands a little short of flat, as his cloak's thick folds would otherwise meet
+  the ground first, and lies with his club on the ground beside him and his shield nearly flat at his side.
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
