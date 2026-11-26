@@ -71,7 +71,7 @@
   },
   "warrior": {
    "file": "models/warrior.glb",
-   "sha256": "5e733477fe413f9e1752a7916029a507cf8806f4f8822e655eb7b78b100e3c18",
+   "sha256": "eb7007db201bd5dfb8643471831b9504b2acecb40220bb4dfe7c8566ffefed00",
    "extent": {
     "across": [
      -0.553,
@@ -90,7 +90,7 @@
    "made": "generated; rewrapped; the owner's colour on the cloak; posed, his club and shield held whole",
    "rigged": {
     "file": "models/rigged/warrior.glb",
-    "sha256": "3a36a9149164a25a2794b90a6a9b4adb0385ac07cce0fd01aa36cc89323e46d4",
+    "sha256": "a98692a4e5b3cbff10da3fabce955283cf5e86de738b0aa68a520a750628de0c",
     "clips": {
      "idle": "idle",
      "move": "move",
