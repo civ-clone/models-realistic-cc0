@@ -92,8 +92,9 @@ map draws each type from one set.
   after the body), or lag through the whole clip, so a movement passes from the body out to the limbs. Every frame is
   stood on the ground by its lowest point, and played in place: the map moves units from square to square itself. The
   file has a root node, `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads
-  without the dot: `hand.R` is `handR`), and the held piece's, `prop`, a child of his right hand's. Each clip keys every
-  joint's turn, the root's place, and the prop's size (the molotov's is 0 from just after the throw until it grows
+  without the dot: `hand.R` is `handR`), and, for a figure whose held piece is split off to move on its own (the
+  Partisans', Riflemen's, Musketmen's and Marines'), the piece's, `prop`, a child of his right hand's. Each clip keys
+  every joint's turn, the root's place, and any prop's size (the molotov's is 0 from just after the throw until it grows
   back in his hand). A key can also hold the prop as it says rather than as the hand does: where it points, which way
   its back faces and where its butt goes, carried by the chest as it turns. The hand that holds it, and the other
   hand, are then bent to reach it, each lying along it as its forearm carries it at the keys, and every clip keys
