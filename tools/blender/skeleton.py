@@ -122,20 +122,22 @@ def read_fingers(rule, J):
     """A stance's `fingers`, checked: for each hand it names, the hand as the figure stands in the file (its wrist, its
     length to the fingertips, the ways along it, towards its palm and across it) and how its fingers curl: from the
     knuckles, round an axis across the hand `radius` towards the palm from them (where a fist holds a prop's middle),
-    by up to `curl`, and with `together`, each finger's run across the hand cut by that share (see curl())."""
+    by up to `curl`, with `together`, each finger's run across the hand cut by that share, and with `grip`, each
+    finger closing on the axis until its side nearest the palm is that far from it (see curl())."""
     fingers = rule.get('fingers', {})
     if not isinstance(fingers, dict) or set(fingers) - set(SIDES):
         fail('fingers should name hands, L or R')
     out = {}
     for side, f in fingers.items():
-        if not (isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together'} and finite(f['palm'], 3) and
-                1e-6 < np.linalg.norm(f['palm']) < 1e6 and
-                finite([f['knuckles'], f['radius'], f['curl'], f.get('together', 0)]) and 0 < f['knuckles'] < 1 and
-                0 < f['radius'] <= 0.2 and 0 < f['curl'] <= 360 and 0 <= f.get('together', 0) < 1):
+        if not (isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together', 'grip'} and
+                finite(f['palm'], 3) and 1e-6 < np.linalg.norm(f['palm']) < 1e6 and
+                finite([f['knuckles'], f['radius'], f['curl'], f.get('together', 0), f.get('grip', 0)]) and
+                0 < f['knuckles'] < 1 and 0 < f['radius'] <= 0.2 and 0 < f['curl'] <= 360 and
+                0 <= f.get('together', 0) < 1 and ('grip' not in f or 0 < f['grip'] < f['radius'])):
             fail(f'fingers.{side} should give the way its palm faces [x, y, z], where its knuckles are (a share of '
                  'the way from the wrist to the fingertips, between 0 and 1), and how its fingers curl: a radius '
                  '(metres, over 0 and up to 0.2) and degrees (over 0 and up to 360), and may draw them `together` '
-                 '(from 0 to under 1)')
+                 '(from 0 to under 1) and `grip` (metres, over 0 and under the radius)')
         wrist, tip = J[f'wrist.{side}'], J[f'hand.{side}']
         length = float(np.linalg.norm(tip - wrist))
         along = (tip - wrist) / length
@@ -148,16 +150,47 @@ def read_fingers(rule, J):
         out[side] = {'wrist': wrist, 'along': along, 'palm': palm, 'across': np.cross(along, palm),
                      'knuckles': knuckles, 'radius': radius, 'curl': math.radians(f['curl']), 'length': length,
                      'together': float(f.get('together', 0)),
+                     'grip': float(f['grip']) if 'grip' in f else None,
                      'centre': wrist + along * knuckles + palm * radius}
     return out
+
+
+def pieces(of, faces, weld):
+    """The pieces of a mesh among the points `of`: points joined by `faces` all of whose points are `of`, and points at
+    one place (by `weld`: a mesh split along a texture's seams) kept together. Each, as an array of its points."""
+    parent = np.arange(len(of))
+
+    def root(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+    for f in faces:
+        if of[f].all():
+            for j in f[1:]:
+                parent[root(j)] = root(f[0])
+    first = {}
+    for i in np.where(of)[0]:
+        parent[root(i)] = root(first.setdefault(int(weld[i]), i))
+    idx = np.where(of)[0]
+    roots = np.array([root(i) for i in idx])
+    return [idx[roots == r] for r in np.unique(roots)]
 
 
 def curl(hand, points, normals, mine, faces, weld):
     """A hand's points past its knuckles (and their normals) with the fingers curled, as read_fingers() reads the
     hand: each bent round the curl's axis, as a finger's length wraps it (a point that far past the knuckles turned by
     that far over the radius, keeping its height above the line from the wrist to the fingertips, towards the palm),
-    up to the curl, and straight on past that. A point further towards the palm than the axis would be turned through
-    it, inside out, so it's held at least a fifth of the radius short of the axis (and counted).
+    up to the curl, and straight on past that. A point that would come nearer the axis than a fifth of the radius is
+    held that far from it (and counted): one further towards the palm than the axis would otherwise be turned through
+    it, inside out.
+
+    With `grip`, each finger also closes on the axis as it wraps it, as on a held prop's handle. Its middle, a line
+    fitted to its points' heights along it, comes in (or goes out), over the stretch from where the fingers part to as
+    far again, until the side of it nearest the palm lies `grip` from the axis. It turns as the line halfway between
+    its middle and that side keeps its length, so its palm side is pressed a little and its back stretched, as a
+    finger's is round a handle, and a finger that has come in turns further. Its points are held a fifth of the grip
+    from the axis.
 
     And first, with `together`, splayed fingers closed: each finger, a piece of the mesh (by `faces`, points at one
     place, by `weld`, kept together) past the first part of its length, has that share taken off how far it runs
@@ -166,53 +199,58 @@ def curl(hand, points, normals, mine, faces, weld):
     is such a piece too. A run is taken as at most 45 degrees across.
 
     `mine` are the points that are the hand's. Returns the points, the normals, which points moved, and what was done:
-    how many moved, how many were held short of the axis, and, with `together`, how many pieces were found and the
-    most a point was moved across."""
+    how many moved, how many were held short of the axis, how many faces were folded (turned over, as a long face that
+    a bent finger runs along can be, since it can't bend itself), with `grip`, the most a finger turned, and, with
+    `together`, how many pieces were found and the most a point was moved across."""
     rel = points - hand['wrist']
     past = rel @ hand['along'] - hand['knuckles']
     up = rel @ hand['palm']
-    radius = hand['radius']
+    radius, grip = hand['radius'], hand['grip']
     moved = (past > 0) & mine
+    start = 0.15 * (hand['length'] - hand['knuckles'])  # where the fingers part
+    fingers = ([q for q in pieces(moved & (past > start), faces, weld) if len(q) >= 3 and np.ptp(past[q]) > 1e-3]
+               if (hand['together'] or grip) and moved.any() else [])
     reach = radius - up  # from the axis, once turned
-    held = moved & (reach < 0.2 * radius)
-    reach = np.maximum(reach, 0.2 * radius)
     phi = np.clip(past / radius, 0, hand['curl'])
     on = np.maximum(past - hand['curl'] * radius, 0)
+    least = 0.2 * radius
+    info = {'points': int(moved.sum())}
+    if grip is not None:
+        least = 0.2 * grip
+        if start / radius < hand['curl']:
+            for q in fingers:
+                slope, height = np.polyfit(past[q], up[q], 1)
+                slope = float(np.clip(slope, -1, 1))
+                height = float(np.mean(up[q] - slope * past[q]))
+                inner = float((up[q] - height - slope * past[q]).max())  # its side nearest the palm, from its middle
+
+                def closer(s):  # how far its middle has come in, that far past the knuckles
+                    return (radius - height - slope * s - inner - grip) * np.clip((s - start) / start, 0, 1)
+                s = np.linspace(start, past[q].max(), max(2, int(np.ceil((past[q].max() - start) / 5e-4)) + 1))
+                bend = np.maximum(radius - height - slope * s - closer(s) - inner / 2, least)  # keeps its length
+                gone = np.cumsum(np.diff(s) * (1 / bend[:-1] + 1 / bend[1:]) / 2)  # its turn, from where they part
+                turn = start / radius + np.concatenate([[0], gone])
+                phi[q] = np.minimum(np.interp(past[q], s, turn), hand['curl'])
+                last = np.interp(hand['curl'], turn, s) if turn[-1] > hand['curl'] else np.inf  # where it's turned all
+                on[q] = np.maximum(past[q] - last, 0)
+                reach[q] -= closer(past[q])
+        info['most turned (deg)'] = round(math.degrees(float(phi[moved].max())), 1) if moved.any() else 0
+    held = moved & (reach < least)
+    reach = np.maximum(reach, least)
+    info['held'] = int(held.sum())
     c, s = np.cos(phi), np.sin(phi)
     along = hand['knuckles'] + reach * s + on * c
     palm = radius - reach * c + on * s
     across = rel @ hand['across']
-    info = {'points': int(moved.sum()), 'held': int(held.sum())}
     if hand['together'] and moved.any():
-        start = 0.15 * (hand['length'] - hand['knuckles'])  # where the fingers part
-        finger = moved & (past > start)
-        parent = np.arange(len(points))
-
-        def root(i):
-            while parent[i] != i:
-                parent[i] = parent[parent[i]]
-                i = parent[i]
-            return i
-        for f in faces:
-            if finger[f].all():
-                for j in f[1:]:
-                    parent[root(j)] = root(f[0])
-        first = {}  # points at one place (split along a texture's seams) are one finger's
-        for i in np.where(finger)[0]:
-            parent[root(i)] = root(first.setdefault(int(weld[i]), i))
-        idx = np.where(finger)[0]
-        roots = np.array([root(i) for i in idx])
-        drift = {}  # each finger's run across the hand per metre along it
-        for r in np.unique(roots):
-            m = idx[roots == r]
-            if len(m) >= 3 and np.ptp(past[m]) > 1e-3:
-                drift[r] = float(np.clip(np.polyfit(past[m], across[m], 1)[0], -1, 1))
+        drift = []  # each finger's run across the hand per metre along it
+        for q in fingers:
+            drift.append((q, float(np.clip(np.polyfit(past[q], across[q], 1)[0], -1, 1))))
         shift = np.zeros(len(points))
         if drift:
-            usual = float(np.median(list(drift.values())))
-            for r, k in drift.items():
-                m = idx[roots == r]
-                shift[m] = hand['together'] * (k - usual) * (past[m] - start)  # from where they part, so none jumps
+            usual = float(np.median([k for _, k in drift]))
+            for q, k in drift:
+                shift[q] = hand['together'] * (k - usual) * (past[q] - start)  # from where they part, so none jumps
         across = across - shift
         info.update({'pieces': len(drift), 'most across (mm)': round(float(np.abs(shift).max()) * 1000, 1)})
     new = points.copy()
@@ -223,4 +261,12 @@ def curl(hand, points, normals, mine, faces, weld):
               np.outer(normals @ hand['across'], hand['across']))
     new_normals = normals.copy()
     new_normals[moved] = turned[moved]
+    f = faces[moved[faces].any(1)]
+    if len(f):  # a face's normal, turned as its points are, against the face's own once they're moved
+        n0, n1 = (np.cross(p[f[:, 1]] - p[f[:, 0]], p[f[:, 2]] - p[f[:, 0]]) for p in (points, new))
+        ph = np.where(moved, phi, 0)[f].mean(1)
+        na, npl = n0 @ hand['along'], n0 @ hand['palm']
+        n0 = (np.outer(na * np.cos(ph) - npl * np.sin(ph), hand['along']) +
+              np.outer(na * np.sin(ph) + npl * np.cos(ph), hand['palm']) + np.outer(n0 @ hand['across'], hand['across']))
+        info['folded'] = int(((n0 * n1).sum(1) < 0).sum())
     return new, new_normals, moved, info

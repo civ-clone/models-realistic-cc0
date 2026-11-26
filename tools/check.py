@@ -303,14 +303,16 @@ def check_stance(where, rule):
         problem(f'{where}: whole should be a list, each a bone with a part, a line and radius, or a box of x, y or z ranges')
     fingers = rule.get('fingers', {})
     if not isinstance(fingers, dict) or set(fingers) - {'L', 'R'} or not all(
-            isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together'} and direction(f['palm']) and
+            isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together', 'grip'} and direction(f['palm']) and
             number(f['knuckles']) and 0 < f['knuckles'] < 1 and number(f['radius']) and 0 < f['radius'] <= 0.2 and
             number(f['curl']) and 0 < f['curl'] <= 360 and number(f.get('together', 0)) and
-            0 <= f.get('together', 0) < 1 for f in fingers.values()):
+            0 <= f.get('together', 0) < 1 and ('grip' not in f or (number(f['grip'], 0) and f['grip'] < f['radius']))
+            for f in fingers.values()):
         problem(f'{where}: fingers should give a hand (L or R) the way its palm faces [x, y, z], where its '
                 'knuckles are (a share of the way from the wrist to the fingertips, between 0 and 1), and how its '
                 'fingers curl: a radius (metres, over 0 and up to 0.2) and degrees (over 0 and up to 360), and may '
-                'draw them together (a share, from 0 to under 1)')
+                'draw them together (a share, from 0 to under 1) and close them on a grip (metres, over 0 and under '
+                'the radius)')
     elif isinstance(joints, dict) and set(joints) == JOINTS and all(
             isinstance(p, list) and len(p) == 3 and all(number(v) for v in p) for p in joints.values()):
         for side, f in fingers.items():
