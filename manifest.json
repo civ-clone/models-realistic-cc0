@@ -236,23 +236,43 @@
   },
   "alpine-trooper": {
    "file": "models/alpine-trooper.glb",
-   "sha256": "95734619e20e2bffce86fefc66fbb0bdc9c8fa01d5ad2323118c47a8ccae77f3",
+   "sha256": "bae3cdd8b97f33ea31c039c09ebca5e6fe04ab1147c1cdf62448aced5db40173",
    "extent": {
     "across": [
-     -0.401,
-     0.401
+     -0.387,
+     0.387
     ],
     "along": [
-     -0.789,
-     0.789
+     -0.506,
+     0.582
     ],
     "height": 1.8
    },
-   "triangles": 1996,
+   "triangles": 1949,
    "from": [
+    "https://github.com/civ-clone/models-realistic-cc0",
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; simplified; the owner's colour on the jacket"
+   "made": "generated; rewrapped; his rifle generated apart and put in his right hand; the owner's colour on the smock; posed, his arms at his sides and his rifle at the trail in his right hand",
+   "rigged": {
+    "file": "models/rigged/alpine-trooper.glb",
+    "sha256": "93dd411ae49eb0380ddd2ac0f7e9b193fa3c322fc126b049567162187870e395",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "fight": "fight",
+     "die": "die"
+    },
+    "shots": {
+     "fight": [
+      {
+       "at": 0.541667,
+       "joint": "muzzle",
+       "kind": "bullet"
+      }
+     ]
+    }
+   }
   },
   "partisan": {
    "file": "models/partisan.glb",

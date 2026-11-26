@@ -16,10 +16,10 @@ map draws each type from one set.
 
 - **`models/*.glb`:** one glTF binary for each model, facing `+z`, with one baked colour texture (JPEG, 512 px for
   people and 1024 px for the rest), and a PNG at half that size for its owner's colour; the Partisans, Riflemen,
-  Marines and Musketmen have a second JPEG (256 px), for their molotov, rifle or musket. Each was cut down to its budget where it was over
-  (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500 for an aircraft, 3,500 for a ship),
-  and its colour baked into the texture. Each carries its credit in `asset.copyright`, and its credit, licence and
-  what was done to it in `asset.extras`.
+  Marines, Musketmen and Alpine Troops have a second JPEG (256 px), for their molotov, rifle or musket. Each was cut
+  down to its budget where it was over (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500
+  for an aircraft, 3,500 for a ship), and its colour baked into the texture. Each carries its credit in
+  `asset.copyright`, and its credit, licence and what was done to it in `asset.extras`.
 - **Standing and floating:** a model stands on its origin, centred across and along, at its real size in metres. A
   ship floats with its origin at the waterline, its draught under it (`extent.draught`).
 - **The owner's colour:** each model takes its owner's colour on one part, as models-0ad and models-cimpletoon do:
@@ -40,17 +40,22 @@ map draws each type from one set.
   arms), and the Marines hold theirs by its grip, muzzle down, a carbine too short to ground at the hand. The Warriors
   and Engineers stand as they were made, their arms a little out from their sides: the Warriors with a club in the right
   hand and a round shield on the left arm, under their cloaks, and the Engineers with a rolled drawing in the left hand.
-  The Alpine Troops and the Settlers stood naturally already, and the riders sit their horses.
+  The Alpine Troops, generated again without ski poles, stand with their arms at their sides and their rifles at the
+  trail in their right hands, muzzle forward and a little up, the hand along it (grounded by the foot, its muzzle would
+  run up into their thick sleeves); their skis are short, about 0.75 m, all ahead of the heel, as Meshy made them. The
+  Settlers stood naturally already, and the riders sit their horses.
 
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
   it stands in the file, the way each bone should point, any pieces that move whole (the Partisan's molotov, the rifles
   and muskets in their hands, the Warriors' club and shield and the Engineers' drawing), and how a hand's fingers curl,
   where it's made open (`fingers`; none here yet: models-realistic-by's Fanatics have them). The Riflemen's rifle was
-  split off the back it was generated slung across (`split`); the Marines' rifle and the Musketmen's musket were
-  generated apart from them. The Explorer's coil of rope, which the cut to 2,000 triangles drew as jagged slivers, was
-  dropped before the cut (a `split` that only drops). Blender weights each point to the bones near it, and the file's
-  points and normals are moved; nothing else in it changes but a mark on the mesh (`extras.posed`).
-- **Rigged and animated:** the Partisans, Riflemen, Marines, Musketmen, Explorer, Spy, Warriors and Engineers, so far.
+  split off the back it was generated slung across (`split`); the Marines' and the Alpine Troops' rifles and the
+  Musketmen's musket were generated apart from them. The Explorer's coil of rope, which the cut to 2,000 triangles
+  drew as jagged slivers, was dropped before the cut (a `split` that only drops). Blender weights each point to the
+  bones near it, and the file's points and normals are moved; nothing else in it changes but a mark on the mesh
+  (`extras.posed`).
+- **Rigged and animated:** the Partisans, Riflemen, Marines, Musketmen, Alpine Troops, Explorer, Spy, Warriors and
+  Engineers, so far.
   Each `models/rigged/<model>.glb` is the model as it stands, bound to the skeleton it was posed with, with its clips.
   The Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and `move` (a 1 s stride in place),
   which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his hand at 0.5 s, back in it by the
@@ -70,6 +75,15 @@ map draws each type from one set.
   up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
   Their shots are bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its
   barrel's end.
+
+  The Alpine Troops keep their rifles in their hands throughout too. Their `idle` is the Riflemen's, the rifle at the
+  trail. Their `move` is a ski glide (1.2 s): both skis stay on the snow, each sliding ahead of where it stands and
+  back as the other does the opposite, his hips dropping as his legs part, leaning into it, his arms swinging against
+  his legs (a ski behind him lifts its tail a few centimetres). Their `fight` is the Riflemen's from the trail: he
+  raises the rifle on a slant to his shoulder, fires once at 0.54 s, and lowers it to the trail again. In `die` he's
+  hit as the Riflemen are, then falls sideways onto his left side (on his back, his thick rucksack would hold him off
+  the ground, legs and skis in the air): his skis lie on their edges on the ground, his right leg forward of his left,
+  his rucksack behind him and his rifle in front of him.
 
   The Explorer, the Spy and the Engineers, who don't fight, have the Partisans' `idle`, `move` and `die`, the Engineers'
   arms swinging from where they hold them. Lying dead, the Engineers' drawing lies beside them, and their heads are
@@ -93,16 +107,17 @@ map draws each type from one set.
   stood on the ground by its lowest point, and played in place: the map moves units from square to square itself. The
   file has a root node, `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads
   without the dot: `hand.R` is `handR`), and, for a figure whose held piece is split off to move on its own (the
-  Partisans', Riflemen's, Musketmen's and Marines'), the piece's, `prop`, a child of his right hand's. Each clip keys
-  every joint's turn, the root's place, and any prop's size (the molotov's is 0 from just after the throw until it grows
-  back in his hand). A key can also hold the prop as it says rather than as the hand does: where it points, which way
-  its back faces and where its butt goes, carried by the chest as it turns. The hand that holds it, and the other
-  hand, are then bent to reach it, each lying along it as its forearm carries it at the keys, and every clip keys
-  the prop's place on the hand as well. As a hold eases on or off, the elbow's bend is eased with it, the hand
-  sliding along the prop to keep it so; a prop whose `slides` is false (the Marine's rifle, held by its pistol grip)
-  moves with the hand instead. A prop whose `grounded` is false (as these weapons' are) is left out of
-  standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once starts as the model stands (its feet can be planted there
-  from the start, so they don't slide as it begins), and a loop ends where it starts.
+  Partisans', Riflemen's, Musketmen's, Marines' and Alpine Troops'), the piece's, `prop`, a child of his right hand's.
+  Each clip keys every joint's turn, the root's place, and any prop's size (the molotov's is 0 from just after the
+  throw until it grows back in his hand). A key can also hold the prop as it says rather than as the hand does: where
+  it points, which way its back faces and where its butt goes, carried by the chest as it turns. The hand that holds
+  it, and the other hand, are then bent to reach it, each lying along it as its forearm carries it at the keys, and
+  every clip keys the prop's place on the hand as well. As a hold eases on or off, the elbow's bend is eased with it,
+  the hand sliding along the prop to keep it so; a prop whose `slides` is false (the Marine's rifle, held by its
+  pistol grip) moves with the hand instead. A prop whose `grounded` is false (as these weapons' are) is left out of
+  standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once
+  starts as the model stands (its feet can be planted there from the start, so they don't slide as it begins), and a
+  loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;
@@ -118,9 +133,9 @@ map draws each type from one set.
   - each model: the unit types it draws, its source, a piece its original fuses to the figure and how it's split off
     (`split`: the Rifleman's rifle, made whole from its mirror image) or what's dropped before it's cut (the Explorer's
     rope), how it's cut (part by part, or wrapped in one new surface, which can be closed over a split piece's slits),
-    how it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov, or the piece split off,
-    turned to stand as the figure is posed), where its owner's colour goes, how a figure is posed, how it's rigged and
-    its clips, its budget, and its scale where it isn't the set's.
+    how it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov, a weapon generated
+    apart, or the piece split off), turned to be held as the figure is posed, where its owner's colour goes, how a
+    figure is posed, how it's rigged and its clips, its budget, and its scale where it isn't the set's.
 
   The set's scale draws a 1.8 m person as tall as the other sets' people, 0.168 squares. The 3D map draws units
   bigger than life, so the rest have scales of their own, close to models-cimpletoon's sizes: riders 0.21 to 0.22
