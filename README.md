@@ -16,10 +16,10 @@ map draws each type from one set.
 
 - **`models/*.glb`:** one glTF binary for each model, facing `+z`, with one baked colour texture (JPEG, 512 px for
   people and 1024 px for the rest), and a PNG at half that size for its owner's colour; the Partisans, Riflemen,
-  Marines, Musketmen and Alpine Troops have a second JPEG (256 px), for their molotov, rifle or musket. Each was cut down to its budget where it was over
-  (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500 for an aircraft, 3,500 for a ship),
-  and its colour baked into the texture. Each carries its credit in `asset.copyright`, and its credit, licence and
-  what was done to it in `asset.extras`.
+  Marines, Musketmen and Alpine Troops have a second JPEG (256 px), for their molotov, rifle or musket. Each was cut
+  down to its budget where it was over (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500
+  for an aircraft, 3,500 for a ship), and its colour baked into the texture. Each carries its credit in
+  `asset.copyright`, and its credit, licence and what was done to it in `asset.extras`.
 - **Standing and floating:** a model stands on its origin, centred across and along, at its real size in metres. A
   ship floats with its origin at the waterline, its draught under it (`extent.draught`).
 - **The owner's colour:** each model takes its owner's colour on one part, as models-0ad and models-cimpletoon do:
