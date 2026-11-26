@@ -38,12 +38,13 @@
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
   and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before its
   length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds whole, any
-  shots within its clip, each from the prop, which is back in the hand by the clip's end, and any strike (when a blow
-  lands) within it, in a clip played once with no shots. A clip's `lag` gives bones a time under its length; a key's
-  `ease` is one of EASES, its `hips` [x, y, z], its `plant` feet each at [x, z] or `true`, and its `late` bones a time
-  from 0, each bone's keys still in order once late (a loop's before its length, none late on its first key; a clip
-  played once none late on its last). A clip played once has nothing on its first key but its time and feet planted
-  where they stand (`true`).
+  muzzle of its own a bone and a place (for a weapon held whole, not a prop: one muzzle at most, its own or its
+  prop's), any shots within its clip, each from the prop (back in the hand by the clip's end) or the muzzle, and any
+  strike (when a blow lands) within it, in a clip played once with no shots. A clip's `lag` gives bones a time under
+  its length; a key's `ease` is one of EASES, its `hips` [x, y, z], its `plant` feet each at [x, z] or `true`, and its
+  `late` bones a time from 0, each bone's keys still in order once late (a loop's before its length, none late on its
+  first key; a clip played once none late on its last). A clip played once has nothing on its first key but its time
+  and feet planted where they stand (`true`).
 - **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
   - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
     stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints
@@ -54,7 +55,8 @@
     place: only the root's place is keyed (and the prop's size), and the root stays within 0.25 m of where it starts
     across the ground in a loop, and 2.5 m in a clip played once. Each joint's property is keyed once. The prop's
     part moves with the prop's joint alone, which is a child of its bone, kept as it is held: its size is 1 but
-    while it's thrown, and 0 from just after each shot until it grows back;
+    while it's thrown, and 0 from just after each shot until it grows back. A muzzle of the rig's own is one node, a
+    child of its bone's joint, with only its place, where the rig says as the figure stands;
   - the manifest gives its file, SHA-256, clips, and any shots and strikes by clip (`rigged`).
 """
 import hashlib
@@ -99,7 +101,7 @@ OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smoot
 STANCE = {'joints', 'aim', 'twist', 'whole', 'fingers'}
 FINGERS = {'palm', 'knuckles', 'radius', 'curl'}  # a hand's, in a stance's `fingers`
 # A rig, as blender/rig.py reads it, and its clips by role: those that loop, and those that play once.
-RIG = {'prop', 'clips'}
+RIG = {'prop', 'muzzle', 'clips'}
 CLIP = {'length', 'keys', 'shots', 'strike', 'lag'}
 KEY = {'at', 'aim', 'twist', 'turn', 'slide', 'ease', 'hips', 'plant', 'late', 'hold', 'grip'}
 KINDS = ('bottle', 'arrow', 'bullet', 'shell')  # what a shot is, for the map to draw
@@ -329,15 +331,17 @@ def direction(d):
     return isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
 
 
-def shot_ok(x, prop, length):
-    """Whether a shot is a time in the clip, the joint it leaves from, what flies, and (a bottle) when it's back."""
-    if not (isinstance(x, dict) and prop and number(x.get('at')) and 0 < x['at'] < length):
+def shot_ok(x, prop, length, muzzle=False):
+    """Whether a shot is a time in the clip, the joint it leaves from, what flies, and (a bottle) when it's back.
+    `muzzle`: whether the rig has a muzzle of its own (on a bone, not its prop)."""
+    muzzle = muzzle or bool(prop and 'muzzle' in prop)
+    if not (isinstance(x, dict) and (prop or muzzle) and number(x.get('at')) and 0 < x['at'] < length):
         return False
     kind = x.get('kind', 'bottle')
     if kind == 'bottle':
-        return x.get('joint') == 'prop' and {'at', 'joint', 'back'} <= set(x) <= {'at', 'joint', 'back', 'kind'}
-    return kind in KINDS and x.get('joint') in (('prop', 'muzzle') if 'muzzle' in prop else ('prop',)) and \
-        {'at', 'joint'} <= set(x) <= {'at', 'joint', 'kind'}
+        return bool(prop) and x.get('joint') == 'prop' and {'at', 'joint', 'back'} <= set(x) <= {'at', 'joint', 'back', 'kind'}
+    joints = (('prop',) if prop else ()) + (('muzzle',) if muzzle else ())
+    return kind in KINDS and x.get('joint') in joints and {'at', 'joint'} <= set(x) <= {'at', 'joint', 'kind'}
 
 
 def posing(rig):
@@ -360,6 +364,15 @@ def check_rig(where, rig, stance):
         problem(f'{where}.prop: should be a part and its bone, as the stance holds it whole, and may have a muzzle and a '
                 'back (ways [x, y, z]) and grounded (true or false) and slides (true or false)')
         prop = None
+    muzzle = rig.get('muzzle')
+    if muzzle is not None and not (isinstance(muzzle, dict) and set(muzzle) == {'bone', 'at'} and muzzle['bone'] in BONES
+                                   and isinstance(muzzle['at'], list) and len(muzzle['at']) == 3
+                                   and all(number(v) for v in muzzle['at'])):
+        problem(f'{where}.muzzle: should be the bone that carries it and where it is (at, [x, y, z], as the posed figure '
+                'stands)')
+        muzzle = None
+    if muzzle is not None and prop is not None and 'muzzle' in prop:
+        problem(f'{where}: has a muzzle of its own and its prop has one too: shots leave from one')
     hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None
     clips = rig.get('clips')
     if not isinstance(clips, dict) or not clips:
@@ -460,8 +473,8 @@ def check_rig(where, rig, stance):
             problem(f'{at}: strike should be the time a blow lands, over 0 and up to its length, in a clip played once '
                     'with no shots (a melee fight)')
         shots = clip.get('shots', [])
-        if not isinstance(shots, list) or not all(shot_ok(x, prop, length) for x in shots):
-            problem(f'{at}: shots should each be a time in the clip (at), the joint they leave from (prop, or its '
+        if not isinstance(shots, list) or not all(shot_ok(x, prop, length, muzzle is not None) for x in shots):
+            problem(f'{at}: shots should each be a time in the clip (at), the joint they leave from (prop, or a '
                     'muzzle: three.js renames the bones) and what flies (kind: bottle, the default, arrow, bullet or '
                     'shell); a bottle is the prop, thrown, so leaves from it, and says when the prop is back (back)')
             continue
@@ -851,9 +864,9 @@ def check_rigged(rel, entry):
             if 'muzzle' in rig['prop'] and (len(muzzles) != 1 or parent.get(muzzles[0]) != joints[prop_j] or
                                             set(nodes[muzzles[0]]) != {'name', 'translation'}):
                 raise glb.Bad('the prop\'s muzzle should be one node, a child of the prop\'s joint, with only its place')
-            if 'muzzle' not in rig['prop'] and muzzles:
+            if 'muzzle' not in rig['prop'] and 'muzzle' not in rig and muzzles:
                 raise glb.Bad('it has a muzzle, but its prop has none')
-            if muzzles:  # at the end of the prop: as far as it reaches that way from its joint, and on it
+            if muzzles and 'muzzle' in rig['prop']:  # at the end of the prop: as far as it reaches that way from its joint, and on it
                 ibm_p = glb.accessor(gltf, binary, skins[0]['inverseBindMatrices'])[prop_j]
                 inv_p = [[ibm_p[c * 4 + r] for c in range(4)] for r in range(4)]
                 pp = prims[rig['prop']['part']]
@@ -869,6 +882,14 @@ def check_rigged(rel, entry):
                         sum(a * b for a, b in zip(way_m, rig['prop']['muzzle'])) <= 0:
                     raise glb.Bad('the prop\'s muzzle should be at its end, as far as the prop reaches that way, the '
                                   'end its muzzle way points to')
+        muzzles = [i for i, n in enumerate(nodes) if n.get('name') == 'muzzle']
+        if 'muzzle' in rig:  # the rig's own: one node on the joint of the bone that carries it, placed, nothing on it
+            if len(muzzles) != 1 or parent.get(muzzles[0]) != joints[names.index(rig['muzzle']['bone'])] or \
+                    set(nodes[muzzles[0]]) != {'name', 'translation'}:
+                raise glb.Bad(f'its muzzle should be one node, a child of {rig["muzzle"]["bone"]}\'s joint, with only its '
+                              'place')
+        elif 'prop' not in rig and muzzles:
+            raise glb.Bad('it has a muzzle, but its rig gives none')
         # Standing as bound: each joint where its inverse bind matrix undoes.
 
         def world(i, local=None):
@@ -880,6 +901,8 @@ def check_rigged(rel, entry):
             m = glb.multiply(world(j), [[inv[c * 4 + r] for c in range(4)] for r in range(4)])
             if any(abs(m[r][c] - (r == c)) > 1e-4 for r in range(4) for c in range(4)):
                 raise glb.Bad(f'joint {nodes[j].get("name")} is not where it is bound, so the figure would not stand as models/{static_rel} does')
+        if 'muzzle' in rig and math.dist([world(muzzles[0])[r][3] for r in range(3)], rig['muzzle']['at']) > 1e-3:
+            raise glb.Bad('its muzzle should be where the rig says, as the figure stands')
         # The clips: by role, each keying the same joints' turns and places, from 0 to its length.
         anims = {a.get('name'): a for a in gltf.get('animations', [])}
         posed = posing(rig)
@@ -942,8 +965,8 @@ def check_rigged(rel, entry):
                     raise glb.Bad(f'clip {role} should end where it starts, as it loops')
                 got.add((nodes[node]['name'], path_))
             for x in rig['clips'][role].get('shots', []):
-                if x['joint'] not in names and not (x['joint'] == 'muzzle' and 'muzzle' in rig.get('prop', {})):
-                    raise glb.Bad(f'clip {role} has a shot from {x["joint"]}, which is not a joint or the prop\'s muzzle')
+                if x['joint'] not in names and not (x['joint'] == 'muzzle' and ('muzzle' in rig or 'muzzle' in rig.get('prop', {}))):
+                    raise glb.Bad(f'clip {role} has a shot from {x["joint"]}, which is not a joint or a muzzle')
                 if x.get('kind', 'bottle') == 'bottle':
                     ch = next((c for c in anim['channels'] if nodes[c['target']['node']].get('name') == 'prop' and
                                c['target'].get('path') == 'scale'), None)

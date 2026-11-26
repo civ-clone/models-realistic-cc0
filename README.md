@@ -69,12 +69,13 @@ map draws each type from one set.
   as the Partisans do, the weapon held as they stand. In `move` the Riflemen and Musketmen carry theirs across the
   chest at port arms, and the Marines at the low ready (the butt in the shoulder, the muzzle down ahead), both hands
   on it. In `fight` they bring it to the shoulder, the left hand on the fore-end and the head down to the stock (the
-  Marines' left hand comes up to it as it reaches the shoulder, and leaves it before it's lowered). The
-  Riflemen and Musketmen fire once at 0.54 s, and the Marines a three-round burst at 0.5, 0.667 and 0.833 s, each
-  shot leaving as he holds still (for a frame, so the map finds the muzzle where it fired) and then kicking the muzzle
-  up. Then they bring it back to where they stand. They die as the Partisans do, the weapon lying beside them.
-  Their shots are bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its
-  barrel's end.
+  Marines' left hand comes up to it as it reaches the shoulder, and leaves it before it's lowered). The Riflemen and
+  Musketmen fire once at 0.54 s, and the Marines a three-round burst at 0.5, 0.667 and 0.833 s, each shot leaving as
+  he holds still (for a frame, so the map finds the muzzle where it fired) and then kicking the muzzle up. Then they
+  bring it back to where they stand. They die as the Partisans do, the weapon lying beside them. Their shots are
+  bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its barrel's end. A rig
+  can instead put a `muzzle` on a bone, for a weapon that's part of the figure rather than a prop of its own
+  (models-realistic-by's Paratroopers' slung SMG); none here does.
 
   The Alpine Troops keep their rifles in their hands throughout too. Their `idle` is the Riflemen's, the rifle at the
   trail. Their `move` is a ski glide (1.2 s): both skis stay on the snow, each sliding ahead of where it stands and
