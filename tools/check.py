@@ -32,8 +32,9 @@
 - **The credits** in CREDITS.md are as build.py writes them.
 - **Each stance** names every joint of the skeleton blender/stance.py fits, none of its bones shorter than 5 mm, and
   only its bones, and any hand's `fingers` (its palm a way across the hand, its knuckles a share between 0 and 1,
-  a radius over 0 and up to 0.2 m, a curl up to 360°, and `together` under 1); a model with one says "posed" in its
-  `made`, and its mesh says `extras.posed`, and only then.
+  a radius over 0 and up to 0.2 m, a curl over 0 and up to 360°, `together` from 0 to under 1, and a `grip` over 0
+  and under the radius); a model with one says "posed" in its `made`, and its mesh says `extras.posed`, and only
+  then.
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
   and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before its
   length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds whole, any

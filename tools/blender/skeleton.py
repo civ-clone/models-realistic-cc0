@@ -189,8 +189,9 @@ def curl(hand, points, normals, mine, faces, weld):
     fitted to its points' heights along it, comes in (or goes out), over the stretch from where the fingers part to as
     far again, until the side of it nearest the palm lies `grip` from the axis. It turns as the line halfway between
     its middle and that side keeps its length, so its palm side is pressed a little and its back stretched, as a
-    finger's is round a handle, and a finger that has come in turns further. Its points are held a fifth of the grip
-    from the axis.
+    finger's is round a handle, and a finger that has come in turns further. Every curled point of the hand is then
+    held a fifth of the grip from the axis, rather than a fifth of the radius. A curl that ends before the fingers
+    part leaves the grip nothing to do.
 
     And first, with `together`, splayed fingers closed: each finger, a piece of the mesh (by `faces`, points at one
     place, by `weld`, kept together) past the first part of its length, has that share taken off how far it runs
