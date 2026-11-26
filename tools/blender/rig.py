@@ -20,6 +20,11 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   lift him as the hand moves), and the report says how far it went below. With `slides` false, the hand that holds
   it can't slide along it (a pistol grip): as a hold eases, the prop moves with the hand instead (below). (A hold's
   `hand` still moves the hand along it.)
+- **`muzzle`:** for a figure whose weapon isn't a prop of its own but part of him, held whole by a bone as its stance
+  says (a slung gun his chest carries, say): a node of that name (not a joint), a child of that bone's joint
+  (`bone`), at `at` ([x, y, z], as the posed figure stands in the file), for shots to leave from, within MUZZLE_NEAR
+  (check.py's) of a point that bone alone moves: something it carries whole, as the weapon should be (which thing, the
+  tools can't tell). A rig has one muzzle at most: this, or its prop's.
 - **`clips`:** by role: `idle`, `move` and `work` loop; `fight`, `die` and `settle` play once. Each has a `length` in
   seconds and its `keys`, each a pose at a time (`at`):
   - `aim` and `twist`, as a stance's, laid over the stance's own: a bone a key names is aimed (or twisted) as the key
@@ -82,11 +87,11 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   is stood on the ground in every frame, by its lowest point (the prop's included, at its size, unless it isn't
   `grounded`), as stance.py stands it.
   - `shots`, in a clip: where a shot leaves the figure, for the map to draw: each a time (`at`), the joint it
-    leaves from (`joint`: the prop, or its `muzzle`; three.js renames joints whose names have a dot, so the bones'
+    leaves from (`joint`: the prop, or the `muzzle`; three.js renames joints whose names have a dot, so the bones'
     can't be found by name) and what flies (`kind`: bottle, the default, arrow, bullet or shell). The map reads the
     joint's place then, and draws it. A bottle is the prop, thrown: it leaves from the prop, which is gone from 1 ms
     after `at` until 0.2 s before `back` (at least 0.25 s after `at`), growing back in the hand over those 0.2 s.
-    The rest leave the prop where it is.
+    The rest leave the prop (or the figure) where it is.
   - `strike`, in a clip played once with no shots (a melee fight's, for one): the time its blow lands, for the map
     to time the blow and the attacker's lunge by. Nothing in the figure changes with it.
 
@@ -121,7 +126,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import glb  # noqa: E402
-from check import BONES  # noqa: E402
+from check import BONES, MUZZLE_NEAR, muzzle_rule_ok  # noqa: E402
 from skeleton import SIDES, about, fail, finite, forward, read_aim, read_rule, turn  # noqa: E402
 
 FPS = 24
@@ -147,21 +152,22 @@ def way(v):
     return finite(v, 3) and 1e-6 < np.linalg.norm(v) < 1e6
 
 
-def shot_ok(x, prop, length):
+def shot_ok(x, rig, length):
     """Whether a shot is a time in the clip, the joint it leaves from, what flies, and (a bottle) when it's back."""
-    if not (isinstance(x, dict) and prop and number(x.get('at'), 0) and x['at'] < length):
+    prop, muzzle = rig.get('prop'), 'muzzle' in rig or 'muzzle' in (rig.get('prop') or {})
+    if not (isinstance(x, dict) and (prop or muzzle) and number(x.get('at'), 0) and x['at'] < length):
         return False
     kind = x.get('kind', 'bottle')
     if kind == 'bottle':
-        return x.get('joint') == 'prop' and {'at', 'joint', 'back'} <= set(x) <= {'at', 'joint', 'back', 'kind'}
-    return kind in KINDS and x.get('joint') in (('prop', 'muzzle') if 'muzzle' in prop else ('prop',)) and \
-        {'at', 'joint'} <= set(x) <= {'at', 'joint', 'kind'}
+        return bool(prop) and x.get('joint') == 'prop' and {'at', 'joint', 'back'} <= set(x) <= {'at', 'joint', 'back', 'kind'}
+    joints = (('prop',) if prop else ()) + (('muzzle',) if muzzle else ())
+    return kind in KINDS and x.get('joint') in joints and {'at', 'joint'} <= set(x) <= {'at', 'joint', 'kind'}
 
 
 def read_rig(rig):
     """The rig rule, checked."""
-    if not isinstance(rig, dict) or set(rig) - {'prop', 'clips'} or not isinstance(rig.get('clips'), dict) or not rig['clips']:
-        fail('the rig should have clips, and may have a prop')
+    if not isinstance(rig, dict) or set(rig) - {'prop', 'muzzle', 'clips'} or not isinstance(rig.get('clips'), dict) or not rig['clips']:
+        fail('the rig should have clips, and may have a prop or a muzzle')
     prop = rig.get('prop')
     if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded', 'slides'}
                                  and prop['bone'] in BONES and isinstance(prop['part'], int) and not isinstance(prop['part'], bool)
@@ -169,6 +175,11 @@ def read_rig(rig):
                                  and all(isinstance(prop.get(k, True), bool) for k in ('grounded', 'slides'))):
         fail('prop should be a part and the bone it follows, and may have a muzzle and a back (ways [x, y, z]) and '
              'grounded (true or false) and slides (true or false)')
+    muzzle = rig.get('muzzle')
+    if 'muzzle' in rig and not muzzle_rule_ok(muzzle):
+        fail('muzzle should be the bone that carries it and where it is (at, [x, y, z], as the posed figure stands)')
+    if muzzle is not None and prop is not None and 'muzzle' in prop:
+        fail('the rig has a muzzle of its own and its prop has one too: shots leave from one')
     hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None
     for role, clip in rig['clips'].items():
         where = f'clip {role}'
@@ -254,8 +265,8 @@ def read_rig(rig):
                 fail(f'{where}: a clip that plays once starts at the stance, its first key only a time, and feet planted '
                      'where they stand (true)')
         shots = clip.get('shots', [])
-        if not isinstance(shots, list) or not all(shot_ok(x, prop, clip['length']) for x in shots):
-            fail(f'{where}: shots should each be a time in the clip (at), the joint they leave from (prop, or its muzzle: '
+        if not isinstance(shots, list) or not all(shot_ok(x, rig, clip['length']) for x in shots):
+            fail(f'{where}: shots should each be a time in the clip (at), the joint they leave from (prop, or a muzzle: '
                  'three.js renames the bones) and what flies (kind: bottle, the default, arrow, bullet or shell); a bottle '
                  'is the prop, thrown, so leaves from it, and says when the prop is back (back)')
         if any(b['at'] <= a['at'] for a, b in zip(shots, shots[1:])):
@@ -544,6 +555,12 @@ def main():
             fail(f'prop: part {part} is not held whole in the stance, so it moves with the figure')
         w[used] = 0
         w[used, joints.index('prop')] = 1
+    if rig.get('muzzle'):
+        # A muzzle of the rig's own is on the weapon its bone carries: some point that bone alone moves lies by it.
+        alone = w[:, joints.index(rig['muzzle']['bone'])] > 1 - 1e-6
+        if not alone.any() or float(np.linalg.norm(pos[alone] - np.array(rig['muzzle']['at'], dtype=float), axis=1).min()) > MUZZLE_NEAR:
+            fail(f'muzzle: no point {rig["muzzle"]["bone"]} alone moves lies within {MUZZLE_NEAR} m of it: it should be on '
+                 'something that bone carries whole, as a weapon the stance holds whole')
     # The four biggest weights of each point, shared again to add up to one. Points at one place have the same
     #  weights (stance.py weighted them as one), so they keep the same four, and seams stay shut.
     order = np.argsort(-w, axis=1, kind='stable')[:, :INFLUENCES]
@@ -1045,12 +1062,17 @@ def main():
         kids = [index[c] for c in joints if parents[c] == n]
         if n == 'prop' and 'muzzle' in rig['prop']:  # where its shots leave from: the middle of its top
             kids.append(first + 1 + len(joints))
+        if rig.get('muzzle') and n == rig['muzzle']['bone']:  # or on the bone that carries the weapon, where it says
+            kids.append(first + 1 + len(joints))
         if kids:
             node['children'] = kids
         nodes.append(node)
     if rig.get('prop') and 'muzzle' in rig['prop']:
         nodes.append({'name': 'muzzle', 'translation': [
             float(v) for v in (np.linalg.inv(bind[nb]) @ np.append(top, 1))[:3].astype(np.float32)]})
+    if rig.get('muzzle'):
+        nodes.append({'name': 'muzzle', 'translation': [float(v) for v in (
+            np.linalg.inv(bind[joints.index(rig['muzzle']['bone'])]) @ np.append(rig['muzzle']['at'], 1))[:3].astype(np.float32)]})
     gltf['scenes'][gltf.get('scene', 0)]['nodes'].append(first)
     ibm = add(np.ascontiguousarray(inverse.transpose(0, 2, 1)).astype(np.float32).reshape(-1, 16), 'MAT4', 5126)
     gltf['skins'] = [{'name': 'skeleton', 'joints': [index[n] for n in joints], 'inverseBindMatrices': ibm,
