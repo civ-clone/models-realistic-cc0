@@ -7,8 +7,11 @@ MODE hand: prop upright in the figure's right hand (its -X side). Options: heigh
   laid along its own length (its top the end nearer `top`, x,y,z in the prop file's axes, or else its narrow end, or
   its wide end with end=wide; turned `roll` degrees about its length from its fuller side facing the front) and turned
   so that, once stance.py has posed the figure and carried it with the right hand (the stance holds it whole on
-  hand.R), its top points that way; with ground=1 its grip is where its foot, so posed, rests 5 mm above the body's
-  lowest point (as the figure stands, so the stance mustn't move the legs, which would stand him higher or lower).
+  hand.R), its top points that way; or, where the stance gives the right hand's `fingers`, held in its fist: laid
+  across the palm on the axis the fingers curl round, its top the end that, posed, points nearer that way (the
+  stance's own turn of the hand points it; `roll` then turns it from the least turn onto that axis); with ground=1 its
+  grip is where its foot, so posed, rests 5 mm above the body's lowest point (as the figure stands, so the stance
+  mustn't move the legs, which would stand him higher or lower).
 MODE chute: prop centred above the figure. Options: width (prop's widest horizontal size, m), bottom (height of the
   prop's lowest point, m).
 MODE hat: prop on the head. Options: width (brim width, m), sink (how far down over the head, m).
@@ -205,7 +208,7 @@ if mode == "hand" and opt.get("posed"):
     # the hand's turn once posed, from the stance (as stance.py turns a piece held whole on hand.R)
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from skeleton import forward, read_rule
+    from skeleton import forward, read_fingers, read_rule
     st = json.load(open(opt["stance"]))
     J, skel = read_rule(st)
     rot, moved = forward(skel, st.get("aim", {}), st.get("twist", {}))
@@ -213,6 +216,16 @@ if mode == "hand" and opt.get("posed"):
     want = mathutils.Vector([float(x) for x in opt["posed"].split(",")]).normalized()
     F = mathutils.Vector((0, 1, 0)).rotation_difference(want).to_matrix()
     A = Rh.transposed() @ F  # canonical -> the A-posed figure, glTF axes
+    fist = read_fingers(st, J).get("R")
+    if fist is not None:  # held in a fist: across the palm, on the axis its fingers curl round, its top the end that,
+        #  posed, points nearer `posed` (the stance turns the hand to point it there)
+        way = mathutils.Vector(fist["across"].tolist())
+        if (Rh @ way).dot(want) < 0:
+            way = -way
+        A = mathutils.Vector((0, 1, 0)).rotation_difference(way).to_matrix()
+        want = (Rh @ way).normalized()
+        F = Rh @ A
+        hand = G.inverted() @ mathutils.Vector(fist["centre"].tolist())
     hand_g = G @ hand
     posed_hand = Rh @ (hand_g - mathutils.Vector(J["wrist.R"].tolist())) + mathutils.Vector(moved["hand.R"].tolist())
     if opt.get("ground") == "1":
@@ -235,6 +248,13 @@ if mode == "hand" and opt.get("posed"):
     M = mathutils.Matrix.Translation(hand - Gi3 @ A @ (roll @ (B @ c) + anchor) * s) @ lin.to_4x4()
     placed = {"hand": [round(x, 3) for x in hand], "scale": round(s, 4), "grip": round(grip, 4),
               "posed hand": [round(x, 3) for x in posed_hand], "posed": [round(x, 3) for x in want]}
+    if fist is not None:  # the prop's radius where it's held (by its points nearest the grip along it, as a shaft may
+        #  have points only at its ends), beside the fist's and the grip its fingers close on: best a little over it
+        near = sorted(canon, key=lambda v: abs(v.y - anchor.y))[:max(8, len(canon) // 20)]
+        band = sorted(math.hypot(v.x - anchor.x, v.z - anchor.z) * s for v in near)
+        placed.update({"fist": True, "fist radius": round(float(fist["radius"]), 4),
+                       "fist grip": None if fist["grip"] is None else round(fist["grip"], 4),
+                       "radius at grip": round(band[len(band) // 2], 4)})
 elif mode == "hand":
     s = float(opt["height"]) / pd.z
     grip = float(opt.get("grip", 0.4))
