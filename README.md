@@ -81,7 +81,7 @@ map draws each type from one set.
   his head and down at an enemy ahead of him, his shield arm brought forward to guard him; it lands at 0.5 s (`strike`),
   its head about 1.5 m up and 1.3 m ahead of his hips, and carries on down. His back foot stays where it is as he steps
   into it. In `die` he lands a little short of flat, as his cloak's thick folds would otherwise meet the ground first,
-  and lies with his club on the ground beside him and his shield nearly flat beside his head.
+  then settles flat, and lies with his club on the ground beside him and his shield nearly flat beside his head.
 
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
   of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
