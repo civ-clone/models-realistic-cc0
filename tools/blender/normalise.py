@@ -4,10 +4,10 @@ their hierarchy, skeleton and animations under a root node; "pose" freezes a rig
 
 Args (after --): STAGE.json OUTDIR [key ...]
 Each stage entry: src, measure ("height" or "along"), size (metres), turn (degrees about up, counter-clockwise from
-above), optional mirror (true: its left and right swapped, across x, before it's turned; for a figure made the wrong
-way round; not with keep), keep (bool), pose ([action name, frame]), out (file name, default <key>.glb), and matrix (4x4, in
-Blender's axes): the staging to use as it is instead of the one its own box gives, as split.py hands on for a body
-whose piece reached past it.
+above), optional mirror (true: its left and right swapped, across x, before it's turned, so a turn turns the mirrored
+figure; for a figure made the wrong way round; not with keep), keep (bool), pose ([action name, frame]), out (file name,
+default <key>.glb), and matrix (4x4, in Blender's axes): the staging to use as it is instead of the one its own box
+gives, as split.py hands on for a body whose piece reached past it.
 Writes OUTDIR/<out> and OUTDIR/<key>.json (extent in glTF axes, triangles, sha256)."""
 import bpy, sys, os, json, math, hashlib, mathutils
 

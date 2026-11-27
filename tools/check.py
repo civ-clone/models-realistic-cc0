@@ -153,6 +153,8 @@ def figure(joints):
     if names == JOINTS | MOUNT_JOINTS:
         return JOINTS | MOUNT_JOINTS, BONES | MOUNT_BONES, BONE_ENDS | MOUNT_BONE_ENDS
     return None
+
+
 ATTRIBUTES = {'POSITION', 'NORMAL', 'TEXCOORD_0'}
 SKIN_ATTRIBUTES = {'JOINTS_0', 'WEIGHTS_0'}
 # Points over a face, where it's sampled to find its owner's colour (as blender/owner.py samples it).
@@ -340,7 +342,9 @@ def check_stance(where, rule):
                 (len(b) > 1 and set(b) <= {'bone', 'x', 'y', 'z'} and all(
                     span(b[k], -math.inf, math.inf) and b[k][0] <= b[k][1] for k in 'xyz' if k in b)))
             for b in whole_):
-        problem(f'{where}: whole should be a list, each a bone with a part, a line and radius, or a box of x, y or z ranges')
+        named = {b['bone']: 1 for b in whole_ if isinstance(b, dict) and isinstance(b.get('bone'), str)} if isinstance(whole_, list) else {}
+        problem(f'{where}: whole should be a list, each a bone with a part, a line and radius, or a box of x, y or z ranges'
+                f'{strangers(named, bones)}')
     fingers = rule.get('fingers', {})
     if not isinstance(fingers, dict) or set(fingers) - {'L', 'R'} or not all(
             isinstance(f, dict) and FINGERS <= set(f) <= FINGERS | {'together', 'grip'} and direction(f['palm']) and
@@ -412,7 +416,7 @@ def check_rig(where, rig, stance):
     muzzle = rig.get('muzzle')
     if 'muzzle' in rig and not muzzle_rule_ok(muzzle, bones):
         problem(f'{where}.muzzle: should be the bone that carries it and where it is (at, [x, y, z], as the posed figure '
-                'stands)')
+                f'stands){strangers({muzzle["bone"]: 1} if isinstance(muzzle, dict) and isinstance(muzzle.get("bone"), str) else {}, bones)}')
         muzzle = None
     if muzzle is not None and prop is not None and 'muzzle' in prop:
         problem(f'{where}: has a muzzle of its own and its prop has one too: shots leave from one')
@@ -624,6 +628,8 @@ def check_build_entry(where, e, allowed, sources):
         problem(f'{where}: made should say "split off" exactly when a piece is split off')
     elif 'split' in e and splits is False and 'dropped' not in e['made']:
         problem(f'{where}: made should say what was dropped where the split rule only drops')
+    elif isinstance(e.get('stage'), dict) and e['stage'].get('mirror') is True and 'mirrored' not in e['made']:
+        problem(f'{where}: made should say "mirrored" where the model was mirrored')
     elif isinstance(e.get('cut'), dict) and (e['cut'].get('mode') == 'rewrap') != ('rewrap' in e['made']):
         problem(f'{where}: made should say "rewrapped" where, and only where, the model was rewrapped')
     elif ('owner' in e) != ("the owner's colour" in e['made']):

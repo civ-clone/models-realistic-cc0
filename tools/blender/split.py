@@ -9,8 +9,8 @@ body would move wherever the piece reached past it, away from the stance's joint
 started with factory settings and scripts in files turned off, and reads the GLB only as data.
 
 The rule (a model's `split` in the roster, with its `stage`) gives `chains` of stations along the piece, in the frame
-stance.py's joints use: the original as normalise.py would turn (and mirror), size and ground it (metres, x across with the figure's
-left at +x, y up, facing +z). Each station is [place, across, deep, gap]:
+stance.py's joints use: the original as normalise.py would mirror (first), turn, size and ground it (metres, x across
+with the figure's left at +x, y up, facing +z). Each station is [place, across, deep, gap]:
 - `place`, [x, y, z]: a point on the piece's middle line;
 - `across` and `deep`: how far the piece reaches from that line, across it and along `depth` (default [0, 0, 1], the
   figure's front), as the half-widths of an ellipse;

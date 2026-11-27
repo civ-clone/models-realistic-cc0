@@ -114,25 +114,25 @@ map draws each type from one set.
   through and comes back to the carry. In `die` the horse throws its head up, its forelegs buckle, and it goes over onto
   its right side, its rider with it, thrown down at its back with his right leg under it.
 
-  A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest
-  of the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is
-  made from key poses, in the stance's terms (which way each bone points, and how it's twisted), with the whole
-  figure turned where it falls, the hips moved and the feet planted (the legs bent to keep them where they're put).
-  Between keys the bones turn on smooth curves; a key can be met at rest, at speed, hit at speed (a body reaching the
-  ground) or snapped to (a body a shot strikes), and some bones can meet it after the rest (a head and arms landing
-  after the body), or lag through the whole clip, so a movement passes from the body out to the limbs. Every frame is
-  stood on the ground by its lowest point, and played in place: the map moves units from square to square itself. The
-  file has a root node, `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads
-  without the dot: `hand.R` is `handR`; a rider's horse's are named `mount_`, and its hips are the root), and, for a figure whose held piece is split off to move on its own (the
-  Partisans', Riflemen's, Musketmen's, Marines' and Alpine Troops'), the piece's, `prop`, a child of his right hand's.
-  Each clip keys every joint's turn, the root's place, and any prop's size (the molotov's is 0 from just after the
-  throw until it grows back in his hand). A key can also hold the prop as it says rather than as the hand does: where
-  it points, which way its back faces and where its butt goes, carried by the chest as it turns. The hand that holds
-  it, and the other hand, are then bent to reach it, each lying along it as its forearm carries it at the keys, and
-  every clip keys the prop's place on the hand as well. As a hold eases on or off, the elbow's bend is eased with it,
-  the hand sliding along the prop to keep it so; a prop whose `slides` is false (the Marine's rifle, held by its
-  pistol grip) moves with the hand instead. A prop whose `grounded` is false (as these weapons' are) is left out of
-  standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once
+  A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest of
+  the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is made
+  from key poses, in the stance's terms (which way each bone points, and how it's twisted), with the whole figure turned
+  where it falls, the hips moved and the feet planted (the legs bent to keep them where they're put). Between keys the
+  bones turn on smooth curves; a key can be met at rest, at speed, hit at speed (a body reaching the ground) or snapped
+  to (a body a shot strikes), and some bones can meet it after the rest (a head and arms landing after the body), or lag
+  through the whole clip, so a movement passes from the body out to the limbs. Every frame is stood on the ground by its
+  lowest point, and played in place: the map moves units from square to square itself. The file has a root node,
+  `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads without the dot: `hand.R` is
+  `handR`; a rider's horse's are named `mount_`, and its hips are the root), and, for a figure whose held piece is split
+  off to move on its own (the Partisans', Riflemen's, Musketmen's, Marines' and Alpine Troops'), the piece's, `prop`, a
+  child of his right hand's. Each clip keys every joint's turn, the root's place, and any prop's size (the molotov's is
+  0 from just after the throw until it grows back in his hand). A key can also hold the prop as it says rather than as
+  the hand does: where it points, which way its back faces and where its butt goes, carried by the chest as it turns.
+  The hand that holds it, and the other hand, are then bent to reach it, each lying along it as its forearm carries it
+  at the keys, and every clip keys the prop's place on the hand as well. As a hold eases on or off, the elbow's bend is
+  eased with it, the hand sliding along the prop to keep it so; a prop whose `slides` is false (the Marine's rifle, held
+  by its pistol grip) moves with the hand instead. A prop whose `grounded` is false (as these weapons' are) is left out
+  of standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once
   starts as the model stands (its feet can be planted there from the start, so they don't slide as it begins), and a
   loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
@@ -150,7 +150,7 @@ map draws each type from one set.
   - each model: the unit types it draws, its source, a piece its original fuses to the figure and how it's split off
     (`split`: the Rifleman's rifle, made whole from its mirror image) or what's dropped before it's cut (the Explorer's
     rope), how it's cut (part by part, or wrapped in one new surface, which can be closed over a split piece's slits),
-    how it's turned and sized, how deep a ship floats, the prop put in (the Partisan's molotov, a weapon generated
+    how it's turned (or mirrored) and sized, how deep a ship floats, the prop put in (the Partisan's molotov, a weapon generated
     apart, or the piece split off), turned to be held as the figure is posed, where its owner's colour goes, how a
     figure is posed, how it's rigged and its clips, its budget, and its scale where it isn't the set's.
 

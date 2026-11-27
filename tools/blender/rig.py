@@ -6,8 +6,9 @@ WEIGHTS what it wrote of its points' weights then. OUT is POSED with a skin and 
 textures are POSED's, untouched, so it stands as POSED does until a clip moves it.
 
 - **The skeleton** is stance.py's, bound where the stance put it: each bone a joint (named as the bone), under a root
-  node `skeleton`. A rider's is his mount's and his, its root the mount's hips (`mount_hips`), his hips on its back. Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one,
-  but for a leg's above its hip, which fade out (see LEG_REACH).
+  node `skeleton`. A rider's is his mount's and his, its root the mount's hips (`mount_hips`), his hips on its back.
+  Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one, but for a leg's
+  above its hip, which fade out (see LEG_REACH).
 - **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, a child of the bone
   that holds it (`bone`), with its origin at the middle of the part as it stands (so a shot from it leaves from
   there). Unless a key holds it otherwise (`hold`, below) it stays in the hand as the stance holds it: only its size
@@ -174,11 +175,14 @@ def read_rig(rig, bones=BONES):
                                  and prop['bone'] in bones and isinstance(prop['part'], int) and not isinstance(prop['part'], bool)
                                  and all(way(prop[k]) for k in ('muzzle', 'back') if k in prop)
                                  and all(isinstance(prop.get(k, True), bool) for k in ('grounded', 'slides'))):
+        unknown = prop.get('bone') if isinstance(prop, dict) and isinstance(prop.get('bone'), str) and prop['bone'] not in bones else None
         fail('prop should be a part and the bone it follows, and may have a muzzle and a back (ways [x, y, z]) and '
-             'grounded (true or false) and slides (true or false)')
+             'grounded (true or false) and slides (true or false)' + (f' (not the figure\'s: {unknown})' if unknown else ''))
     muzzle = rig.get('muzzle')
     if 'muzzle' in rig and not muzzle_rule_ok(muzzle, bones):
-        fail('muzzle should be the bone that carries it and where it is (at, [x, y, z], as the posed figure stands)')
+        unknown = muzzle.get('bone') if isinstance(muzzle, dict) and isinstance(muzzle.get('bone'), str) and muzzle['bone'] not in bones else None
+        fail('muzzle should be the bone that carries it and where it is (at, [x, y, z], as the posed figure stands)'
+             + (f' (not the figure\'s: {unknown})' if unknown else ''))
     if muzzle is not None and prop is not None and 'muzzle' in prop:
         fail('the rig has a muzzle of its own and its prop has one too: shots leave from one')
     hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None

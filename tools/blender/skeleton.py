@@ -139,7 +139,9 @@ def read_rule(rule):
             ok = len(b) > 1 and set(b) <= {'bone', 'x', 'y', 'z'} and all(
                 finite(b[k], 2) and b[k][0] <= b[k][1] for k in 'xyz' if k in b)
         if not ok:
-            fail(f'whole: {b!r} should be a bone with a part, a line and radius, or a box of x, y or z ranges')
+            fail(f'whole: {b!r} should be a bone with a part, a line and radius, or a box of x, y or z ranges'
+                 + (f' (not the figure\'s: {b["bone"]})' if isinstance(b, dict) and isinstance(b.get('bone'), str)
+                    and b['bone'] not in shape[1] else ''))
     return J, skeleton
 
 
