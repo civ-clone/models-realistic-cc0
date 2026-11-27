@@ -78,7 +78,7 @@ def weights(welded, faces, skeleton, moving, apart=()):
     take their bone's weights anyway, such as a long prop the heat can't get round). Where none of those weights it (or
     a bone that moves gets no points), it weights a copy remeshed in voxels instead, and each point takes the weights
     of the copy's points nearest it. Where the heat weights none of that copy (its loose bits, such as a horse's reins
-    and buckles, can stop it), it weights the copy's biggest piece alone."""
+    and buckles, can stop it), it weights the biggest piece of a copy of the figure without the points `apart`."""
     names = list(skeleton)
     all_faces = faces
 
@@ -164,10 +164,15 @@ def weights(welded, faces, skeleton, moving, apart=()):
     pp, pw = heat(welded, 1, remesh=0.012)
     keep = pw.sum(axis=1) > 1e-6
     how = 'bone heat on a copy remeshed in voxels'
-    if not keep.any():
-        pp, pw = heat(welded, 1, remesh=0.012, biggest=True)
+    if not keep.any():  # the copy's biggest piece, of the figure without the parts held whole (a held sword's thin
+        #  blade, fused into the copy, can stop the heat too); they take their bone's weights anyway
+        rest = np.ones(len(welded), dtype=bool); rest[list(apart)] = False
+        index = np.cumsum(rest) - 1
+        faces = index[all_faces[rest[all_faces].all(axis=1)]]
+        pp, pw = heat(welded[rest], 1, remesh=0.012, biggest=True)
+        faces = all_faces
         keep = pw.sum(axis=1) > 1e-6
-        how = 'bone heat on the biggest piece of a copy remeshed in voxels'
+        how = 'bone heat on the biggest piece of a copy remeshed in voxels' + (', without the parts held whole' if len(apart) else '')
     if not keep.any():
         fail('the bone heat found no weights, on the figure or on a copy remeshed in voxels (or its biggest piece)')
     pp, pw = pp[keep], pw[keep]
