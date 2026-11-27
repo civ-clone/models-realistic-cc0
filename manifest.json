@@ -7,13 +7,22 @@
  "licence": {
   "name": "CC0 1.0",
   "url": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
+  "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models, Lucian Pavel's Lowpoly Molotov and Ulan Cabanilla's Wooden Handle Saber (Poly Haven), all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov and the sabre are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
  },
  "credits": [
   {
    "work": "Models generated for civ.one",
    "author": "dom111",
    "url": "https://github.com/civ-clone/models-realistic-cc0",
+   "licence": {
+    "name": "CC0 1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+   }
+  },
+  {
+   "work": "Wooden Handle Saber",
+   "author": "Ulan Cabanilla (Poly Haven)",
+   "url": "https://polyhaven.com/a/wooden_handle_saber",
    "licence": {
     "name": "CC0 1.0",
     "url": "https://creativecommons.org/publicdomain/zero/1.0/"
@@ -216,23 +225,37 @@
   "cavalry": {
    "file": "models/cavalry.glb",
    "scale": 0.090284,
-   "sha256": "1b06cf6fe71da20a3a6b0aa1920d4588d1070be7fd2ded12b9154efb1c2b7bb9",
+   "sha256": "6d24932653341f231708eaabb5c4102f0a4f3840d0d163cfbb04223ec7b695d7",
    "extent": {
     "across": [
-     -0.421,
-     0.421
+     -0.451,
+     0.451
     ],
     "along": [
-     -1.163,
-     1.163
+     -1.183,
+     1.183
     ],
-    "height": 2.5
+    "height": 2.646
    },
-   "triangles": 2979,
+   "triangles": 2991,
    "from": [
-    "https://github.com/civ-clone/models-realistic-cc0"
+    "https://github.com/civ-clone/models-realistic-cc0",
+    "https://polyhaven.com/a/wooden_handle_saber"
    ],
-   "made": "generated; rewrapped; the owner's colour on the uniform and saddle cloth"
+   "made": "generated; mirrored; his sabre's hilt dropped; rewrapped; a sabre put in his right hand; the owner's colour on the uniform and saddle cloth; posed, on his horse, his sabre at the carry",
+   "rigged": {
+    "file": "models/rigged/cavalry.glb",
+    "sha256": "d84a5c6ee33dc0450e65b442fe1a96703f794a1538c341d7b249ad748884cded",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "die": "die",
+     "fight": "fight"
+    },
+    "strikes": {
+     "fight": 0.55
+    }
+   }
   },
   "alpine-trooper": {
    "file": "models/alpine-trooper.glb",

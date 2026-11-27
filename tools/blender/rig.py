@@ -6,8 +6,9 @@ WEIGHTS what it wrote of its points' weights then. OUT is POSED with a skin and 
 textures are POSED's, untouched, so it stands as POSED does until a clip moves it.
 
 - **The skeleton** is stance.py's, bound where the stance put it: each bone a joint (named as the bone), under a root
-  node `skeleton`. Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one,
-  but for a leg's above its hip, which fade out (see LEG_REACH).
+  node `skeleton`. A rider's is his mount's and his, its root the mount's hips (`mount_hips`), his hips on its back.
+  Each point keeps the four weights stance.py gave it that are biggest, shared again to add up to one, but for a leg's
+  above its hip, which fade out (see LEG_REACH).
 - **`prop`:** a part (`part`, counted as stance.py counts them) on a joint of its own, `prop`, a child of the bone
   that holds it (`bone`), with its origin at the middle of the part as it stands (so a shot from it leaves from
   there). Unless a key holds it otherwise (`hold`, below) it stays in the hand as the stance holds it: only its size
@@ -33,7 +34,8 @@ textures are POSED's, untouched, so it stands as POSED does until a clip moves i
   - `turn`: the whole figure turned about a place (`about`), about an axis (`axis`), by `degrees`. A clip's turns
     share their axis and place;
   - `slide`: the whole figure moved across and along, [x, z], in metres;
-  - `hips`: the hips moved from where they stand, [x, y, z], in metres, and `plant`: feet (`L`, `R`) kept on the
+  - `hips`: the root moved from where it stands, [x, y, z], in metres (the hips, or a rider's mount's, carrying him),
+    and `plant` (not a rider's: his feet are in his stirrups): feet (`L`, `R`) kept on the
     ground, the ankle at a place [x, z] (as the posed figure stands in the file; or `true`: where it stands), the
     legs bent to reach them (the knees bending forward from where the keys put them), so the hips can drop, lean and
     shift their weight, and a foot can step, without the feet sliding, even as the whole figure turns. Between keys
@@ -164,20 +166,23 @@ def shot_ok(x, rig, length):
     return kind in KINDS and x.get('joint') in joints and {'at', 'joint'} <= set(x) <= {'at', 'joint', 'kind'}
 
 
-def read_rig(rig):
-    """The rig rule, checked."""
+def read_rig(rig, bones=BONES):
+    """The rig rule, checked, for a figure with `bones` (its skeleton's)."""
     if not isinstance(rig, dict) or set(rig) - {'prop', 'muzzle', 'clips'} or not isinstance(rig.get('clips'), dict) or not rig['clips']:
         fail('the rig should have clips, and may have a prop or a muzzle')
     prop = rig.get('prop')
     if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded', 'slides'}
-                                 and prop['bone'] in BONES and isinstance(prop['part'], int) and not isinstance(prop['part'], bool)
+                                 and prop['bone'] in bones and isinstance(prop['part'], int) and not isinstance(prop['part'], bool)
                                  and all(way(prop[k]) for k in ('muzzle', 'back') if k in prop)
                                  and all(isinstance(prop.get(k, True), bool) for k in ('grounded', 'slides'))):
+        unknown = prop.get('bone') if isinstance(prop, dict) and isinstance(prop.get('bone'), str) and prop['bone'] not in bones else None
         fail('prop should be a part and the bone it follows, and may have a muzzle and a back (ways [x, y, z]) and '
-             'grounded (true or false) and slides (true or false)')
+             'grounded (true or false) and slides (true or false)' + (f' (not the figure\'s: {unknown})' if unknown else ''))
     muzzle = rig.get('muzzle')
-    if 'muzzle' in rig and not muzzle_rule_ok(muzzle):
-        fail('muzzle should be the bone that carries it and where it is (at, [x, y, z], as the posed figure stands)')
+    if 'muzzle' in rig and not muzzle_rule_ok(muzzle, bones):
+        unknown = muzzle.get('bone') if isinstance(muzzle, dict) and isinstance(muzzle.get('bone'), str) and muzzle['bone'] not in bones else None
+        fail('muzzle should be the bone that carries it and where it is (at, [x, y, z], as the posed figure stands)'
+             + (f' (not the figure\'s: {unknown})' if unknown else ''))
     if muzzle is not None and prop is not None and 'muzzle' in prop:
         fail('the rig has a muzzle of its own and its prop has one too: shots leave from one')
     hand = prop['bone'][-1] if prop and prop['bone'] in ('hand.L', 'hand.R') else None
@@ -196,7 +201,9 @@ def read_rig(rig):
         if not isinstance(keys, list) or not keys:
             fail(f'{where}: keys should be a list of poses')
         lag = clip.get('lag', {})
-        if not isinstance(lag, dict) or set(lag) - BONES or not all(number(v) and 0 <= v < clip['length'] for v in lag.values()):
+        if isinstance(lag, dict) and set(lag) - bones:
+            fail(f'{where}: lag names bones the figure hasn\'t: {sorted(set(lag) - bones)}')
+        if not isinstance(lag, dict) or set(lag) - bones or not all(number(v) and 0 <= v < clip['length'] for v in lag.values()):
             fail(f'{where}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
         turns = []
         for k in keys:
@@ -217,21 +224,25 @@ def read_rig(rig):
                 fail(f'{where}: grip is for a prop a hand holds, with a muzzle and a back: it gives the other hand (L or R) a '
                      'share of the way along it, 0 to 1')
             late = k.get('late', {})
-            if not isinstance(late, dict) or set(late) - BONES or not all(number(v) and v >= 0 for v in late.values()):
+            if isinstance(late, dict) and set(late) - bones:
+                fail(f'{where}: late names bones the figure hasn\'t: {sorted(set(late) - bones)}')
+            if not isinstance(late, dict) or set(late) - bones or not all(number(v) and v >= 0 for v in late.values()):
                 fail(f'{where}: late should give bones (by name) a time from 0, in seconds')
             if 'hips' in k and not finite(k['hips'], 3):
                 fail(f'{where}: hips should be [x, y, z], how far the hips move from where they stand')
             plant = k.get('plant', {})
             if not isinstance(plant, dict) or set(plant) - {'L', 'R'} or not all(v is True or finite(v, 2) for v in plant.values()):
                 fail(f'{where}: plant should give feet (L, R) a place on the ground [x, z], or true to keep them where they stand')
+            if 'plant' in k and 'mount_hips' in bones:
+                fail(f'{where}: a rider\'s feet are in his stirrups, not on the ground: plant is for a figure on its own feet')
             if k.get('ease', 'stop') not in ('stop', 'through', 'hit', 'snap'):
                 fail(f'{where}: a key\'s ease is stop, through, hit or snap')
             aim = k.get('aim', {})
             if not isinstance(aim, dict):
                 fail(f'{where}: aim should be an object')
-            read_aim({b: d for b, d in aim.items() if d is not None}, k.get('twist', {}), where)
-            if set(aim) - BONES:
-                fail(f'{where}: aim names bones the skeleton hasn\'t: {sorted(set(aim) - BONES)}')
+            read_aim({b: d for b, d in aim.items() if d is not None}, k.get('twist', {}), where, bones)
+            if set(aim) - bones:
+                fail(f'{where}: aim names bones the skeleton hasn\'t: {sorted(set(aim) - bones)}')
             if 'turn' in k:
                 t = k['turn']
                 if not (isinstance(t, dict) and set(t) == {'axis', 'degrees', 'about'} and finite(t['axis'], 3) and
@@ -493,7 +504,7 @@ def main():
     posed_path, weights_path, stance_path, rig_path, out_path = a[:5]
     stance = json.load(open(stance_path, encoding='utf-8'))
     J, skeleton = read_rule(stance)
-    rig = read_rig(json.load(open(rig_path, encoding='utf-8')))
+    rig = read_rig(json.load(open(rig_path, encoding='utf-8')), set(skeleton))
     side = json.load(open(weights_path, encoding='utf-8'))
     names = list(skeleton)
     if side.get('bones') != names:
