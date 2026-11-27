@@ -7,11 +7,18 @@ failure ends Blender with an error code.
 The rule gives the figure's skeleton as it stands in the file, and how to pose it:
 - `joints`: each joint's place in metres, in the file's axes (x across, the figure's left at +x, y up, facing +z):
   `pelvis`, `chest`, `neck`, `head`, `top`, and on each side (`.L`, `.R`) `shoulder`, `elbow`, `wrist`, `hand` (the
-  fingertips), `hip`, `knee`, `ankle` and `toe`.
+  fingertips), `hip`, `knee`, `ankle` and `toe`. A rider's give his mount's too: `mount_pelvis` (over its hip joints),
+  `mount_withers`, `mount_poll` (the top of its head), `mount_nose`, `mount_dock` (the root of its tail) and
+  `mount_tail` (its end), and on each side its foreleg's `mount_fore_top`, `_elbow`, `_knee`, `_fetlock` and `_toe`
+  (the front of the hoof, on the ground) and its hind leg's `mount_hind_top`, `_stifle`, `_hock`, `_fetlock` and
+  `_toe`.
 - `aim`: for any bone, the way it points once posed, as [x, y, z]. A bone not named keeps its place on its parent.
   The bones run `hips` (from the pelvis down), `spine` (pelvis to chest), `chest` (to the neck), `neck` (to the head),
   `head` (to the top), and on each side `shoulder` (from the chest to the shoulder joint), `upper_arm`, `forearm`,
-  `hand`, `thigh`, `shin` and `foot`.
+  `hand`, `thigh`, `shin` and `foot`. A rider's mount's run `mount_hips` (the root, from its pelvis down; the rider's
+  `hips` ride on its back), `mount_back` (its pelvis to its withers), `mount_neck`, `mount_head` and `mount_tail`, and
+  on each side, from the top of each leg down, `mount_fore_upper`, `_lower`, `_cannon` and `_hoof` (hung from its
+  back) and `mount_hind_upper`, `_lower`, `_cannon` and `_hoof` (from its hips).
 - `twist`: for any bone, degrees to turn it about its own length once aimed (positive turns it anticlockwise, looking
   from its end back to the joint).
 - `whole`: boxes (metres, as `owner`'s), lines (`line`, two places, and a `radius`: the points within the radius of
@@ -46,6 +53,7 @@ import os
 import struct
 import sys
 
+import bmesh
 import bpy
 import numpy as np
 
@@ -69,13 +77,14 @@ def weights(welded, faces, skeleton, moving, apart=()):
     weights the figure, it tries both again on the figure without the points `apart` (those of parts held whole, which
     take their bone's weights anyway, such as a long prop the heat can't get round). Where none of those weights it (or
     a bone that moves gets no points), it weights a copy remeshed in voxels instead, and each point takes the weights
-    of the copy's points nearest it."""
+    of the copy's points nearest it. Where the heat weights none of that copy (its loose bits, such as a horse's reins
+    and buckles, can stop it), it weights the copy's biggest piece alone."""
     names = list(skeleton)
     all_faces = faces
 
-    def heat(points, scale, remesh=None):
-        """Bone heat on the welded figure (or a copy remeshed in voxels this big), all made `scale` times bigger: the
-        points weighted, and their weights."""
+    def heat(points, scale, remesh=None, biggest=False):
+        """Bone heat on the welded figure (or a copy remeshed in voxels this big, or that copy's biggest piece alone),
+        all made `scale` times bigger: the points weighted, and their weights."""
         bpy.ops.wm.read_factory_settings(use_empty=True)
         scene = bpy.context.scene
         arm = bpy.data.armatures.new('skeleton')
@@ -104,6 +113,26 @@ def weights(welded, faces, skeleton, moving, apart=()):
             mod = obj.modifiers.new('voxels', 'REMESH')
             mod.mode, mod.voxel_size = 'VOXEL', remesh * scale
             bpy.ops.object.modifier_apply(modifier='voxels')
+        if biggest:  # the copy's pieces, by its edges: all but the biggest dropped
+            parent = np.arange(len(obj.data.vertices))
+
+            def root(i):
+                while parent[i] != i:
+                    parent[i] = parent[parent[i]]
+                    i = parent[i]
+                return i
+            ends = np.zeros(2 * len(obj.data.edges), dtype=np.int64)
+            obj.data.edges.foreach_get('vertices', ends)
+            for i, j in ends.reshape(-1, 2):
+                parent[root(i)] = root(j)
+            roots = np.array([root(i) for i in range(len(parent))])
+            big = np.bincount(roots).argmax()
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+            bm.verts.ensure_lookup_table()
+            bmesh.ops.delete(bm, geom=[bm.verts[i] for i in np.where(roots != big)[0]], context='VERTS')
+            bm.to_mesh(obj.data)
+            bm.free()
         rig.select_set(True)
         bpy.context.view_layer.objects.active = rig
         bpy.ops.object.parent_set(type='ARMATURE_AUTO')
@@ -134,8 +163,13 @@ def weights(welded, faces, skeleton, moving, apart=()):
         faces = all_faces
     pp, pw = heat(welded, 1, remesh=0.012)
     keep = pw.sum(axis=1) > 1e-6
+    how = 'bone heat on a copy remeshed in voxels'
     if not keep.any():
-        fail('the bone heat found no weights, on the figure or on a copy remeshed in voxels')
+        pp, pw = heat(welded, 1, remesh=0.012, biggest=True)
+        keep = pw.sum(axis=1) > 1e-6
+        how = 'bone heat on the biggest piece of a copy remeshed in voxels'
+    if not keep.any():
+        fail('the bone heat found no weights, on the figure or on a copy remeshed in voxels (or its biggest piece)')
     pp, pw = pp[keep], pw[keep]
     out = np.zeros((len(welded), len(names)))
     for chunk in np.array_split(np.arange(len(welded)), max(1, len(welded) // 256)):
@@ -146,7 +180,7 @@ def weights(welded, faces, skeleton, moving, apart=()):
     if not all(out[:, b].max() > 0.5 for b in moving):
         fail(f'no point moves mostly with {[n for i, n in enumerate(skeleton) if i in moving and out[:, i].max() <= 0.5]}, '
              'even on a copy remeshed in voxels')
-    return out, 'bone heat on a copy remeshed in voxels'
+    return out, how
 
 
 def main():

@@ -30,8 +30,8 @@
   as tall or long as its size. A model with a prop is checked for its draught and grounding only, as its prop reaches
   past it.
 - **The credits** in CREDITS.md are as build.py writes them.
-- **Each stance** names every joint of the skeleton blender/stance.py fits, none of its bones shorter than 5 mm, and
-  only its bones, and any hand's `fingers` (its palm a way across the hand, its knuckles a share between 0 and 1,
+- **Each stance** names every joint of the skeleton blender/stance.py fits (a person's, or a rider's: his and his
+  mount's, MOUNT_JOINTS), none of its bones shorter than 5 mm, and only its bones, and any hand's `fingers` (its palm a way across the hand, its knuckles a share between 0 and 1,
   a radius over 0 and up to 0.2 m, a curl over 0 and up to 360°, `together` from 0 to under 1, and a `grip` over 0
   and under the radius); a model with one says "posed" in its `made`, and its mesh says `extras.posed`, and only
   then.
@@ -44,7 +44,8 @@
   its length; a key's `ease` is one of EASES, its `hips` [x, y, z], its `plant` feet each at [x, z] or `true`, and its
   `late` bones a time from 0, each bone's keys still in order once late (a loop's before its length, none late on its
   first key; a clip played once none late on its last). A clip played once has nothing on its first key but its time
-  and feet planted where they stand (`true`).
+  and feet planted where they stand (`true`). A rider's feet are in his stirrups, so his keys plant none. The bones a
+  rig names are its stance's figure's.
 - **Each rigged figure,** `models/rigged/<model>.glb`, is its model bound to its stance's skeleton:
   - one skin whose joints are the stance's bones (and the prop), each where its inverse bind matrix undoes, so it
     stands as its model does; its mesh, materials and images are its model's, with no morph targets, and four joints
@@ -52,7 +53,8 @@
   - its clips are the rig's, each running from 0 to its length (its times' min and max given), keying the same
     joints (every joint's turn and the root's place) linearly, with values that are numbers and turns that are unit
     quaternions. A clip played once starts where the figure stands, and a loop ends where it starts. Clips play in
-    place: only the root's place is keyed (and the prop's size), and the root stays within 0.25 m of where it starts
+    place: only the root's place is keyed (and the prop's size; the root is `hips`, or a rider's mount's
+    `mount_hips`), and the root stays within 0.25 m of where it starts
     across the ground in a loop, and 2.5 m in a clip played once. Each joint's property is keyed once. The prop's
     part moves with the prop's joint alone, which is a child of its bone, kept as it is held: its size is 1 but
     while it's thrown, and 0 from just after each shot until it grows back. A muzzle of the rig's own is one node, a
@@ -122,6 +124,29 @@ BONE_ENDS = {'spine': ('pelvis', 'chest'), 'chest': ('chest', 'neck'), 'neck': (
 BONE_ENDS |= {f'{b}.{s}': (f'{h}.{s}', f'{t}.{s}') for s in 'LR' for b, h, t in (
     ('upper_arm', 'shoulder', 'elbow'), ('forearm', 'elbow', 'wrist'), ('hand', 'wrist', 'hand'),
     ('thigh', 'hip', 'knee'), ('shin', 'knee', 'ankle'), ('foot', 'ankle', 'toe'))}
+# A rider's mount (his horse): its joints and bones, named `mount_` so they're told from the rider's. Its legs' joints,
+#  from the top of each leg down to the front of its hoof, and their bones, one between each two.
+MOUNT_LEGS = {'fore': ('top', 'elbow', 'knee', 'fetlock', 'toe'), 'hind': ('top', 'stifle', 'hock', 'fetlock', 'toe')}
+MOUNT_LEG_BONES = ('upper', 'lower', 'cannon', 'hoof')
+MOUNT_JOINTS = {'mount_pelvis', 'mount_withers', 'mount_poll', 'mount_nose', 'mount_dock', 'mount_tail'} | {
+    f'mount_{leg}_{j}.{s}' for s in 'LR' for leg, js in MOUNT_LEGS.items() for j in js}
+MOUNT_BONES = {'mount_hips', 'mount_back', 'mount_neck', 'mount_head', 'mount_tail'} | {
+    f'mount_{leg}_{b}.{s}' for s in 'LR' for leg in MOUNT_LEGS for b in MOUNT_LEG_BONES}
+MOUNT_BONE_ENDS = {'mount_back': ('mount_pelvis', 'mount_withers'), 'mount_neck': ('mount_withers', 'mount_poll'),
+                   'mount_head': ('mount_poll', 'mount_nose'), 'mount_tail': ('mount_dock', 'mount_tail')}
+MOUNT_BONE_ENDS |= {f'mount_{leg}_{b}.{s}': (f'mount_{leg}_{js[i]}.{s}', f'mount_{leg}_{js[i + 1]}.{s}')
+                    for s in 'LR' for leg, js in MOUNT_LEGS.items() for i, b in enumerate(MOUNT_LEG_BONES)}
+
+
+def figure(joints):
+    """A figure's joints, bones and bones' ends, by the joints its stance gives: a person's, or a rider's (his and his
+    mount's, his hips riding on its back). None where the joints are neither."""
+    names = set(joints) if isinstance(joints, dict) else None
+    if names == JOINTS:
+        return JOINTS, BONES, BONE_ENDS
+    if names == JOINTS | MOUNT_JOINTS:
+        return JOINTS | MOUNT_JOINTS, BONES | MOUNT_BONES, BONE_ENDS | MOUNT_BONE_ENDS
+    return None
 ATTRIBUTES = {'POSITION', 'NORMAL', 'TEXCOORD_0'}
 SKIN_ATTRIBUTES = {'JOINTS_0', 'WEIGHTS_0'}
 # Points over a face, where it's sampled to find its owner's colour (as blender/owner.py samples it).
@@ -274,11 +299,15 @@ def check_stance(where, rule):
     if not keys_ok(where, rule, STANCE):
         return
     joints = rule.get('joints')
-    if not isinstance(joints, dict) or set(joints) != JOINTS or not all(
-            isinstance(p, list) and len(p) == 3 and all(number(v) for v in p) for p in joints.values()):
-        problem(f'{where}: joints should give each of {len(JOINTS)} joints a place [x, y, z]')
+    shape = figure(joints)
+    bones = shape[1] if shape else BONES | MOUNT_BONES
+    placed = shape is not None and all(isinstance(p, list) and len(p) == 3 and all(number(v) for v in p)
+                                       for p in joints.values())
+    if not placed:
+        problem(f'{where}: joints should give each of a person\'s {len(JOINTS)} joints a place [x, y, z], or each of a '
+                f'rider\'s {len(JOINTS | MOUNT_JOINTS)} (his and his mount\'s)')
     else:
-        short = [b for b, (h, t) in BONE_ENDS.items() if math.dist(joints[h], joints[t]) < 0.005]
+        short = [b for b, (h, t) in shape[2].items() if math.dist(joints[h], joints[t]) < 0.005]
         for s, sgn in (('L', 1), ('R', -1)):
             # the shoulder bone runs from a point between the chest and neck, out to the shoulder joint
             root = [c + 0.7 * (n - c) + (sgn * 0.03 if k == 0 else 0)
@@ -288,16 +317,16 @@ def check_stance(where, rule):
         if short:
             problem(f'{where}: bones shorter than 5 mm, their joints too close: {sorted(short)}')
     aim = rule.get('aim', {})
-    if not isinstance(aim, dict) or set(aim) - BONES or not all(
+    if not isinstance(aim, dict) or set(aim) - bones or not all(
             isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
             for d in aim.values()):
         problem(f'{where}: aim should give bones a way to point [x, y, z]')
     twist = rule.get('twist', {})
-    if not isinstance(twist, dict) or set(twist) - BONES or not all(number(v) for v in twist.values()):
+    if not isinstance(twist, dict) or set(twist) - bones or not all(number(v) for v in twist.values()):
         problem(f'{where}: twist should give bones a number of degrees')
     whole_ = rule.get('whole', [])
     if not isinstance(whole_, list) or not all(
-            isinstance(b, dict) and b.get('bone') in BONES and (
+            isinstance(b, dict) and b.get('bone') in bones and (
                 (set(b) == {'bone', 'part'} and whole(b['part'], -1)) or
                 (set(b) == {'bone', 'line', 'radius'} and isinstance(b['line'], list) and len(b['line']) == 2 and all(
                     isinstance(e, list) and len(e) == 3 and all(number(v) for v in e) for e in b['line'])
@@ -318,8 +347,7 @@ def check_stance(where, rule):
                 'fingers curl: a radius (metres, over 0 and up to 0.2) and degrees (over 0 and up to 360), and may '
                 'draw them together (a share, from 0 to under 1) and close them on a grip (metres, over 0 and under '
                 'the radius)')
-    elif isinstance(joints, dict) and set(joints) == JOINTS and all(
-            isinstance(p, list) and len(p) == 3 and all(number(v) for v in p) for p in joints.values()):
+    elif placed:
         for side, f in fingers.items():
             along = [t - w for w, t in zip(joints[f'wrist.{side}'], joints[f'hand.{side}'])]
             n = math.hypot(*along)
@@ -333,9 +361,9 @@ def direction(d):
     return isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
 
 
-def muzzle_rule_ok(m):
-    """Whether a rig's own muzzle is a bone and a place: {"bone", "at"}."""
-    return isinstance(m, dict) and set(m) == {'bone', 'at'} and isinstance(m['bone'], str) and m['bone'] in BONES and \
+def muzzle_rule_ok(m, bones=BONES):
+    """Whether a rig's own muzzle is a bone (of `bones`, the figure's) and a place: {"bone", "at"}."""
+    return isinstance(m, dict) and set(m) == {'bone', 'at'} and isinstance(m['bone'], str) and m['bone'] in bones and \
         isinstance(m['at'], list) and len(m['at']) == 3 and all(number(v) for v in m['at'])
 
 
@@ -364,6 +392,9 @@ def check_rig(where, rig, stance):
     if not isinstance(stance, dict):
         problem(f'{where}: a rig binds the skeleton a stance fits, so needs a stance')
         return
+    shape = figure(stance.get('joints'))
+    bones = shape[1] if shape else BONES | MOUNT_BONES  # (joints that are neither, the stance's check reports)
+    mounted = shape is not None and shape[1] != BONES
     prop = rig.get('prop')
     if prop is not None and not (isinstance(prop, dict) and {'part', 'bone'} <= set(prop) <= {'part', 'bone', 'muzzle', 'back', 'grounded', 'slides'}
                                  and {'part': prop.get('part'), 'bone': prop.get('bone')} in stance.get('whole', []) and
@@ -373,7 +404,7 @@ def check_rig(where, rig, stance):
                 'back (ways [x, y, z]) and grounded (true or false) and slides (true or false)')
         prop = None
     muzzle = rig.get('muzzle')
-    if 'muzzle' in rig and not muzzle_rule_ok(muzzle):
+    if 'muzzle' in rig and not muzzle_rule_ok(muzzle, bones):
         problem(f'{where}.muzzle: should be the bone that carries it and where it is (at, [x, y, z], as the posed figure '
                 'stands)')
         muzzle = None
@@ -395,7 +426,7 @@ def check_rig(where, rig, stance):
             problem(f'{at}: needs a length over 0 and a list of keys')
             continue
         lag = clip.get('lag', {})
-        if not isinstance(lag, dict) or set(lag) - BONES or not all(number(v) and 0 <= v < length for v in lag.values()):
+        if not isinstance(lag, dict) or set(lag) - bones or not all(number(v) and 0 <= v < length for v in lag.values()):
             problem(f'{at}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
         turns = []
         for k in keys:
@@ -404,9 +435,9 @@ def check_rig(where, rig, stance):
             aim, twist = k.get('aim', {}), k.get('twist', {})
             if not number(k.get('at')) or k['at'] < 0:
                 problem(f'{at}: each key needs a time (at), from 0')
-            if not isinstance(aim, dict) or set(aim) - BONES or not all(d is None or direction(d) for d in aim.values()):
+            if not isinstance(aim, dict) or set(aim) - bones or not all(d is None or direction(d) for d in aim.values()):
                 problem(f'{at}: aim should give bones a way to point [x, y, z], or null')
-            if not isinstance(twist, dict) or set(twist) - BONES or not all(number(v) for v in twist.values()):
+            if not isinstance(twist, dict) or set(twist) - bones or not all(number(v) for v in twist.values()):
                 problem(f'{at}: twist should give bones a number of degrees')
             if 'turn' in k:
                 t = k['turn']
@@ -426,8 +457,10 @@ def check_rig(where, rig, stance):
             if not isinstance(plant, dict) or set(plant) - {'L', 'R'} or not all(
                     v is True or (isinstance(v, list) and len(v) == 2 and all(number(x) for x in v)) for v in plant.values()):
                 problem(f'{at}: plant should give feet (L, R) a place on the ground [x, z], or true to keep them where they stand')
+            if mounted and 'plant' in k:
+                problem(f'{at}: a rider\'s feet are in his stirrups, not on the ground: plant is for a figure on its own feet')
             late = k.get('late', {})
-            if not isinstance(late, dict) or set(late) - BONES or not all(number(v) and v >= 0 for v in late.values()):
+            if not isinstance(late, dict) or set(late) - bones or not all(number(v) and v >= 0 for v in late.values()):
                 problem(f'{at}: late should give bones a time from 0, in seconds')
             if 'hold' in k:
                 h = k['hold']
@@ -467,7 +500,7 @@ def check_rig(where, rig, stance):
             problem(f'{at}: a clip that plays once starts at the stance (its first key only at 0, and feet planted where '
                     'they stand, true) and has a key at its length')
         lates = [k['late'] for k in keys if isinstance(k.get('late'), dict)]
-        for b in sorted({b for d in lates for b in d if b in BONES and number(d[b])}):
+        for b in sorted({b for d in lates for b in d if b in bones and number(d[b])}):
             bt = [k['at'] + (k['late'][b] if isinstance(k.get('late'), dict) and number(k['late'].get(b)) else 0) for k in keys]
             if any(y <= x for x, y in zip(bt, bt[1:])) or not (bt[-1] < length if role in LOOPS else bt[-1] <= length):
                 problem(f'{at}: late keys of {b} should still come in order of time, '
@@ -802,7 +835,10 @@ def check_rigged(rel, entry):
         gltf, binary = glb.read(path)
         static, static_bin = glb.read(os.path.join(ROOT, 'models', static_rel))
         rig = entry['rig']
-        if 'muzzle' in rig and not muzzle_rule_ok(rig['muzzle']):  # a bad rule, which the roster's check reports
+        shape = figure((entry.get('stance') or {}).get('joints'))
+        bones = shape[1] if shape else BONES  # (joints that are neither, the stance's check reports)
+        root = 'mount_hips' if 'mount_hips' in bones else 'hips'  # the skeleton's root: a rider's is his mount's
+        if 'muzzle' in rig and not muzzle_rule_ok(rig['muzzle'], bones):  # a bad rule, which the roster's check reports
             rig = {k: v for k, v in rig.items() if k != 'muzzle'}
         skins = gltf.get('skins', [])
         if len(skins) != 1:
@@ -811,7 +847,7 @@ def check_rigged(rel, entry):
         joints = skins[0]['joints']
         names = [nodes[j].get('name') for j in joints]
         parent = {c: i for i, n in enumerate(nodes) for c in n.get('children', [])}
-        want = BONES | ({'prop'} if 'prop' in rig else set())
+        want = bones | ({'prop'} if 'prop' in rig else set())
         if len(set(names)) != len(names) or set(names) != want:
             raise glb.Bad(f'its joints should be the stance\'s bones{" and the prop" if "prop" in rig else ""}, each once')
         placed = glb.placed_meshes(gltf)
@@ -949,7 +985,7 @@ def check_rigged(rel, entry):
                 if any(not math.isfinite(v) for value in values for v in value) or (path_ == 'rotation' and any(
                         abs(math.sqrt(sum(v * v for v in q)) - 1) > 1e-3 for q in values)):
                     raise glb.Bad(f'clip {role} has a value that is not a number, or a turn that is not a unit quaternion')
-                if path_ == 'translation' and nodes[node].get('name') not in ('hips', *(('prop',) if posed else ())) or \
+                if path_ == 'translation' and nodes[node].get('name') not in (root, *(('prop',) if posed else ())) or \
                         path_ == 'scale' and nodes[node].get('name') != 'prop':
                     raise glb.Bad(f'clip {role} moves {nodes[node].get("name")} ({path_}); only the root\'s place, and the '
                                   'prop\'s size (and its place, where a key holds or grips it), are keyed beside the turns')
@@ -969,7 +1005,7 @@ def check_rigged(rel, entry):
                     if any(not same(v, (1, 1, 1), path_, 1e-6) for t, v in zip(times, values)
                            if not any(x['at'] + 1e-4 < t < x['back'] - 1e-4 for x in out)):
                         raise glb.Bad(f'clip {role} should keep the prop in the hand, its size 1, but while it is thrown')
-                if path_ == 'translation' and nodes[node].get('name') == 'hips':
+                if path_ == 'translation' and nodes[node].get('name') == root:
                     reach = max(math.hypot(v[0] - values[0][0], v[2] - values[0][2]) for v in values)
                     if reach > (0.25 if role in LOOPS else 2.5):
                         raise glb.Bad(f'clip {role} moves the figure {reach:.2f} m across the ground; clips play in '
@@ -1006,7 +1042,7 @@ def check_rigged(rel, entry):
                                       f'and again by {x["back"]} s')
             if keyed is None:
                 keyed = got
-            if got != keyed or not {(n, 'rotation') for n in want} | {('hips', 'translation')} | (
+            if got != keyed or not {(n, 'rotation') for n in want} | {(root, 'translation')} | (
                     {('prop', 'translation')} if posed else set()) <= got:
                 raise glb.Bad(f'clip {role} should key every joint\'s turn and the root\'s place (and the prop\'s, where a '
                               'key holds or grips it), as every clip does')

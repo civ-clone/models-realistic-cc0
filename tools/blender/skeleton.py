@@ -1,14 +1,14 @@
 """skeleton.py : the skeleton stance.py fits to a figure and rig.py binds it to, and how its bones are turned.
 
-A stance's `joints` give each joint's place as the figure stands in the file; `bones()` makes the skeleton from them,
-and `forward()` turns its bones as an `aim` and a `twist` say (see stance.py), from the root out. `read_fingers()` reads
+A stance's `joints` give each joint's place as the figure stands in the file; `bones()` makes the skeleton from them
+(a rider's with his mount's bones first, his hips riding on its back), and `forward()` turns its bones as an `aim` and a `twist` say (see stance.py), from the root out. `read_fingers()` reads
 a stance's `fingers`, each hand's frame as the figure stands in the file, and `curl()` bends a hand's fingers so.
 """
 import math
 
 import numpy as np
 
-from check import BONES, FINGERS, JOINTS, STANCE
+from check import BONES, FINGERS, MOUNT_LEG_BONES, MOUNT_LEGS, STANCE, figure
 
 SIDES = ('L', 'R')
 
@@ -34,7 +34,26 @@ def bones(J):
         out[f'thigh.{s}'] = (J[f'hip.{s}'], J[f'knee.{s}'], 'hips')
         out[f'shin.{s}'] = (J[f'knee.{s}'], J[f'ankle.{s}'], f'thigh.{s}')
         out[f'foot.{s}'] = (J[f'ankle.{s}'], J[f'toe.{s}'], f'shin.{s}')
-    return out
+    if 'mount_pelvis' not in J:
+        return out
+    # A rider: his mount's bones first, from its hips (the root, from its pelvis down) along its back to its withers,
+    #  its neck to its poll and its head to its nose, its tail from its dock, and each leg from its top to the front of
+    #  its hoof (the forelegs hung from its back, the hind legs from its hips); and his hips riding on its back.
+    mount = {'mount_hips': (J['mount_pelvis'], J['mount_pelvis'] - np.array([0, 0.12, 0]), None),
+             'mount_back': (J['mount_pelvis'], J['mount_withers'], 'mount_hips'),
+             'mount_neck': (J['mount_withers'], J['mount_poll'], 'mount_back'),
+             'mount_head': (J['mount_poll'], J['mount_nose'], 'mount_neck'),
+             'mount_tail': (J['mount_dock'], J['mount_tail'], 'mount_hips')}
+    for s in SIDES:
+        for leg, parent in (('fore', 'mount_back'), ('hind', 'mount_hips')):
+            js = MOUNT_LEGS[leg]
+            for i, b in enumerate(MOUNT_LEG_BONES):
+                name = f'mount_{leg}_{b}.{s}'
+                mount[name] = (J[f'mount_{leg}_{js[i]}.{s}'], J[f'mount_{leg}_{js[i + 1]}.{s}'], parent)
+                parent = name
+    head, tail, _ = out['hips']
+    out['hips'] = (head, tail, 'mount_back')
+    return {**mount, **out}
 
 
 def turn(a, b):
@@ -77,11 +96,11 @@ def finite(v, n=None):
     return ok
 
 
-def read_aim(aim, twist, where='the rule'):
-    """An aim and a twist, checked."""
-    if not isinstance(aim, dict) or set(aim) - BONES or not all(finite(d, 3) and 1e-6 < np.linalg.norm(d) < 1e6 for d in aim.values()):
+def read_aim(aim, twist, where='the rule', bones=BONES):
+    """An aim and a twist, checked: for `bones` (the figure's) only."""
+    if not isinstance(aim, dict) or set(aim) - bones or not all(finite(d, 3) and 1e-6 < np.linalg.norm(d) < 1e6 for d in aim.values()):
         fail(f'{where}: aim should give bones (by name) a way to point [x, y, z], not [0, 0, 0]')
-    if not isinstance(twist, dict) or set(twist) - BONES or not all(finite([v]) for v in twist.values()):
+    if not isinstance(twist, dict) or set(twist) - bones or not all(finite([v]) for v in twist.values()):
         fail(f'{where}: twist should give bones (by name) a number of degrees')
 
 
@@ -90,21 +109,23 @@ def read_rule(rule):
     if not isinstance(rule, dict) or set(rule) - STANCE:
         fail(f'the rule should be an object of {sorted(STANCE)}')
     joints = rule.get('joints')
-    if not isinstance(joints, dict) or set(joints) != JOINTS or not all(finite(p, 3) for p in joints.values()):
-        fail(f'the joints should be exactly {sorted(JOINTS)}, each a place [x, y, z]')
+    shape = figure(joints)
+    if shape is None or not all(finite(p, 3) for p in joints.values()):
+        fail('the joints should be exactly a person\'s or a rider\'s (his and his mount\'s), as check.py names them, '
+             'each a place [x, y, z]')
     J = {k: np.array(v, dtype=float) for k, v in joints.items()}
     skeleton = bones(J)
-    if set(skeleton) != BONES:
+    if set(skeleton) != shape[1]:
         fail('the skeleton\'s bones are not those check.py knows')
     short = [n for n, (head, tail, _) in skeleton.items() if np.linalg.norm(tail - head) < 0.005]
     if short:
         fail(f'bones shorter than 5 mm, their joints too close: {short}')
-    read_aim(rule.get('aim', {}), rule.get('twist', {}))
+    read_aim(rule.get('aim', {}), rule.get('twist', {}), bones=shape[1])
     whole = rule.get('whole', [])
     if not isinstance(whole, list):
         fail('whole should be a list')
     for b in whole:
-        ok = isinstance(b, dict) and b.get('bone') in BONES
+        ok = isinstance(b, dict) and b.get('bone') in shape[1]
         if ok and 'part' in b:
             ok = set(b) == {'bone', 'part'} and isinstance(b['part'], int) and not isinstance(b['part'], bool)
         elif ok and 'line' in b:
