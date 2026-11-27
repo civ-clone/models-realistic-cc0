@@ -128,10 +128,10 @@
       "note": "Generated in Meshy (meshy.ai) on a paid plan, so mine under Meshy's terms, and dedicated to the public domain. Made with AI.",
       "ai": true,
       "generated": true,
-      "made": "an image from the prompt with Nano Banana, then Meshy 7.1 image to 3D (Ultra 2K, 2K texture)",
-      "prompt": "A realistic mid-19th-century light cavalry trooper mounted on a brown horse, seen in a three-quarter side view from the front left, the whole horse and rider in frame with all four hooves on the ground, the horse standing still, the rider sitting upright in the saddle wearing a dark blue tunic with brass buttons, light blue trousers with a yellow stripe, black riding boots and a dark blue peaked cap, a curved sabre in its scabbard at his side, a carbine in a saddle holster, leather saddle and bridle, no flags, no national insignia, no badges, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
+      "made": "an image from the prompt with Nano Banana, then Meshy 7.5 image to 3D (High Detail, Ultra 2K, 2K texture)",
+      "prompt": "A realistic mid-19th-century light cavalry trooper mounted on a brown horse, three-quarter side view from the front right, the whole horse and rider in frame, all four hooves on the ground, the horse standing still. The rider sits upright, holding the reins in his left hand; his right arm is stretched out straight to his right side, slanting down like an A-pose, his right hand open and empty, far from his body, the saddle and the reins. Dark blue tunic with brass buttons, light blue trousers with a yellow stripe, black riding boots, dark blue peaked cap, a sabre scabbard at his left hip, leather saddle and bridle, no flags, no insignia, no text, plain neutral grey background, soft studio lighting, reference image for a 3D model",
       "file": "the generated GLB, kept by me, not published",
-      "sha256": "858b3f6985bc5a30c656a81d94d6dd7a4790832a7b2c45ec55113c43450e1266"
+      "sha256": "8145751c8b0124dfb443658dd980003fc61e78f637b67ffc0ad0e6f13fdece2c"
     },
     "generated-alpine-trooper": {
       "work": "Second World War ski trooper for Alpine Troops (generated for civ.one)",
@@ -393,6 +393,17 @@
       "file": "the generated GLB, kept by me, not published",
       "sha256": "a257aec2f95503880bb3ab907d934f7545cf597f3f2fa7e1cb48d6ddf7188fd0",
       "prompt": "A realistic Second World War bolt-action infantry rifle, full length, seen from its left side and slightly from above, a dark walnut stock with a straight wrist, a round steel barrel with a hooded front sight near the muzzle, a turned-down bolt handle, a metal butt plate, sling swivels, no sling, no bayonet, no scope, the whole rifle in frame, isolated, centred, plain neutral grey background, soft studio lighting, no text, no markings, no logos, reference image for a 3D model"
+    },
+    "wooden-handle-saber": {
+      "work": "Wooden Handle Saber",
+      "author": "Ulan Cabanilla (Poly Haven)",
+      "url": "https://polyhaven.com/a/wooden_handle_saber",
+      "licence": {
+        "name": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "file": "sabre.glb: Poly Haven's model packed into one GLB by Summer Engine's asset store (https://www.summerengine.com/asset-store/library-sabre)",
+      "sha256": "bd390f46d632b7199bea918e969eeb51bdc2b823e94f148d7bf83ce59f189a8c"
     }
   },
   "models": {
@@ -5541,14 +5552,15 @@
       "source": "generated-cavalry",
       "cut": {
         "mode": "rewrap",
-        "tris": 3000,
+        "tris": 2820,
         "texture": 1024,
         "depth": 8
       },
       "stage": {
         "measure": "height",
         "size": 2.5,
-        "turn": 0
+        "turn": 0,
+        "mirror": true
       },
       "scale": 0.090284,
       "owner": {
@@ -5587,7 +5599,1262 @@
         ]
       },
       "budget": 3000,
-      "made": "generated; rewrapped; the owner's colour on the uniform and saddle cloth"
+      "made": "generated; mirrored; his sabre's hilt dropped; rewrapped; a sabre put in his right hand; the owner's colour on the uniform and saddle cloth; posed, on his horse, his sabre at the carry",
+      "stance": {
+        "joints": {
+          "pelvis": [
+            0.22,
+            1.72,
+            -0.2
+          ],
+          "chest": [
+            0.22,
+            2.0,
+            -0.18
+          ],
+          "neck": [
+            0.22,
+            2.22,
+            -0.2
+          ],
+          "head": [
+            0.22,
+            2.3,
+            -0.19
+          ],
+          "top": [
+            0.22,
+            2.5,
+            -0.2
+          ],
+          "shoulder.L": [
+            0.41,
+            2.15,
+            -0.2
+          ],
+          "elbow.L": [
+            0.46,
+            1.9,
+            -0.13
+          ],
+          "wrist.L": [
+            0.33,
+            1.77,
+            0.05
+          ],
+          "hand.L": [
+            0.27,
+            1.74,
+            0.13
+          ],
+          "hip.L": [
+            0.33,
+            1.7,
+            -0.18
+          ],
+          "knee.L": [
+            0.52,
+            1.42,
+            -0.02
+          ],
+          "ankle.L": [
+            0.57,
+            1.03,
+            0.0
+          ],
+          "toe.L": [
+            0.58,
+            0.95,
+            0.14
+          ],
+          "shoulder.R": [
+            0.03,
+            2.15,
+            -0.2
+          ],
+          "elbow.R": [
+            -0.24,
+            2.1,
+            -0.22
+          ],
+          "wrist.R": [
+            -0.5,
+            2.03,
+            -0.26
+          ],
+          "hand.R": [
+            -0.63,
+            2.0,
+            -0.28
+          ],
+          "hip.R": [
+            0.11,
+            1.7,
+            -0.18
+          ],
+          "knee.R": [
+            -0.08,
+            1.42,
+            -0.02
+          ],
+          "ankle.R": [
+            -0.13,
+            1.03,
+            0.0
+          ],
+          "toe.R": [
+            -0.14,
+            0.95,
+            0.14
+          ],
+          "mount_pelvis": [
+            0.22,
+            1.35,
+            -0.75
+          ],
+          "mount_withers": [
+            0.22,
+            1.5,
+            0.25
+          ],
+          "mount_poll": [
+            0.22,
+            2.02,
+            0.85
+          ],
+          "mount_nose": [
+            0.22,
+            1.58,
+            1.12
+          ],
+          "mount_dock": [
+            0.22,
+            1.47,
+            -1.1
+          ],
+          "mount_tail": [
+            0.25,
+            0.3,
+            -1.09
+          ],
+          "mount_fore_top.L": [
+            0.36,
+            1.2,
+            0.33
+          ],
+          "mount_fore_elbow.L": [
+            0.36,
+            0.95,
+            0.2
+          ],
+          "mount_fore_knee.L": [
+            0.36,
+            0.45,
+            0.32
+          ],
+          "mount_fore_fetlock.L": [
+            0.36,
+            0.17,
+            0.32
+          ],
+          "mount_fore_toe.L": [
+            0.36,
+            0.0,
+            0.47
+          ],
+          "mount_hind_top.L": [
+            0.39,
+            1.28,
+            -0.83
+          ],
+          "mount_hind_stifle.L": [
+            0.39,
+            0.98,
+            -0.68
+          ],
+          "mount_hind_hock.L": [
+            0.39,
+            0.58,
+            -0.95
+          ],
+          "mount_hind_fetlock.L": [
+            0.39,
+            0.17,
+            -0.94
+          ],
+          "mount_hind_toe.L": [
+            0.39,
+            0.0,
+            -0.77
+          ],
+          "mount_fore_top.R": [
+            0.08,
+            1.2,
+            0.33
+          ],
+          "mount_fore_elbow.R": [
+            0.08,
+            0.95,
+            0.2
+          ],
+          "mount_fore_knee.R": [
+            0.08,
+            0.45,
+            0.32
+          ],
+          "mount_fore_fetlock.R": [
+            0.08,
+            0.17,
+            0.32
+          ],
+          "mount_fore_toe.R": [
+            0.08,
+            0.0,
+            0.47
+          ],
+          "mount_hind_top.R": [
+            0.05,
+            1.28,
+            -0.83
+          ],
+          "mount_hind_stifle.R": [
+            0.05,
+            0.98,
+            -0.68
+          ],
+          "mount_hind_hock.R": [
+            0.05,
+            0.58,
+            -0.95
+          ],
+          "mount_hind_fetlock.R": [
+            0.05,
+            0.17,
+            -0.94
+          ],
+          "mount_hind_toe.R": [
+            0.05,
+            0.0,
+            -0.77
+          ]
+        },
+        "whole": [
+          {
+            "bone": "mount_neck",
+            "x": [
+              0.01999999999999999,
+              0.42000000000000004
+            ],
+            "y": [
+              1.25,
+              1.45
+            ],
+            "z": [
+              0.62,
+              0.95
+            ]
+          },
+          {
+            "bone": "mount_neck",
+            "x": [
+              0.01999999999999999,
+              0.42000000000000004
+            ],
+            "y": [
+              1.55,
+              1.8
+            ],
+            "z": [
+              0.2,
+              0.75
+            ]
+          },
+          {
+            "bone": "hand.R",
+            "part": 2
+          }
+        ],
+        "aim": {
+          "upper_arm.R": [
+            -0.169,
+            -0.21,
+            -0.058
+          ],
+          "forearm.R": [
+            0.16,
+            -0.159,
+            0.153
+          ],
+          "hand.R": [
+            -0.017,
+            0.24,
+            0.971
+          ]
+        },
+        "twist": {
+          "hand.R": -20.5
+        },
+        "fingers": {
+          "R": {
+            "palm": [
+              0.255,
+              -0.932,
+              -0.258
+            ],
+            "knuckles": 0.5,
+            "radius": 0.03,
+            "curl": 150.0
+          }
+        }
+      },
+      "split": {
+        "drop": [
+          [
+            [
+              [
+                -0.02,
+                1.64,
+                -0.11
+              ],
+              0.035,
+              0.07,
+              0.015
+            ],
+            [
+              [
+                -0.02,
+                1.755,
+                -0.1
+              ],
+              0.035,
+              0.07,
+              0.015
+            ]
+          ]
+        ]
+      },
+      "prop": {
+        "mode": "hand",
+        "source": "wooden-handle-saber",
+        "cut": {
+          "mode": "parts",
+          "tris": 180,
+          "texture": 256
+        },
+        "options": {
+          "height": 0.935,
+          "grip": 0.065,
+          "top": [
+            0,
+            0.8,
+            0
+          ],
+          "posed": [
+            -0.068,
+            0.968,
+            -0.24
+          ]
+        }
+      },
+      "rig": {
+        "clips": {
+          "idle": {
+            "length": 3,
+            "lag": {
+              "mount_head": 0.15,
+              "mount_tail": 0.2,
+              "head": 0.2
+            },
+            "keys": [
+              {
+                "at": 0
+              },
+              {
+                "at": 1,
+                "aim": {
+                  "mount_neck": [
+                    0,
+                    0.55,
+                    1
+                  ],
+                  "mount_tail": [
+                    0.15,
+                    -1,
+                    -0.05
+                  ]
+                },
+                "twist": {
+                  "head": 25
+                }
+              },
+              {
+                "at": 2,
+                "aim": {
+                  "mount_neck": [
+                    0,
+                    0.75,
+                    1
+                  ],
+                  "mount_tail": [
+                    -0.12,
+                    -1,
+                    -0.05
+                  ]
+                },
+                "twist": {
+                  "head": -20
+                }
+              }
+            ]
+          },
+          "move": {
+            "length": 1,
+            "lag": {
+              "mount_neck": 0.04,
+              "mount_head": 0.08,
+              "mount_tail": 0.1,
+              "neck": 0.04,
+              "head": 0.08
+            },
+            "keys": [
+              {
+                "at": 0,
+                "aim": {
+                  "mount_fore_upper.L": [
+                    0,
+                    -0.97,
+                    -0.1
+                  ],
+                  "mount_fore_lower.L": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_fore_cannon.L": [
+                    0,
+                    -0.9,
+                    0.45
+                  ],
+                  "mount_fore_hoof.L": [
+                    0,
+                    -0.6,
+                    0.8
+                  ],
+                  "mount_fore_upper.R": [
+                    0,
+                    -0.85,
+                    -0.6
+                  ],
+                  "mount_fore_lower.R": [
+                    0,
+                    -0.95,
+                    -0.3
+                  ],
+                  "mount_fore_cannon.R": [
+                    0,
+                    -0.9,
+                    -0.4
+                  ],
+                  "mount_fore_hoof.R": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_hind_upper.R": [
+                    0,
+                    -0.8,
+                    0.6
+                  ],
+                  "mount_hind_lower.R": [
+                    0,
+                    -0.8,
+                    -0.6
+                  ],
+                  "mount_hind_cannon.R": [
+                    0,
+                    -0.98,
+                    0.2
+                  ],
+                  "mount_hind_hoof.R": [
+                    0,
+                    -0.7,
+                    0.7
+                  ],
+                  "mount_hind_upper.L": [
+                    0,
+                    -0.97,
+                    0.2
+                  ],
+                  "mount_hind_lower.L": [
+                    0,
+                    -0.85,
+                    -0.53
+                  ],
+                  "mount_hind_cannon.L": [
+                    0,
+                    -0.88,
+                    -0.45
+                  ],
+                  "mount_hind_hoof.L": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_neck": [
+                    0.0,
+                    0.8,
+                    1.0
+                  ],
+                  "mount_tail": [
+                    0,
+                    -0.9,
+                    -0.35
+                  ]
+                }
+              },
+              {
+                "at": 0.25,
+                "aim": {
+                  "mount_fore_upper.L": [
+                    0,
+                    -0.9,
+                    -0.43
+                  ],
+                  "mount_fore_lower.L": [
+                    0,
+                    -0.99,
+                    0.12
+                  ],
+                  "mount_fore_cannon.L": [
+                    0,
+                    -1,
+                    0.03
+                  ],
+                  "mount_fore_hoof.L": [
+                    0,
+                    -0.79,
+                    0.6
+                  ],
+                  "mount_fore_upper.R": [
+                    0,
+                    -0.97,
+                    -0.05
+                  ],
+                  "mount_fore_lower.R": [
+                    0,
+                    -0.35,
+                    0.95
+                  ],
+                  "mount_fore_cannon.R": [
+                    0,
+                    -0.8,
+                    -0.6
+                  ],
+                  "mount_fore_hoof.R": [
+                    0,
+                    -0.6,
+                    -0.8
+                  ],
+                  "mount_hind_upper.R": [
+                    0,
+                    -0.92,
+                    0.4
+                  ],
+                  "mount_hind_lower.R": [
+                    0,
+                    -0.8,
+                    -0.6
+                  ],
+                  "mount_hind_cannon.R": [
+                    0,
+                    -1,
+                    0.02
+                  ],
+                  "mount_hind_hoof.R": [
+                    0,
+                    -0.77,
+                    0.64
+                  ],
+                  "mount_hind_upper.L": [
+                    0,
+                    -0.75,
+                    0.66
+                  ],
+                  "mount_hind_lower.L": [
+                    0,
+                    -0.55,
+                    -0.83
+                  ],
+                  "mount_hind_cannon.L": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_hind_hoof.L": [
+                    0,
+                    -0.9,
+                    -0.4
+                  ],
+                  "mount_neck": [
+                    0,
+                    0.9,
+                    1
+                  ],
+                  "mount_tail": [
+                    0.08,
+                    -0.9,
+                    -0.35
+                  ]
+                }
+              },
+              {
+                "at": 0.5,
+                "aim": {
+                  "mount_fore_upper.L": [
+                    0,
+                    -0.85,
+                    -0.6
+                  ],
+                  "mount_fore_lower.L": [
+                    0,
+                    -0.95,
+                    -0.3
+                  ],
+                  "mount_fore_cannon.L": [
+                    0,
+                    -0.9,
+                    -0.4
+                  ],
+                  "mount_fore_hoof.L": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_fore_upper.R": [
+                    0,
+                    -0.97,
+                    -0.1
+                  ],
+                  "mount_fore_lower.R": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_fore_cannon.R": [
+                    0,
+                    -0.9,
+                    0.45
+                  ],
+                  "mount_fore_hoof.R": [
+                    0,
+                    -0.6,
+                    0.8
+                  ],
+                  "mount_hind_upper.R": [
+                    0,
+                    -0.97,
+                    0.2
+                  ],
+                  "mount_hind_lower.R": [
+                    0,
+                    -0.85,
+                    -0.53
+                  ],
+                  "mount_hind_cannon.R": [
+                    0,
+                    -0.88,
+                    -0.45
+                  ],
+                  "mount_hind_hoof.R": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_hind_upper.L": [
+                    0,
+                    -0.8,
+                    0.6
+                  ],
+                  "mount_hind_lower.L": [
+                    0,
+                    -0.8,
+                    -0.6
+                  ],
+                  "mount_hind_cannon.L": [
+                    0,
+                    -0.98,
+                    0.2
+                  ],
+                  "mount_hind_hoof.L": [
+                    0,
+                    -0.7,
+                    0.7
+                  ],
+                  "mount_neck": [
+                    0.0,
+                    0.8,
+                    1.0
+                  ],
+                  "mount_tail": [
+                    0,
+                    -0.9,
+                    -0.35
+                  ]
+                }
+              },
+              {
+                "at": 0.75,
+                "aim": {
+                  "mount_fore_upper.L": [
+                    0,
+                    -0.97,
+                    -0.05
+                  ],
+                  "mount_fore_lower.L": [
+                    0,
+                    -0.35,
+                    0.95
+                  ],
+                  "mount_fore_cannon.L": [
+                    0,
+                    -0.8,
+                    -0.6
+                  ],
+                  "mount_fore_hoof.L": [
+                    0,
+                    -0.6,
+                    -0.8
+                  ],
+                  "mount_fore_upper.R": [
+                    0,
+                    -0.9,
+                    -0.43
+                  ],
+                  "mount_fore_lower.R": [
+                    0,
+                    -0.99,
+                    0.12
+                  ],
+                  "mount_fore_cannon.R": [
+                    0,
+                    -1,
+                    0.03
+                  ],
+                  "mount_fore_hoof.R": [
+                    0,
+                    -0.79,
+                    0.6
+                  ],
+                  "mount_hind_upper.R": [
+                    0,
+                    -0.75,
+                    0.66
+                  ],
+                  "mount_hind_lower.R": [
+                    0,
+                    -0.55,
+                    -0.83
+                  ],
+                  "mount_hind_cannon.R": [
+                    0,
+                    -0.85,
+                    0.5
+                  ],
+                  "mount_hind_hoof.R": [
+                    0,
+                    -0.9,
+                    -0.4
+                  ],
+                  "mount_hind_upper.L": [
+                    0,
+                    -0.92,
+                    0.4
+                  ],
+                  "mount_hind_lower.L": [
+                    0,
+                    -0.8,
+                    -0.6
+                  ],
+                  "mount_hind_cannon.L": [
+                    0,
+                    -1,
+                    0.02
+                  ],
+                  "mount_hind_hoof.L": [
+                    0,
+                    -0.77,
+                    0.64
+                  ],
+                  "mount_neck": [
+                    0,
+                    0.9,
+                    1
+                  ],
+                  "mount_tail": [
+                    -0.08,
+                    -0.9,
+                    -0.35
+                  ]
+                }
+              }
+            ]
+          },
+          "die": {
+            "length": 1.5,
+            "keys": [
+              {
+                "at": 0
+              },
+              {
+                "at": 0.2,
+                "ease": "snap",
+                "aim": {
+                  "mount_neck": [
+                    0,
+                    1,
+                    0.5
+                  ],
+                  "chest": [
+                    0,
+                    1,
+                    -0.25
+                  ],
+                  "head": [
+                    0,
+                    1,
+                    -0.3
+                  ]
+                }
+              },
+              {
+                "at": 0.55,
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    -0.25,
+                    0,
+                    0
+                  ],
+                  "degrees": 30
+                },
+                "aim": {
+                  "mount_fore_upper.L": [
+                    0,
+                    -0.7,
+                    -0.7
+                  ],
+                  "mount_fore_lower.L": [
+                    0,
+                    -0.3,
+                    0.95
+                  ],
+                  "mount_fore_cannon.L": [
+                    0,
+                    -0.5,
+                    -0.85
+                  ],
+                  "mount_fore_hoof.L": [
+                    0,
+                    -0.3,
+                    -1
+                  ],
+                  "mount_fore_upper.R": [
+                    0,
+                    -0.7,
+                    -0.7
+                  ],
+                  "mount_fore_lower.R": [
+                    0,
+                    -0.3,
+                    0.95
+                  ],
+                  "mount_fore_cannon.R": [
+                    0,
+                    -0.5,
+                    -0.85
+                  ],
+                  "mount_fore_hoof.R": [
+                    0,
+                    -0.3,
+                    -1
+                  ],
+                  "mount_neck": [
+                    -0.2,
+                    0.6,
+                    1
+                  ],
+                  "spine": [
+                    -0.3,
+                    1,
+                    0
+                  ],
+                  "chest": [
+                    -0.35,
+                    1,
+                    0
+                  ]
+                }
+              },
+              {
+                "at": 0.85,
+                "ease": "hit",
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    -0.25,
+                    0,
+                    0
+                  ],
+                  "degrees": 90.0
+                },
+                "aim": {
+                  "mount_fore_upper.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_upper.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_fore_lower.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_lower.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_fore_cannon.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_cannon.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_fore_hoof.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_hoof.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_hind_upper.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_upper.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_hind_lower.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_lower.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_hind_cannon.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_cannon.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_hind_hoof.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_hoof.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_neck": [
+                    -0.35,
+                    0.2,
+                    1
+                  ],
+                  "mount_head": null,
+                  "mount_tail": [
+                    -0.3,
+                    -1,
+                    -0.4
+                  ],
+                  "spine": [
+                    -0.35,
+                    1.0,
+                    0.0
+                  ],
+                  "chest": [
+                    -0.45,
+                    1.0,
+                    0.05
+                  ],
+                  "head": [
+                    -0.45,
+                    1.0,
+                    0.1
+                  ]
+                },
+                "late": {
+                  "head": 0.08,
+                  "mount_head": 0.08
+                }
+              },
+              {
+                "at": 1.5,
+                "turn": {
+                  "axis": [
+                    0,
+                    0,
+                    1
+                  ],
+                  "about": [
+                    -0.25,
+                    0,
+                    0
+                  ],
+                  "degrees": 90.0
+                },
+                "aim": {
+                  "mount_fore_upper.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_upper.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_fore_lower.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_lower.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_fore_cannon.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_cannon.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_fore_hoof.L": [
+                    -0.28,
+                    -1.0,
+                    0.3
+                  ],
+                  "mount_fore_hoof.R": [
+                    -0.1,
+                    -1.0,
+                    0.15
+                  ],
+                  "mount_hind_upper.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_upper.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_hind_lower.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_lower.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_hind_cannon.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_cannon.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_hind_hoof.L": [
+                    -0.28,
+                    -1.0,
+                    0.05
+                  ],
+                  "mount_hind_hoof.R": [
+                    -0.1,
+                    -1.0,
+                    -0.1
+                  ],
+                  "mount_neck": [
+                    -0.35,
+                    0.2,
+                    1
+                  ],
+                  "mount_head": null,
+                  "mount_tail": [
+                    -0.3,
+                    -1,
+                    -0.4
+                  ],
+                  "spine": [
+                    -0.35,
+                    1.0,
+                    0.0
+                  ],
+                  "chest": [
+                    -0.45,
+                    1.0,
+                    0.05
+                  ],
+                  "head": [
+                    -0.45,
+                    1.0,
+                    0.1
+                  ]
+                }
+              }
+            ]
+          },
+          "fight": {
+            "length": 1.5,
+            "strike": 0.55,
+            "lag": {
+              "head": 0.05,
+              "mount_head": 0.08
+            },
+            "keys": [
+              {
+                "at": 0
+              },
+              {
+                "at": 0.3,
+                "aim": {
+                  "upper_arm.R": [
+                    -0.25,
+                    0.011,
+                    -0.116
+                  ],
+                  "forearm.R": [
+                    -0.1,
+                    0.198,
+                    0.158
+                  ],
+                  "hand.R": [
+                    0.024,
+                    0.97,
+                    -0.24
+                  ],
+                  "mount_neck": [
+                    0,
+                    0.85,
+                    1
+                  ]
+                },
+                "twist": {
+                  "chest": -15.0,
+                  "hand.R": 178.3
+                }
+              },
+              {
+                "at": 0.55,
+                "ease": "hit",
+                "aim": {
+                  "upper_arm.R": [
+                    -0.149,
+                    -0.138,
+                    0.186
+                  ],
+                  "forearm.R": [
+                    -0.14,
+                    -0.135,
+                    0.191
+                  ],
+                  "hand.R": [
+                    -0.058,
+                    0.866,
+                    0.497
+                  ],
+                  "mount_neck": [
+                    0,
+                    1,
+                    0.75
+                  ]
+                },
+                "twist": {
+                  "chest": 12.0,
+                  "hand.R": -78.5
+                }
+              },
+              {
+                "at": 0.8,
+                "aim": {
+                  "upper_arm.R": [
+                    -0.139,
+                    -0.234,
+                    0.04
+                  ],
+                  "forearm.R": [
+                    -0.129,
+                    -0.235,
+                    0.045
+                  ],
+                  "hand.R": [
+                    -0.291,
+                    -0.698,
+                    0.655
+                  ]
+                },
+                "twist": {
+                  "chest": 5.0,
+                  "hand.R": -156.1
+                }
+              },
+              {
+                "at": 1.5
+              }
+            ]
+          }
+        }
+      }
     },
     "alpine-trooper": {
       "units": [
