@@ -9,7 +9,7 @@ body would move wherever the piece reached past it, away from the stance's joint
 started with factory settings and scripts in files turned off, and reads the GLB only as data.
 
 The rule (a model's `split` in the roster, with its `stage`) gives `chains` of stations along the piece, in the frame
-stance.py's joints use: the original as normalise.py would turn, size and ground it (metres, x across with the figure's
+stance.py's joints use: the original as normalise.py would turn (and mirror), size and ground it (metres, x across with the figure's
 left at +x, y up, facing +z). Each station is [place, across, deep, gap]:
 - `place`, [x, y, z]: a point on the piece's middle line;
 - `across` and `deep`: how far the piece reaches from that line, across it and along `depth` (default [0, 0, 1], the
@@ -114,6 +114,8 @@ mn, mx = V.min(0), V.max(0)
 c = np.array([(mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, mn[2]])
 t = math.radians(stage.get('turn', 0))
 R = np.array([[math.cos(t), -math.sin(t), 0], [math.sin(t), math.cos(t), 0], [0, 0, 1]])
+if stage.get('mirror'):  # its left and right swapped before it's turned, as normalise.py does
+    R = R @ np.diag([-1.0, 1.0, 1.0])
 P1 = (V - c) @ R.T
 ext = P1.max(0) - P1.min(0)
 s = stage['size'] / (ext[2] if stage['measure'] == 'height' else ext[1])
@@ -490,7 +492,10 @@ for ob, name, out in ((obj, 'body', body_out),) + (((piece, 'piece', piece_out),
             raise RuntimeError(f'Error: what the rule drops moves the body\'s box by {off * 1000:.1f} mm: '
                                'one that only drops should leave the box as it was')
     else:  # in the staged frame, where the rule (and a prop's `top`) gives places
-        ob.data.transform(mathutils.Matrix(Mb.tolist())); ob.data.update()
+        ob.data.transform(mathutils.Matrix(Mb.tolist()))
+        if np.linalg.det(Mb) < 0:  # mirrored: its faces wound back the right way round
+            ob.data.flip_normals()
+        ob.data.update()
         if rule.get('mirror'):
             report['mirror'] = mirror(ob)
     for x in sc.objects: x.select_set(False)

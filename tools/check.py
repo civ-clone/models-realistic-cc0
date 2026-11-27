@@ -98,7 +98,7 @@ MODEL = {'units', 'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 's
 EXTRA = {'source', 'drop', 'split', 'cut', 'stage', 'prop', 'owner', 'stance', 'made'}
 SPLIT = {'chains', 'drop', 'depth', 'mirror'}
 CUT = {'mode', 'tris', 'texture', 'depth', 'solidify', 'close'}
-STAGE = {'measure', 'size', 'turn', 'draught', 'pose', 'keep'}
+STAGE = {'measure', 'size', 'turn', 'mirror', 'draught', 'pose', 'keep'}
 PROP = {'mode', 'source', 'options', 'cut'}
 OWNER = {'part', 'colours', 'within', 'without', 'sides', 'cut', 'share', 'smooth', 'light'}
 STANCE = {'joints', 'aim', 'twist', 'whole', 'fingers'}
@@ -540,6 +540,8 @@ def check_build_entry(where, e, allowed, sources):
             problem(f'{where}.stage: needs measure (height or along) and a size over 0')
         if not number(st.get('turn', 0)) or ('draught' in st and not number(st['draught'], 0)):
             problem(f'{where}.stage: turn and draught should be numbers (draught over 0)')
+        if not isinstance(st.get('mirror', False), bool) or (st.get('mirror') and st.get('keep')):
+            problem(f'{where}.stage: mirror should be true or false, and not for a model that keeps its hierarchy')
     # whether it splits a piece off (not only dropping): None where check_split finds its rule malformed (said there)
     chains = e['split'].get('chains', []) if isinstance(e.get('split'), dict) else None
     splits = (bool(chains) if isinstance(chains, list) else None) if 'split' in e else False
