@@ -31,10 +31,10 @@
   past it.
 - **The credits** in CREDITS.md are as build.py writes them.
 - **Each stance** names every joint of the skeleton blender/stance.py fits (a person's, or a rider's: his and his
-  mount's, MOUNT_JOINTS), none of its bones shorter than 5 mm, and only its bones, and any hand's `fingers` (its palm a way across the hand, its knuckles a share between 0 and 1,
-  a radius over 0 and up to 0.2 m, a curl over 0 and up to 360°, `together` from 0 to under 1, and a `grip` over 0
-  and under the radius); a model with one says "posed" in its `made`, and its mesh says `extras.posed`, and only
-  then.
+  mount's, MOUNT_JOINTS), none of its bones shorter than 5 mm, and only its bones, and any hand's `fingers` (its palm a
+  way across the hand, its knuckles a share between 0 and 1, a radius over 0 and up to 0.2 m, a curl over 0 and up to
+  360°, `together` from 0 to under 1, and a `grip` over 0 and under the radius); a model with one says "posed" in its
+  `made`, and its mesh says `extras.posed`, and only then.
 - **Each rig** is on a figure with a stance, and says only what blender/rig.py reads: its clips by role (idle, move
   and work loop; fight, die and settle play once), each with a length and keys in order (a loop's from 0 to before its
   length; a clip played once from the stance at 0 to a key at its length), any prop a part the stance holds whole, any
@@ -458,7 +458,8 @@ def check_rig(where, rig, stance):
                     v is True or (isinstance(v, list) and len(v) == 2 and all(number(x) for x in v)) for v in plant.values()):
                 problem(f'{at}: plant should give feet (L, R) a place on the ground [x, z], or true to keep them where they stand')
             if mounted and 'plant' in k:
-                problem(f'{at}: a rider\'s feet are in his stirrups, not on the ground: plant is for a figure on its own feet')
+                problem(f'{at}: a rider\'s feet are in his stirrups, not on the ground: plant is for a figure on its '
+                        'own feet')
             late = k.get('late', {})
             if not isinstance(late, dict) or set(late) - bones or not all(number(v) and v >= 0 for v in late.values()):
                 problem(f'{at}: late should give bones a time from 0, in seconds')

@@ -1,8 +1,9 @@
 """skeleton.py : the skeleton stance.py fits to a figure and rig.py binds it to, and how its bones are turned.
 
 A stance's `joints` give each joint's place as the figure stands in the file; `bones()` makes the skeleton from them
-(a rider's with his mount's bones first, his hips riding on its back), and `forward()` turns its bones as an `aim` and a `twist` say (see stance.py), from the root out. `read_fingers()` reads
-a stance's `fingers`, each hand's frame as the figure stands in the file, and `curl()` bends a hand's fingers so.
+(a rider's with his mount's bones first, his hips riding on its back), and `forward()` turns its bones as an `aim`
+and a `twist` say (see stance.py), from the root out. `read_fingers()` reads a stance's `fingers`, each hand's frame
+as the figure stands in the file, and `curl()` bends a hand's fingers so.
 """
 import math
 
