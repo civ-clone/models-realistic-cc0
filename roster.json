@@ -5,7 +5,7 @@
     "licence": {
       "name": "CC0 1.0",
       "url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models and Lucian Pavel's Lowpoly Molotov, all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
+      "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models, Lucian Pavel's Lowpoly Molotov and Ulan Cabanilla's Wooden Handle Saber (Poly Haven), all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov and the sabre are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
     }
   },
   "date": "22 November 2026",
@@ -402,7 +402,7 @@
         "name": "CC0 1.0",
         "url": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
-      "file": "sabre.glb: Poly Haven's model packed into one GLB by Summer Engine's asset store (https://www.summerengine.com/asset-store/library-sabre)",
+      "file": "sabre.glb from Summer Engine's asset store (https://www.summerengine.com/asset-store/library-sabre, \"Sabre\", CC0 1.0), one GLB of Poly Haven's model: its node and textures are named wooden_handle_saber, and it has Poly Haven's 4,031 triangles",
       "sha256": "bd390f46d632b7199bea918e969eeb51bdc2b823e94f148d7bf83ce59f189a8c"
     }
   },
@@ -5584,16 +5584,16 @@
         "without": [
           {
             "x": [
-              -0.1,
-              0.1
+              0.08,
+              0.36
             ],
             "y": [
               2.25,
-              2.42
+              2.52
             ],
             "z": [
-              -0.32,
-              -0.2
+              -0.36,
+              -0.04
             ]
           }
         ]
@@ -6799,14 +6799,14 @@
                 "ease": "hit",
                 "aim": {
                   "upper_arm.R": [
-                    -0.149,
-                    -0.138,
-                    0.186
+                    -0.085,
+                    -0.168,
+                    0.201
                   ],
                   "forearm.R": [
-                    -0.14,
-                    -0.135,
-                    0.191
+                    -0.024,
+                    -0.144,
+                    0.23
                   ],
                   "hand.R": [
                     -0.058,
@@ -6821,31 +6821,55 @@
                 },
                 "twist": {
                   "chest": 12.0,
-                  "hand.R": -78.5
+                  "hand.R": -109.6
                 }
               },
               {
-                "at": 0.8,
+                "at": 0.72,
                 "aim": {
                   "upper_arm.R": [
-                    -0.139,
-                    -0.234,
-                    0.04
+                    -0.061,
+                    -0.213,
+                    0.163
                   ],
                   "forearm.R": [
-                    -0.129,
-                    -0.235,
-                    0.045
+                    -0.051,
+                    -0.209,
+                    0.166
                   ],
                   "hand.R": [
-                    -0.291,
-                    -0.698,
-                    0.655
+                    -0.276,
+                    0.59,
+                    0.759
+                  ]
+                },
+                "twist": {
+                  "chest": 12.0,
+                  "hand.R": -110.5
+                }
+              },
+              {
+                "at": 1.0,
+                "aim": {
+                  "upper_arm.R": [
+                    -0.232,
+                    -0.122,
+                    0.085
+                  ],
+                  "forearm.R": [
+                    0.083,
+                    -0.031,
+                    0.257
+                  ],
+                  "hand.R": [
+                    0.131,
+                    -0.785,
+                    0.605
                   ]
                 },
                 "twist": {
                   "chest": 5.0,
-                  "hand.R": -156.1
+                  "hand.R": 81.9
                 }
               },
               {

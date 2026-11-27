@@ -5,7 +5,7 @@ their hierarchy, skeleton and animations under a root node; "pose" freezes a rig
 Args (after --): STAGE.json OUTDIR [key ...]
 Each stage entry: src, measure ("height" or "along"), size (metres), turn (degrees about up, counter-clockwise from
 above), optional mirror (true: its left and right swapped, across x, before it's turned; for a figure made the wrong
-way round), keep (bool), pose ([action name, frame]), out (file name, default <key>.glb), and matrix (4x4, in
+way round; not with keep), keep (bool), pose ([action name, frame]), out (file name, default <key>.glb), and matrix (4x4, in
 Blender's axes): the staging to use as it is instead of the one its own box gives, as split.py hands on for a body
 whose piece reached past it.
 Writes OUTDIR/<out> and OUTDIR/<key>.json (extent in glTF axes, triangles, sha256)."""
@@ -85,6 +85,8 @@ for key, v in stage.items():
     mn = mathutils.Vector([min(p[i] for p in pts) for i in range(3)]); mx = mathutils.Vector([max(p[i] for p in pts) for i in range(3)])
     centre = mathutils.Vector(((mn.x + mx.x) / 2, (mn.y + mx.y) / 2, mn.z))
     turn = mathutils.Matrix.Rotation(math.radians(v.get("turn", 0)), 4, "Z")
+    if v.get("mirror") and v.get("keep"):
+        raise RuntimeError("Error: a model that keeps its hierarchy can't be mirrored (its root would be scaled by -1)")
     if v.get("mirror"):  # its left and right swapped, across its middle, before it's turned
         turn = turn @ mathutils.Matrix.Scale(-1, 4, (1, 0, 0))
     m1 = turn @ mathutils.Matrix.Translation(-centre)

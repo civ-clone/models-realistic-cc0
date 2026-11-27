@@ -138,6 +138,12 @@ MOUNT_BONE_ENDS |= {f'mount_{leg}_{b}.{s}': (f'mount_{leg}_{js[i]}.{s}', f'mount
                     for s in 'LR' for leg, js in MOUNT_LEGS.items() for i, b in enumerate(MOUNT_LEG_BONES)}
 
 
+def strangers(d, bones):
+    """Any bones a rule names that the figure hasn't, for a problem to say: ' (not the figure's: [...])' or ''."""
+    names = sorted(set(d) - bones) if isinstance(d, dict) else []
+    return f' (not the figure\'s: {names})' if names else ''
+
+
 def figure(joints):
     """A figure's joints, bones and bones' ends, by the joints its stance gives: a person's, or a rider's (his and his
     mount's, his hips riding on its back). None where the joints are neither."""
@@ -320,10 +326,10 @@ def check_stance(where, rule):
     if not isinstance(aim, dict) or set(aim) - bones or not all(
             isinstance(d, list) and len(d) == 3 and all(number(v) for v in d) and 1e-6 < math.hypot(*d) < 1e6
             for d in aim.values()):
-        problem(f'{where}: aim should give bones a way to point [x, y, z]')
+        problem(f'{where}: aim should give bones a way to point [x, y, z]{strangers(aim, bones)}')
     twist = rule.get('twist', {})
     if not isinstance(twist, dict) or set(twist) - bones or not all(number(v) for v in twist.values()):
-        problem(f'{where}: twist should give bones a number of degrees')
+        problem(f'{where}: twist should give bones a number of degrees{strangers(twist, bones)}')
     whole_ = rule.get('whole', [])
     if not isinstance(whole_, list) or not all(
             isinstance(b, dict) and b.get('bone') in bones and (
@@ -427,7 +433,7 @@ def check_rig(where, rig, stance):
             continue
         lag = clip.get('lag', {})
         if not isinstance(lag, dict) or set(lag) - bones or not all(number(v) and 0 <= v < length for v in lag.values()):
-            problem(f'{at}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
+            problem(f'{at}: lag should give bones a time from 0 to under the clip\'s length, in seconds{strangers(lag, bones)}')
         turns = []
         for k in keys:
             for f in sorted(set(k) - KEY):
@@ -436,9 +442,9 @@ def check_rig(where, rig, stance):
             if not number(k.get('at')) or k['at'] < 0:
                 problem(f'{at}: each key needs a time (at), from 0')
             if not isinstance(aim, dict) or set(aim) - bones or not all(d is None or direction(d) for d in aim.values()):
-                problem(f'{at}: aim should give bones a way to point [x, y, z], or null')
+                problem(f'{at}: aim should give bones a way to point [x, y, z], or null{strangers(aim, bones)}')
             if not isinstance(twist, dict) or set(twist) - bones or not all(number(v) for v in twist.values()):
-                problem(f'{at}: twist should give bones a number of degrees')
+                problem(f'{at}: twist should give bones a number of degrees{strangers(twist, bones)}')
             if 'turn' in k:
                 t = k['turn']
                 if not (isinstance(t, dict) and set(t) == {'axis', 'degrees', 'about'} and direction(t['axis']) and
@@ -462,7 +468,7 @@ def check_rig(where, rig, stance):
                         'own feet')
             late = k.get('late', {})
             if not isinstance(late, dict) or set(late) - bones or not all(number(v) and v >= 0 for v in late.values()):
-                problem(f'{at}: late should give bones a time from 0, in seconds')
+                problem(f'{at}: late should give bones a time from 0, in seconds{strangers(late, bones)}')
             if 'hold' in k:
                 h = k['hold']
                 if not (hand and 'back' in prop and 'muzzle' in prop and isinstance(h, dict) and {'aim', 'up', 'butt'} <= set(h) <= {'aim', 'up', 'butt', 'hand'} and

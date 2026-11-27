@@ -99,6 +99,9 @@ def finite(v, n=None):
 
 def read_aim(aim, twist, where='the rule', bones=BONES):
     """An aim and a twist, checked: for `bones` (the figure's) only."""
+    for kind, d in (('aim', aim), ('twist', twist)):
+        if isinstance(d, dict) and set(d) - bones:
+            fail(f'{where}: {kind} names bones the figure hasn\'t: {sorted(set(d) - bones)}')
     if not isinstance(aim, dict) or set(aim) - bones or not all(finite(d, 3) and 1e-6 < np.linalg.norm(d) < 1e6 for d in aim.values()):
         fail(f'{where}: aim should give bones (by name) a way to point [x, y, z], not [0, 0, 0]')
     if not isinstance(twist, dict) or set(twist) - bones or not all(finite([v]) for v in twist.values()):

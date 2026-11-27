@@ -142,7 +142,7 @@ map draws each type from one set.
     what was done to it;
   - a rigged model's rigged file, its SHA-256, its clips by role, and its shots by clip: when each leaves, the joint
     or node it leaves from, and what flies, where the roster says (`kind`; a bottle without one); and, for a fight
-    with no shots, when its blow lands (`strikes`, by clip: the Warriors') (`rigged`);
+    with no shots, when its blow lands (`strikes`, by clip: the Warriors' and the Cavalry's) (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
@@ -188,8 +188,9 @@ The originals:
 - **Mine:** generated in my Meshy account, and too big to keep here (up to 140 MB each). I've kept them.
 - **Meshy community models:** each post's GLB download, which needs a Meshy account.
 - **The molotov:** [`Molotov.zip`](https://opengameart.org/sites/default/files/Molotov.zip) from its OpenGameArt page.
-- **The sabre:** Poly Haven's [Wooden Handle Saber](https://polyhaven.com/a/wooden_handle_saber), as the one-file GLB
-  Summer Engine's [asset store](https://www.summerengine.com/asset-store/library-sabre) packs it in.
+- **The sabre:** Poly Haven's [Wooden Handle Saber](https://polyhaven.com/a/wooden_handle_saber), as Summer Engine's
+  [asset store](https://www.summerengine.com/asset-store/library-sabre) has it, in one GLB (its node and textures are
+  named for it, and it has Poly Haven's 4,031 triangles).
 
 With Blender 4.5 on the Mac they were made on, a model built again comes out the same file, or differs only in a name
 inside it. Another version of Blender, or another platform, may cut or bake it a little differently.

@@ -197,6 +197,8 @@ def read_rig(rig, bones=BONES):
         if not isinstance(keys, list) or not keys:
             fail(f'{where}: keys should be a list of poses')
         lag = clip.get('lag', {})
+        if isinstance(lag, dict) and set(lag) - bones:
+            fail(f'{where}: lag names bones the figure hasn\'t: {sorted(set(lag) - bones)}')
         if not isinstance(lag, dict) or set(lag) - bones or not all(number(v) and 0 <= v < clip['length'] for v in lag.values()):
             fail(f'{where}: lag should give bones a time from 0 to under the clip\'s length, in seconds')
         turns = []
@@ -218,6 +220,8 @@ def read_rig(rig, bones=BONES):
                 fail(f'{where}: grip is for a prop a hand holds, with a muzzle and a back: it gives the other hand (L or R) a '
                      'share of the way along it, 0 to 1')
             late = k.get('late', {})
+            if isinstance(late, dict) and set(late) - bones:
+                fail(f'{where}: late names bones the figure hasn\'t: {sorted(set(late) - bones)}')
             if not isinstance(late, dict) or set(late) - bones or not all(number(v) and v >= 0 for v in late.values()):
                 fail(f'{where}: late should give bones (by name) a time from 0, in seconds')
             if 'hips' in k and not finite(k['hips'], 3):
