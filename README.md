@@ -122,7 +122,7 @@ map draws each type from one set.
   The Dragoons are rigged as the Cavalry are, and their horses idle, trot and fall as the Cavalry's do, their carbines
   kept at the advance (and in his hand as he falls). In `fight` (1.5 s) he lifts his carbine from his thigh and brings
   it to his right shoulder, its muzzle coming down ahead of him as he turns to his right, and aims it ahead and a little
-  down, about 8° to the right of his horse's head (clear of it by about 17 cm), his left hand leaving the reins for its
+  down, about 8° to the right of his horse's head (clear of it by about 16 cm), his left hand leaving the reins for its
   fore-end and his head bowed towards it. He fires once at 0.54 s, holding still for a frame and then kicking the
   muzzle up, as his horse throws its head up; he holds it aimed, and brings it back down to his thigh. His shot is a
   bullet (`"kind": "bullet"`), leaving from his carbine's `muzzle`: the tip of its bayonet, as the Musketmen's is.
