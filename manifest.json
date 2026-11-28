@@ -463,17 +463,17 @@
   "dragoon": {
    "file": "models/dragoon.glb",
    "scale": 0.094,
-   "sha256": "866cbf5a9ce47519795edfe75c382219a3bf2e9e6837d84eee72a47033e34c4c",
+   "sha256": "833780f54cc8a2d51384f7b253f3376fbf7e0aea9d9e99dbffe67598083043b7",
    "extent": {
     "across": [
-     -0.424,
-     0.424
+     -0.422,
+     0.422
     ],
     "along": [
      -1.136,
      1.136
     ],
-    "height": 2.669
+    "height": 2.686
    },
    "triangles": 2973,
    "from": [
@@ -483,7 +483,7 @@
    "made": "generated; rewrapped; a carbine (the Musketmen's musket, scaled down) put in his right hand; the owner's colour on the coat and saddle cloth; posed, on his horse, his carbine at the advance",
    "rigged": {
     "file": "models/rigged/dragoon.glb",
-    "sha256": "205756c71f630c6da517cd3b3e4a865d0834bafbdb53c2aaecf29d3d842f887c",
+    "sha256": "528b575417b0d81f16707d3b6c6f070b03217e6a4ee36bb5ba1dd7a495fb5ada",
     "clips": {
      "idle": "idle",
      "move": "move",
