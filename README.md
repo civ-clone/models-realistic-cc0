@@ -3,11 +3,11 @@
 Realistic units for [civ.one](https://civ.one)'s 3D map, under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 Most of these I made for civ.one in [Meshy](https://www.meshy.ai): from each text prompt, Meshy made an image with
-Google's Nano Banana, then a model from the image. The rest are Meshy community models, a molotov from OpenGameArt and
-the Cavalry's sabre from Poly Haven, all CC0. All but the molotov and the sabre are made with AI, and each file says
-so. The set draws 20 unit
-types: Settlers, Warriors, Knights, Explorer, Sail, Crusaders, Musketmen, Riflemen, Cavalry, Dragoons, Alpine Troops,
-Partisans, Spy, Marines, Engineers, Bomber, Stealth Bomber, Frigate, Ironclad and Transport.
+Google's Nano Banana, then a model from the image. The rest are a Meshy community model (the Frigate), a molotov from
+OpenGameArt and the Cavalry's sabre from Poly Haven, all CC0. All but the molotov and the sabre are made with AI, and
+each file says so. The set draws 20 unit types: Settlers, Warriors, Knights, Explorer, Sail, Crusaders, Musketmen,
+Riflemen, Cavalry, Dragoons, Alpine Troops, Partisans, Spy, Marines, Engineers, Bomber, Stealth Bomber, Frigate,
+Ironclad and Transport.
 
 [models-realistic-by](https://github.com/civ-clone/models-realistic-by) draws the later units made from CC BY models.
 Some of these types are drawn by [models-cimpletoon](https://github.com/civ-clone/models-cimpletoon) too. civ.one's 3D
@@ -17,16 +17,16 @@ map draws each type from one set.
 
 - **`models/*.glb`:** one glTF binary for each model, facing `+z`, with one baked colour texture (JPEG, 512 px for
   people and 1024 px for the rest), and a PNG at half that size for its owner's colour; the Partisans, Riflemen,
-  Marines, Musketmen, Alpine Troops and Cavalry have a second JPEG (256 px), for their molotov, rifle, musket or
-  sabre. Each was cut
+  Marines, Musketmen, Alpine Troops, Cavalry and Dragoons have a second JPEG (256 px), for their molotov, rifle, musket,
+  sabre or carbine. Each was cut
   down to its budget where it was over (2,000 triangles for a person, 3,000 for a rider or the Settlers' group, 2,500
   for an aircraft, 3,500 for a ship), and its colour baked into the texture. Each carries its credit in
   `asset.copyright`, and its credit, licence and what was done to it in `asset.extras`.
 - **Standing and floating:** a model stands on its origin, centred across and along, at its real size in metres. A
   ship floats with its origin at the waterline, its draught under it (`extent.draught`).
 - **The owner's colour:** each model takes its owner's colour on one part, as models-0ad and models-cimpletoon do:
-  - **people and riders:** their coat, jacket or other main garment, the Cavalry's saddle cloth, the Knight's caparison,
-    the Crusader's surcoat, caparison and shield, and the Settlers' load;
+  - **people and riders:** their coat, jacket or other main garment, the Cavalry's and Dragoons' saddle cloths, the
+    Knight's caparison, the Crusader's surcoat, caparison and shield, and the Settlers' load;
   - **sailing ships:** their sails;
   - **steamships:** a band along the hull;
   - **aircraft:** their wingtips.
@@ -50,20 +50,25 @@ map draws each type from one set.
   the reins, the saddle and his left fist, so it couldn't leave them. Meshy stretched out his left arm instead, so he's
   mirrored (`stage.mirror`), which leaves his empty scabbard on his right hip. His own sabre's hilt is dropped, and he
   holds Poly Haven's sabre in his right hand at the carry, upright, its back by his right shoulder, his hand on his
-  thigh.
+  thigh. The dragoon was generated again too, his horse standing (the Meshy community model I had galloped, its
+  forelegs tucked up) and both his arms held straight out, clear of the reins and saddle; they're brought down to his
+  sides, his left hand forward by the reins and his right fist round the small of his carbine's stock, at the advance:
+  its butt on his right thigh, upright, leaning a little forward and out. His carbine is the Musketmen's musket, its
+  bayonet fixed, scaled down whole to 1.15 m (so it's slimmer too); his sabre stays sheathed at his left hip.
 
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
   it stands in the file, the way each bone should point, any pieces that move whole (the Partisan's molotov, the rifles
-  and muskets in their hands, the Warriors' club and shield, the Engineers' drawing, the Cavalry's sabre and his reins,
-  with his horse's neck), and how a hand's fingers curl, where it's made open (`fingers`: the Cavalry's right hand,
-  round his sabre's grip; models-realistic-by's Fanatics' too). The Riflemen's rifle was
+  and muskets in their hands, the Warriors' club and shield, the Engineers' drawing, the Cavalry's sabre, the Dragoons'
+  carbine, and both riders' reins, with their horses' necks), and how a hand's fingers curl, where it's made open
+  (`fingers`: the Cavalry's right hand, round his sabre's grip, and the Dragoons', round his carbine's stock;
+  models-realistic-by's Fanatics' too). The Riflemen's rifle was
   split off the back it was generated slung across (`split`); the Marines' and the Alpine Troops' rifles and the
-  Musketmen's musket were generated apart from them. The Explorer's coil of rope, which the cut to 2,000 triangles
-  drew as jagged slivers, was dropped before the cut (a `split` that only drops). Blender weights each point to the
-  bones near it, and the file's points and normals are moved; nothing else in it changes but a mark on the mesh
-  (`extras.posed`).
+  Musketmen's musket (the Dragoons' carbine too) were generated apart from them. The Explorer's coil of rope, which
+  the cut to 2,000 triangles drew as jagged slivers, was dropped before the cut (a `split` that only drops). Blender
+  weights each point to the bones near it, and the file's points and normals are moved; nothing else in it changes but
+  a mark on the mesh (`extras.posed`).
 - **Rigged and animated:** the Partisans, Riflemen, Marines, Musketmen, Alpine Troops, Explorer, Spy, Warriors,
-  Engineers and Cavalry, so far.
+  Engineers, Cavalry and Dragoons, so far.
   Each `models/rigged/<model>.glb` is the model as it stands, bound to the skeleton it was posed with, with its clips.
   The Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and `move` (a 1 s stride in place),
   which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his hand at 0.5 s, back in it by the
@@ -81,9 +86,9 @@ map draws each type from one set.
   Musketmen fire once at 0.54 s, and the Marines a three-round burst at 0.5, 0.667 and 0.833 s, each shot leaving as
   he holds still (for a frame, so the map finds the muzzle where it fired) and then kicking the muzzle up. Then they
   bring it back to where they stand. They die as the Partisans do, the weapon lying beside them. Their shots are
-  bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its barrel's end. A rig
-  can instead put a `muzzle` on a bone, for a weapon that's part of the figure rather than a prop of its own
-  (models-realistic-by's Paratroopers' slung SMG); none here does.
+  bullets (`"kind": "bullet"`), leaving from the weapon's `muzzle`, a node at the middle of its top end (a musket's is
+  its bayonet's tip). A rig can instead put a `muzzle` on a bone, for a weapon that's part of the figure rather than a
+  prop of its own (models-realistic-by's Paratroopers' slung SMG); none here does.
 
   The Alpine Troops keep their rifles in their hands throughout too. Their `idle` is the Riflemen's, the rifle at the
   trail. Their `move` is a ski glide (1.2 s): both skis stay on the snow, each sliding ahead of where it stands and
@@ -114,6 +119,14 @@ map draws each type from one set.
   through and comes back to the carry. In `die` the horse throws its head up, its forelegs buckle, and it goes over onto
   its right side, its rider with it, thrown down at its back with his right leg under it.
 
+  The Dragoons are rigged as the Cavalry are, and their horses idle, trot and fall as the Cavalry's do, their carbines
+  kept at the advance (and in his hand as he falls). In `fight` (1.5 s) he lifts his carbine from his thigh and brings
+  it to his right shoulder, its muzzle coming down ahead of him as he turns to his right, and aims it ahead and a little
+  down, about 8° to the right of his horse's head (clear of it by about 16 cm), his left hand leaving the reins for its
+  fore-end and his head bowed towards it. He fires once at 0.54 s, holding still for a frame and then kicking the
+  muzzle up, as his horse throws its head up; he holds it aimed, and brings it back down to his thigh. His shot is a
+  bullet (`"kind": "bullet"`), leaving from his carbine's `muzzle`: the tip of its bayonet, as the Musketmen's is.
+
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest of
   the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is made
   from key poses, in the stance's terms (which way each bone points, and how it's twisted), with the whole figure turned
@@ -124,17 +137,17 @@ map draws each type from one set.
   lowest point, and played in place: the map moves units from square to square itself. The file has a root node,
   `skeleton`, holding a joint for each bone (named as the stance's, which three.js reads without the dot: `hand.R` is
   `handR`; a rider's horse's are named `mount_`, and its hips are the root), and, for a figure whose held piece is split
-  off to move on its own (the Partisans', Riflemen's, Musketmen's, Marines' and Alpine Troops'), the piece's, `prop`, a
-  child of his right hand's. Each clip keys every joint's turn, the root's place, and any prop's size (the molotov's is
-  0 from just after the throw until it grows back in his hand). A key can also hold the prop as it says rather than as
-  the hand does: where it points, which way its back faces and where its butt goes, carried by the chest as it turns.
-  The hand that holds it, and the other hand, are then bent to reach it, each lying along it as its forearm carries it
-  at the keys, and every clip keys the prop's place on the hand as well. As a hold eases on or off, the elbow's bend is
-  eased with it, the hand sliding along the prop to keep it so; a prop whose `slides` is false (the Marine's rifle, held
-  by its pistol grip) moves with the hand instead. A prop whose `grounded` is false (as these weapons' are) is left out
-  of standing the figure on the ground, so it can leave the ground, or dip into it, as he moves. A clip that plays once
-  starts as the model stands (its feet can be planted there from the start, so they don't slide as it begins), and a
-  loop ends where it starts.
+  off to move on its own (the Partisans', Riflemen's, Musketmen's, Marines', Alpine Troops' and Dragoons'), the piece's,
+  `prop`, a child of his right hand's. Each clip keys every joint's turn, the root's place, and any prop's size (the
+  molotov's is 0 from just after the throw until it grows back in his hand). A key can also hold the prop as it says
+  rather than as the hand does: where it points, which way its back faces and where its butt goes, carried by the
+  chest as it turns. The hand that holds it, and the other hand, are then bent to reach it, each lying along it as its
+  forearm carries it at the keys, and every clip keys the prop's place on the hand as well. As a hold eases on or off,
+  the elbow's bend is eased with it, the hand sliding along the prop to keep it so; a prop whose `slides` is false
+  (the Marine's rifle, held by its pistol grip) moves with the hand instead. A prop whose `grounded` is false (as
+  these weapons' are) is left out of standing the figure on the ground, so it can leave the ground, or dip into it, as
+  he moves. A clip that plays once starts as the model stands (its feet can be planted there from the start, so they
+  don't slide as it begins), and a loop ends where it starts.
 - **`manifest.json`:** the set, as civ.one's library describes a set of models:
   - its licence, with the credit to show wherever it's used (`licence.attribution`), and its credits;
   - the scale it's drawn at, and any model's own where it isn't the set's;
@@ -186,7 +199,7 @@ model is built again from its original. `check.py` checks each rule's form, not 
 
 The originals:
 - **Mine:** generated in my Meshy account, and too big to keep here (up to 140 MB each). I've kept them.
-- **Meshy community models:** each post's GLB download, which needs a Meshy account.
+- **The Meshy community model:** its post's GLB download, which needs a Meshy account.
 - **The molotov:** [`Molotov.zip`](https://opengameart.org/sites/default/files/Molotov.zip) from its OpenGameArt page.
 - **The sabre:** Poly Haven's [Wooden Handle Saber](https://polyhaven.com/a/wooden_handle_saber), as Summer Engine's
   [asset store](https://www.summerengine.com/asset-store/library-sabre) has it, in one GLB (its node and textures are

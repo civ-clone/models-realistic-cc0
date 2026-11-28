@@ -7,7 +7,7 @@
  "licence": {
   "name": "CC0 1.0",
   "url": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "attribution": "Models generated for civ.one by dom111 with Meshy, Meshy community models, Lucian Pavel's Lowpoly Molotov and Ulan Cabanilla's Wooden Handle Saber (Poly Haven), all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov and the sabre are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
+  "attribution": "Models generated for civ.one by dom111 with Meshy, a Meshy community model, Lucian Pavel's Lowpoly Molotov and Ulan Cabanilla's Wooden Handle Saber (Poly Haven), all CC0 1.0: reduced, rebaked, given their owner's colour and converted by dom111. All but the molotov and the sabre are made with AI. Credits: https://github.com/civ-clone/models-realistic-cc0/blob/main/CREDITS.md"
  },
  "credits": [
   {
@@ -32,15 +32,6 @@
    "work": "Lowpoly Molotov",
    "author": "Lucian Pavel",
    "url": "https://opengameart.org/content/lowpoly-molotov",
-   "licence": {
-    "name": "CC0 1.0",
-    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
-   }
-  },
-  {
-   "work": "Storm-Swept Redcoat Cavalry",
-   "author": "rossclark13693",
-   "url": "https://www.meshy.ai/posts/019d634e-94fe-7cae-a944-57370f297fb9",
    "licence": {
     "name": "CC0 1.0",
     "url": "https://creativecommons.org/publicdomain/zero/1.0/"
@@ -471,24 +462,44 @@
   },
   "dragoon": {
    "file": "models/dragoon.glb",
-   "scale": 0.088,
-   "sha256": "89bca40e4ae2c0b1ef49fe97afea4457755a9cbc60f55164a021f99487a13684",
+   "scale": 0.094,
+   "sha256": "833780f54cc8a2d51384f7b253f3376fbf7e0aea9d9e99dbffe67598083043b7",
    "extent": {
     "across": [
-     -0.628,
-     0.628
+     -0.422,
+     0.422
     ],
     "along": [
-     -1.258,
-     1.258
+     -1.136,
+     1.136
     ],
-    "height": 2.5
+    "height": 2.686
    },
-   "triangles": 2998,
+   "triangles": 2973,
    "from": [
-    "https://www.meshy.ai/posts/019d634e-94fe-7cae-a944-57370f297fb9"
+    "https://github.com/civ-clone/models-realistic-cc0",
+    "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "simplified; the owner's colour on the coat"
+   "made": "generated; rewrapped; a carbine (the Musketmen's musket, scaled down) put in his right hand; the owner's colour on the coat and saddle cloth; posed, on his horse, his carbine at the advance",
+   "rigged": {
+    "file": "models/rigged/dragoon.glb",
+    "sha256": "528b575417b0d81f16707d3b6c6f070b03217e6a4ee36bb5ba1dd7a495fb5ada",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "die": "die",
+     "fight": "fight"
+    },
+    "shots": {
+     "fight": [
+      {
+       "at": 0.541667,
+       "joint": "muzzle",
+       "kind": "bullet"
+      }
+     ]
+    }
+   }
   },
   "frigate": {
    "file": "models/frigate.glb",
