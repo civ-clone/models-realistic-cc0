@@ -138,8 +138,8 @@ map draws each type from one set.
   does. In `move` it trots (1 s), its lower legs in diagonal pairs half a stride apart, each swinging forward to land,
   under him, back as it pushes off, and lifted, folded back, as it swings through, its tail swishing a little. In
   `fight` (1.5 s) he lowers his lance from upright and couches it under his right arm, leaning into it, its point ahead
-  and a little down, about 6° to the right of his horse's head (clear of it by about 17 cm, and of its neck by 14 cm),
-  and drives it forward: the blow lands at 0.55 s (`strike`). He holds it there, then raises it upright again. In
+  and a little down, about 6° to the right of straight ahead, past his horse's head on its right (clear of it by about
+  17 cm, and of its neck by 14 cm), and drives it forward: the blow lands at 0.55 s (`strike`). He holds it there, then raises it upright again. In
   `die` the horse goes over as the Cavalry's does, its legs moving only below the hem, and his lance comes to lie along
   his side, pointing forward, clear of the ground.
 
