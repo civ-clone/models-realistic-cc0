@@ -105,7 +105,7 @@
   "knight": {
    "file": "models/knight.glb",
    "scale": 0.0875,
-   "sha256": "d5f99b1565875213fab47212325102c092968e707446af3ec9c28aeea07b7949",
+   "sha256": "ce1ae1776683788dd114bb52978240ddb9fbe7c9ec966f3f051a1ed2654b867d",
    "extent": {
     "across": [
      -0.497,
@@ -121,7 +121,20 @@
    "from": [
     "https://github.com/civ-clone/models-realistic-cc0"
    ],
-   "made": "generated; rewrapped; the owner's colour on the caparison"
+   "made": "generated; his lance's foot dropped; rewrapped; the owner's colour on the caparison; posed, on his horse, his lance held whole",
+   "rigged": {
+    "file": "models/rigged/knight.glb",
+    "sha256": "606514d30d978fa3a4e2d414686b5ff1064da98677b46e9339be63112ed6a0db",
+    "clips": {
+     "idle": "idle",
+     "move": "move",
+     "die": "die",
+     "fight": "fight"
+    },
+    "strikes": {
+     "fight": 0.55
+    }
+   }
   },
   "explorer": {
    "file": "models/explorer.glb",

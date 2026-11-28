@@ -54,21 +54,25 @@ map draws each type from one set.
   forelegs tucked up) and both his arms held straight out, clear of the reins and saddle; they're brought down to his
   sides, his left hand forward by the reins and his right fist round the small of his carbine's stock, at the advance:
   its butt on his right thigh, upright, leaning a little forward and out. His carbine is the Musketmen's musket, its
-  bayonet fixed, scaled down whole to 1.15 m (so it's slimmer too); his sabre stays sheathed at his left hip.
+  bayonet fixed, scaled down whole to 1.15 m (so it's slimmer too); his sabre stays sheathed at his left hip. The
+  knight holds his lance upright in his right fist, as he was made; its foot, which lay on his horse's shoulder, is
+  dropped, so it ends in the air below his fist.
 
   A figure is posed by `tools/blender/stance.py`, as its `stance` in `roster.json` says: a skeleton fitted to it where
   it stands in the file, the way each bone should point, any pieces that move whole (the Partisan's molotov, the rifles
   and muskets in their hands, the Warriors' club and shield, the Engineers' drawing, the Cavalry's sabre, the Dragoons'
-  carbine, and both riders' reins, with their horses' necks), and how a hand's fingers curl, where it's made open
+  carbine, the Knights' lance, with the fist round it, the riders' reins, with their horses' necks, and the Knights'
+  caparison, with the horse's back), and how a hand's fingers curl, where it's made open
   (`fingers`: the Cavalry's right hand, round his sabre's grip, and the Dragoons', round his carbine's stock;
   models-realistic-by's Fanatics' too). The Riflemen's rifle was
   split off the back it was generated slung across (`split`); the Marines' and the Alpine Troops' rifles and the
   Musketmen's musket (the Dragoons' carbine too) were generated apart from them. The Explorer's coil of rope, which
-  the cut to 2,000 triangles drew as jagged slivers, was dropped before the cut (a `split` that only drops). Blender
+  the cut to 2,000 triangles drew as jagged slivers, was dropped before the cut (a `split` that only drops), as was the
+  foot of the Knights' lance. Blender
   weights each point to the bones near it, and the file's points and normals are moved; nothing else in it changes but
   a mark on the mesh (`extras.posed`).
 - **Rigged and animated:** the Partisans, Riflemen, Marines, Musketmen, Alpine Troops, Explorer, Spy, Warriors,
-  Engineers, Cavalry and Dragoons, so far.
+  Engineers, Cavalry, Dragoons and Knights, so far.
   Each `models/rigged/<model>.glb` is the model as it stands, bound to the skeleton it was posed with, with its clips.
   The Partisans': `idle` (3 s, breathing, looking about and shifting his weight) and `move` (a 1 s stride in place),
   which loop, and `fight` (1.5 s: he steps into the throw and the molotov leaves his hand at 0.5 s, back in it by the
@@ -127,6 +131,18 @@ map draws each type from one set.
   muzzle up, as his horse throws its head up; he holds it aimed, and brings it back down to his thigh. His shot is a
   bullet (`"kind": "bullet"`), leaving from his carbine's `muzzle`: the tip of its bayonet, as the Musketmen's is.
 
+  The Knights are rigged as the Cavalry are, but for the caparison. Weighted by the bones near it, it tore into strips
+  between the legs as they moved, so it's held whole with the horse's back, with everything under it above its hem,
+  and the horse's knees and hocks are put at the hem, where the legs come out from under it: only the legs below it
+  move. In `idle` (3 s) the horse lowers and raises its head and swishes its tail as he looks about, as the Cavalry's
+  does. In `move` it trots (1 s), its lower legs in diagonal pairs half a stride apart, each swinging forward to land,
+  under him, back as it pushes off, and lifted, folded back, as it swings through, its tail swishing a little. In
+  `fight` (1.5 s) he lowers his lance from upright and couches it under his right arm, leaning into it, its point ahead
+  and a little down, about 6° to the right of his horse's head (clear of it by about 17 cm, and of its neck by 14 cm),
+  and drives it forward: the blow lands at 0.55 s (`strike`). He holds it there, then raises it upright again. In
+  `die` the horse goes over as the Cavalry's does, its legs moving only below the hem, and his lance comes to lie along
+  his side, pointing forward, clear of the ground.
+
   A figure is rigged by `tools/blender/rig.py`, as its `rig` in `roster.json` says. Each point keeps the four biggest of
   the weights it was posed with (a leg's fading out above the hip, so a step doesn't drag the chest). Each clip is made
   from key poses, in the stance's terms (which way each bone points, and how it's twisted), with the whole figure turned
@@ -155,7 +171,8 @@ map draws each type from one set.
     what was done to it;
   - a rigged model's rigged file, its SHA-256, its clips by role, and its shots by clip: when each leaves, the joint
     or node it leaves from, and what flies, where the roster says (`kind`; a bottle without one); and, for a fight
-    with no shots, when its blow lands (`strikes`, by clip: the Warriors' and the Cavalry's) (`rigged`);
+    with no shots, when its blow lands (`strikes`, by clip: the Warriors', the Cavalry's and the
+    Knights') (`rigged`);
   - which unit types each model draws (`names.unit`, by the engine's names for them).
 - **`roster.json`:** what's built, and how:
   - each source: its page, author and licence, where its file came from and that file's SHA-256, and, for the ones I
